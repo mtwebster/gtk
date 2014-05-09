@@ -68,6 +68,8 @@ gboolean                gtk_menu_tracker_item_get_toggled               (GtkMenu
 
 const gchar *           gtk_menu_tracker_item_get_accel                 (GtkMenuTrackerItem *self);
 
+const gchar *           gtk_menu_tracker_item_get_accel_text            (GtkMenuTrackerItem *self);
+
 GMenuModel *           _gtk_menu_tracker_item_get_submenu               (GtkMenuTrackerItem *self);
 
 gchar *                _gtk_menu_tracker_item_get_submenu_namespace     (GtkMenuTrackerItem *self);
@@ -80,5 +82,9 @@ void                    gtk_menu_tracker_item_request_submenu_shown     (GtkMenu
                                                                          gboolean            shown);
 
 gboolean                gtk_menu_tracker_item_get_submenu_shown         (GtkMenuTrackerItem *self);
+
+GMenuItem *             gtk_menu_tracker_item_get_menu_item             (GtkMenuTrackerItem *self);
+
+const gchar *           gtk_menu_tracker_item_get_action_namespace      (GtkMenuTrackerItem *self);
 
 #endif

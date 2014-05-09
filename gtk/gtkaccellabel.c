@@ -107,6 +107,8 @@ struct _GtkAccelLabelPrivate
 
   guint           accel_key;         /* manual accel key specification if != 0 */
   GdkModifierType accel_mods;
+
+  gchar         *accel_text;         /* already-translated accel_string */
 };
 
 static void         gtk_accel_label_set_property (GObject            *object,
@@ -259,6 +261,7 @@ gtk_accel_label_init (GtkAccelLabel *accel_label)
   priv->accel_closure = NULL;
   priv->accel_group = NULL;
   priv->accel_string = NULL;
+  priv->accel_text = NULL;
 }
 
 /**
@@ -300,6 +303,7 @@ gtk_accel_label_finalize (GObject *object)
   GtkAccelLabel *accel_label = GTK_ACCEL_LABEL (object);
 
   g_free (accel_label->priv->accel_string);
+  g_free (accel_label->priv->accel_text);
 
   G_OBJECT_CLASS (gtk_accel_label_parent_class)->finalize (object);
 }
@@ -902,6 +906,12 @@ gtk_accel_label_refetch (GtkAccelLabel *accel_label)
       accel_label->priv->accel_string = NULL;
     }
 
+  if (accel_label->priv->accel_text)
+    {
+      accel_label->priv->accel_string = g_strdup (accel_label->priv->accel_text);
+      return FALSE;
+    }
+
   g_object_get (gtk_widget_get_settings (GTK_WIDGET (accel_label)),
                 "gtk-enable-accels", &enable_accels,
                 NULL);
@@ -983,6 +993,16 @@ gtk_accel_label_set_accel (GtkAccelLabel   *accel_label,
 {
   accel_label->priv->accel_key = accelerator_key;
   accel_label->priv->accel_mods = accelerator_mods;
+
+  gtk_accel_label_reset (accel_label);
+}
+
+void
+_gtk_accel_label_set_accel_text (GtkAccelLabel *accel_label,
+                                 const gchar   *accel_text)
+{
+  g_free (accel_label->priv->accel_text);
+  accel_label->priv->accel_text = g_strdup (accel_text);
 
   gtk_accel_label_reset (accel_label);
 }

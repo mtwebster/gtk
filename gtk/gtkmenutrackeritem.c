@@ -104,6 +104,7 @@ enum {
   PROP_ROLE,
   PROP_TOGGLED,
   PROP_ACCEL,
+  PROP_ACCEL_TEXT,
   PROP_SUBMENU_SHOWN,
   N_PROPS
 };
@@ -174,6 +175,9 @@ gtk_menu_tracker_item_get_property (GObject    *object,
     case PROP_ACCEL:
       g_value_set_string (value, gtk_menu_tracker_item_get_accel (self));
       break;
+    case PROP_ACCEL_TEXT:
+      g_value_set_string (value, gtk_menu_tracker_item_get_accel_text (self));
+      break;
     case PROP_SUBMENU_SHOWN:
       g_value_set_boolean (value, gtk_menu_tracker_item_get_submenu_shown (self));
       break;
@@ -229,6 +233,8 @@ gtk_menu_tracker_item_class_init (GtkMenuTrackerItemClass *class)
     g_param_spec_boolean ("toggled", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_ACCEL] =
     g_param_spec_string ("accel", "", "", NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
+  gtk_menu_tracker_item_pspecs[PROP_ACCEL_TEXT] =
+    g_param_spec_string ("accel-text", "", "", NULL, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
   gtk_menu_tracker_item_pspecs[PROP_SUBMENU_SHOWN] =
     g_param_spec_boolean ("submenu-shown", "", "", FALSE, G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
 
@@ -551,6 +557,16 @@ gtk_menu_tracker_item_get_accel (GtkMenuTrackerItem *self)
   return accel;
 }
 
+const gchar *
+gtk_menu_tracker_item_get_accel_text (GtkMenuTrackerItem *self)
+{
+  const gchar *accel_text = NULL;
+
+  g_menu_item_get_attribute (self->item, "x-canonical-accel", "&s", &accel_text);
+
+  return accel_text;
+}
+
 GMenuModel *
 _gtk_menu_tracker_item_get_submenu (GtkMenuTrackerItem *self)
 {
@@ -785,4 +801,20 @@ gtk_menu_tracker_item_request_submenu_shown (GtkMenuTrackerItem *self,
     }
   else
     gtk_menu_tracker_item_set_submenu_shown (self, shown);
+}
+
+GMenuItem *
+gtk_menu_tracker_item_get_menu_item (GtkMenuTrackerItem *self)
+{
+  g_return_if_fail (GTK_IS_MENU_TRACKER_ITEM (self));
+
+  return self->item;
+}
+
+const gchar *
+gtk_menu_tracker_item_get_action_namespace (GtkMenuTrackerItem *self)
+{
+  g_return_if_fail (GTK_IS_MENU_TRACKER_ITEM (self));
+
+  return self->action_namespace;
 }

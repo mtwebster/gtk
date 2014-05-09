@@ -81,6 +81,8 @@
 
 #include "a11y/gtkmenushellaccessible.h"
 
+#include "ubuntu-private.h"
+
 
 #define MENU_SHELL_TIMEOUT   500
 #define MENU_POPUP_DELAY     225
@@ -2041,6 +2043,58 @@ gtk_menu_shell_tracker_remove_func (gint     position,
   gtk_widget_destroy (child);
 }
 
+static GtkWidget *
+create_custom_menu_item (GMenuItem   *item,
+                         GtkWidget   *parent,
+                         const gchar *action_namespace)
+{
+  gchar *type;
+  GActionGroup *actions;
+  GtkMenuItem *widget = NULL;
+  GList *it;
+
+  g_menu_item_get_attribute (item, "x-canonical-type", "s", &type);
+
+  if (action_namespace)
+    {
+      gchar *action;
+
+      /* Rewrite the menu item to include the fully qualified action
+       * name to make writing widgets easier. This won't break, as
+       * we don't use the tracker item for custom items.
+       */
+      if (g_menu_item_get_attribute (item, "action", "s", &action))
+        {
+          gchar *fullname;
+
+          fullname = g_strconcat (action_namespace, ".", action, NULL);
+          g_menu_item_set_attribute (item, "action", "s", fullname);
+
+          g_free (fullname);
+          g_free (action);
+        }
+    }
+
+  /* Passing the parent muxer is wrong, but we'll only have access
+   * to the menuitem's muxer after the widget has been created.
+   * Thus we'd need some other form of passing the action group to
+   * the widget, which would complicate things for no practical
+   * reason: the panel service is the only consumer of this API and
+   * it will never call gtk_widget_insert_action_group() on the
+   * returned menu item.
+   */
+  actions = G_ACTION_GROUP (_gtk_widget_get_action_muxer (parent));
+
+  for (it = ubuntu_menu_item_factory_get_all (); it != NULL && widget == NULL; it = it->next)
+    widget = ubuntu_menu_item_factory_create_menu_item (it->data, type, item, actions);
+
+  if (widget == NULL)
+    g_warning ("Cannot create custom menu item of type '%s'", type);
+
+  g_free (type);
+  return GTK_WIDGET (widget);
+}
+
 static void
 gtk_menu_shell_tracker_insert_func (GtkMenuTrackerItem *item,
                                     gint                position,
@@ -2048,6 +2102,9 @@ gtk_menu_shell_tracker_insert_func (GtkMenuTrackerItem *item,
 {
   GtkMenuShell *menu_shell = user_data;
   GtkWidget *widget;
+  GMenuItem *menuitem;
+
+  menuitem = gtk_menu_tracker_item_get_menu_item (item);
 
   if (gtk_menu_tracker_item_get_is_separator (item))
     {
@@ -2107,6 +2164,18 @@ gtk_menu_shell_tracker_insert_func (GtkMenuTrackerItem *item,
 
       gtk_widget_show (widget);
     }
+  else if (g_menu_item_get_attribute (menuitem, "x-canonical-type", "s", NULL))
+    {
+      const gchar *namespace;
+
+      namespace = gtk_menu_tracker_item_get_action_namespace (item);
+      widget = create_custom_menu_item (menuitem, GTK_WIDGET (menu_shell), namespace);
+
+      if (widget == NULL)
+        return;
+
+      gtk_widget_show (widget);
+    }
   else
     {
       widget = gtk_model_menu_item_new ();
@@ -2123,6 +2192,7 @@ gtk_menu_shell_tracker_insert_func (GtkMenuTrackerItem *item,
       g_object_bind_property (item, "role", widget, "action-role", G_BINDING_SYNC_CREATE);
       g_object_bind_property (item, "toggled", widget, "toggled", G_BINDING_SYNC_CREATE);
       g_object_bind_property (item, "accel", widget, "accel", G_BINDING_SYNC_CREATE);
+      g_object_bind_property (item, "accel-text", widget, "accel-text", G_BINDING_SYNC_CREATE);
 
       g_signal_connect (widget, "activate", G_CALLBACK (gtk_menu_shell_item_activate), item);
     }

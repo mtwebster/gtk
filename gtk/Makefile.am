@@ -176,6 +176,8 @@ deprecated_private_h_sources =			\
 
 gtk_public_h_sources = 		\
 	gtk.h			\
+	ubuntu-private.h	\
+	ubuntumenuitemfactory.h	\
 	gtkx.h			\
 	gtk-a11y.h		\
 	gtkaboutdialog.h	\
@@ -601,6 +603,7 @@ deprecated_c_sources = 			\
 
 gtk_base_c_sources = 		\
 	$(deprecated_c_sources)	\
+	ubuntumenuitemfactory.c	\
 	gtkactionmuxer.c	\
 	gtkactionobserver.c	\
 	gtkactionobservable.c	\

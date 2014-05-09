@@ -43,7 +43,8 @@ enum
   PROP_ICON,
   PROP_TEXT,
   PROP_TOGGLED,
-  PROP_ACCEL
+  PROP_ACCEL,
+  PROP_ACCEL_TEXT
 };
 
 static void
@@ -286,6 +287,44 @@ gtk_model_menu_item_set_accel (GtkModelMenuItem *item,
     }
 }
 
+void _gtk_accel_label_set_accel_text (GtkAccelLabel *accel_label,
+                                      const gchar   *accel_text);
+
+static void
+gtk_model_menu_item_set_accel_text (GtkModelMenuItem *item,
+                                    const gchar      *accel_text)
+{
+  GtkWidget *child;
+  GList *children;
+
+  child = gtk_bin_get_child (GTK_BIN (item));
+  if (child == NULL)
+    {
+      gtk_menu_item_get_label (GTK_MENU_ITEM (item));
+      child = gtk_bin_get_child (GTK_BIN (item));
+      g_assert (GTK_IS_LABEL (child));
+    }
+
+  if (GTK_IS_LABEL (child))
+    {
+      _gtk_accel_label_set_accel_text (GTK_ACCEL_LABEL (child), accel_text);
+      return;
+    }
+
+  if (!GTK_IS_CONTAINER (child))
+    return;
+
+  children = gtk_container_get_children (GTK_CONTAINER (child));
+
+  while (children)
+    {
+      if (GTK_IS_ACCEL_LABEL (children->data))
+        _gtk_accel_label_set_accel_text (children->data, accel_text);
+
+      children = g_list_delete_link (children, children);
+    }
+}
+
 void
 gtk_model_menu_item_set_property (GObject *object, guint prop_id,
                                   const GValue *value, GParamSpec *pspec)
@@ -312,6 +351,10 @@ gtk_model_menu_item_set_property (GObject *object, guint prop_id,
 
     case PROP_ACCEL:
       gtk_model_menu_item_set_accel (item, g_value_get_string (value));
+      break;
+
+    case PROP_ACCEL_TEXT:
+      gtk_model_menu_item_set_accel_text (item, g_value_get_string (value));
       break;
 
     default:
@@ -354,6 +397,9 @@ gtk_model_menu_item_class_init (GtkModelMenuItemClass *class)
                                                          G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class, PROP_ACCEL,
                                    g_param_spec_string ("accel", "accel", "accel", NULL,
+                                                        G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class, PROP_ACCEL_TEXT,
+                                   g_param_spec_string ("accel-text", "accel-text", "accel-text", NULL,
                                                         G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
 }
 
