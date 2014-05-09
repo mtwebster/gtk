@@ -24,7 +24,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtkenums.h>
-#include <gtk/gtkiconfactory.h>
+#include <gtk/deprecated/gtkiconfactory.h>
 #include <gtk/gtkstyleproperties.h>
 #include <gtk/gtktypes.h>
 
@@ -107,12 +107,14 @@ struct _GtkStyleProviderIface
 					 GtkWidgetPath    *path);
 };
 
+GDK_AVAILABLE_IN_ALL
 GType gtk_style_provider_get_type (void) G_GNUC_CONST;
 
 GDK_DEPRECATED_IN_3_8
 GtkStyleProperties *gtk_style_provider_get_style (GtkStyleProvider *provider,
                                                   GtkWidgetPath    *path);
 
+GDK_AVAILABLE_IN_ALL
 gboolean gtk_style_provider_get_style_property (GtkStyleProvider *provider,
                                                 GtkWidgetPath    *path,
                                                 GtkStateFlags     state,

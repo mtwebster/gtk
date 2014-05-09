@@ -39,6 +39,7 @@ typedef GdkDisplayManager _GdkQuartzDisplayManager;
 typedef struct _GdkDisplayManagerClass GdkQuartzDisplayManagerClass;
 
 
+GDK_AVAILABLE_IN_ALL
 GType gdk_quartz_display_manager_get_type (void);
 
 G_END_DECLS

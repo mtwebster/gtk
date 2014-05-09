@@ -174,7 +174,7 @@ static void gtk_text_tag_get_property (GObject         *object,
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (GtkTextTag, gtk_text_tag, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkTextTag, gtk_text_tag, G_TYPE_OBJECT)
 
 static void
 gtk_text_tag_class_init (GtkTextTagClass *klass)
@@ -569,7 +569,7 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
   /**
    * GtkTextTag:paragraph-background-gdk:
    *
-   * The paragraph background color as a as a #GdkColor.
+   * The paragraph background color as a #GdkColor.
    *
    * Since: 2.8
    *
@@ -586,7 +586,7 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
   /**
    * GtkTextTag:paragraph-background-rgba:
    *
-   * The paragraph background color as a as a #GdkRGBA.
+   * The paragraph background color as a #GdkRGBA.
    *
    * Since: 3.2
    */
@@ -750,21 +750,13 @@ gtk_text_tag_class_init (GtkTextTagClass *klass)
                   G_TYPE_OBJECT,
                   GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE,
                   GTK_TYPE_TEXT_ITER);
-
-  g_type_class_add_private (klass, sizeof (GtkTextTagPrivate));
 }
 
 static void
 gtk_text_tag_init (GtkTextTag *text_tag)
 {
-  GtkTextTagPrivate *priv;
-
-  text_tag->priv = G_TYPE_INSTANCE_GET_PRIVATE (text_tag,
-                                                GTK_TYPE_TEXT_TAG,
-                                                GtkTextTagPrivate);
-  priv = text_tag->priv;
-
-  priv->values = gtk_text_attributes_new ();
+  text_tag->priv = gtk_text_tag_get_instance_private (text_tag);
+  text_tag->priv->values = gtk_text_attributes_new ();
 }
 
 /**
@@ -1915,8 +1907,8 @@ gtk_text_tag_get_priority (GtkTextTag *tag)
  * gtk_text_tag_set_priority:
  * @tag: a #GtkTextTag
  * @priority: the new priority
- * 
- * Sets the priority of a #GtkTextTag. Valid priorities are
+ *
+ * Sets the priority of a #GtkTextTag. Valid priorities
  * start at 0 and go to one less than gtk_text_tag_table_get_size().
  * Each tag in a table has a unique priority; setting the priority
  * of one tag shifts the priorities of all the other tags in the

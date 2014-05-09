@@ -844,16 +844,16 @@ gtk_text_iter_get_visible_line_index (const GtkTextIter *iter)
  * gtk_text_iter_get_char:
  * @iter: an iterator
  *
- * Returns the Unicode character at this iterator.  (Equivalent to
+ * The Unicode character at this iterator is returned.  (Equivalent to
  * operator* on a C++ iterator.)  If the element at this iterator is a
  * non-character element, such as an image embedded in the buffer, the
  * Unicode "unknown" character 0xFFFC is returned. If invoked on
  * the end iterator, zero is returned; zero is not a valid Unicode character.
- * So you can write a loop which ends when gtk_text_iter_get_char ()
+ * So you can write a loop which ends when gtk_text_iter_get_char()
  * returns 0.
  *
- * Return value: a Unicode character, or 0 if @iter is not dereferenceable
- **/
+ * Returns: a Unicode character, or 0 if @iter is not dereferenceable
+ */
 gunichar
 gtk_text_iter_get_char (const GtkTextIter *iter)
 {
@@ -1155,11 +1155,14 @@ gtk_text_iter_get_toggled_tags  (const GtkTextIter  *iter,
  * @tag: (allow-none): a #GtkTextTag, or %NULL
  *
  * Returns %TRUE if @tag is toggled on at exactly this point. If @tag
- * is %NULL, returns %TRUE if any tag is toggled on at this point. Note
- * that the gtk_text_iter_begins_tag () returns %TRUE if @iter is the
- * <emphasis>start</emphasis> of the tagged range;
- * gtk_text_iter_has_tag () tells you whether an iterator is
- * <emphasis>within</emphasis> a tagged range.
+ * is %NULL, returns %TRUE if any tag is toggled on at this point.
+ *
+ * Note that if gtk_text_iter_begins_tag() returns %TRUE, it means that @iter is
+ * at the beginning of the tagged range, and that the
+ * <emphasis>character</emphasis> at @iter is inside the tagged range. In other
+ * words, unlike gtk_text_iter_ends_tag(), if gtk_text_iter_begins_tag() returns
+ * %TRUE, gtk_text_iter_has_tag() will also return %TRUE for the same
+ * parameters.
  *
  * Return value: whether @iter is the start of a range tagged with @tag
  **/
@@ -1201,14 +1204,15 @@ gtk_text_iter_begins_tag    (const GtkTextIter  *iter,
  * @tag: (allow-none): a #GtkTextTag, or %NULL
  *
  * Returns %TRUE if @tag is toggled off at exactly this point. If @tag
- * is %NULL, returns %TRUE if any tag is toggled off at this point. Note
- * that the gtk_text_iter_ends_tag () returns %TRUE if @iter is the
- * <emphasis>end</emphasis> of the tagged range;
- * gtk_text_iter_has_tag () tells you whether an iterator is
- * <emphasis>within</emphasis> a tagged range.
+ * is %NULL, returns %TRUE if any tag is toggled off at this point.
+ *
+ * Note that if gtk_text_iter_ends_tag() returns %TRUE, it means that @iter is
+ * at the end of the tagged range, but that the <emphasis>character</emphasis>
+ * at @iter is <emphasis>outside</emphasis> the tagged range. In other words,
+ * unlike gtk_text_iter_begins_tag(), if gtk_text_iter_ends_tag() returns %TRUE,
+ * gtk_text_iter_has_tag() will return %FALSE for the same parameters.
  *
  * Return value: whether @iter is the end of a range tagged with @tag
- *
  **/
 gboolean
 gtk_text_iter_ends_tag   (const GtkTextIter  *iter,
@@ -1289,7 +1293,8 @@ gtk_text_iter_toggles_tag (const GtkTextIter  *iter,
  * @iter: an iterator
  * @tag: a #GtkTextTag
  *
- * Returns %TRUE if @iter is within a range tagged with @tag.
+ * Returns %TRUE if @iter points to a character that is part of a range tagged
+ * with @tag. See also gtk_text_iter_begins_tag() and gtk_text_iter_ends_tag().
  *
  * Return value: whether @iter is tagged with @tag
  **/
@@ -4163,6 +4168,9 @@ gtk_text_iter_forward_to_tag_toggle (GtkTextIter *iter,
 
   check_invariants (iter);
 
+  if (gtk_text_iter_is_end (iter))
+    return FALSE;
+
   current_line = real->line;
   next_line = _gtk_text_line_next_could_contain_tag (current_line,
                                                      real->tree, tag);
@@ -4406,7 +4414,6 @@ forward_chars_with_skipping (GtkTextIter *iter,
                              gboolean     skip_nontext,
                              gboolean     skip_decomp)
 {
-
   gint i;
 
   g_return_if_fail (count >= 0);
@@ -4418,8 +4425,8 @@ forward_chars_with_skipping (GtkTextIter *iter,
       gboolean ignored = FALSE;
 
       /* minimal workaround to avoid the infinite loop of bug #168247. */
-       if (gtk_text_iter_is_end (iter))
-         return;
+      if (gtk_text_iter_is_end (iter))
+        return;
 
       if (skip_nontext &&
           gtk_text_iter_get_char (iter) == GTK_TEXT_UNKNOWN_CHAR)
@@ -4746,7 +4753,7 @@ lines_match (const GtkTextIter *start,
 
   /* Go to end of search string */
   forward_chars_with_skipping (&next, g_utf8_strlen (*lines, -1),
-                               visible_only, !slice, TRUE);
+                               visible_only, !slice, case_insensitive);
 
   g_free (line_text);
 
@@ -4848,7 +4855,7 @@ strbreakup (const char *string,
  * @flags: flags affecting how the search is done
  * @match_start: (out caller-allocates) (allow-none): return location for start of match, or %NULL
  * @match_end: (out caller-allocates) (allow-none): return location for end of match, or %NULL
- * @limit: (allow-none): bound for the search, or %NULL for the end of the buffer
+ * @limit: (allow-none): location of last possible @match_end, or %NULL for the end of the buffer
  *
  * Searches forward for @str. Any match is returned by setting
  * @match_start to the first character of the match and @match_end to the
@@ -4856,18 +4863,11 @@ strbreakup (const char *string,
  * @limit. Note that a search is a linear or O(n) operation, so you
  * may wish to use @limit to avoid locking up your UI on large
  * buffers.
- * 
- * If the #GTK_TEXT_SEARCH_VISIBLE_ONLY flag is present, the match may
- * have invisible text interspersed in @str. i.e. @str will be a
- * possibly-noncontiguous subsequence of the matched range. similarly,
- * if you specify #GTK_TEXT_SEARCH_TEXT_ONLY, the match may have
- * pixbufs or child widgets mixed inside the matched range. If these
- * flags are not given, the match must be exact; the special 0xFFFC
- * character in @str will match embedded pixbufs or child widgets.
- * If you specify the #GTK_TEXT_SEARCH_CASE_INSENSITIVE flag, the text will
- * be matched regardless of what case it is in.
  *
- * Return value: whether a match was found
+ * @match_start will never be set to a #GtkTextIter located before @iter, even if
+ * there is a possible @match_end after or at @iter.
+ *
+ * Returns: whether a match was found
  **/
 gboolean
 gtk_text_iter_forward_search (const GtkTextIter *iter,
@@ -5188,7 +5188,10 @@ lines_window_free (LinesWindow *win)
  *
  * Same as gtk_text_iter_forward_search(), but moves backward.
  *
- * Return value: whether a match was found
+ * @match_end will never be set to a #GtkTextIter located after @iter, even if
+ * there is a possible @match_start before or at @iter.
+ *
+ * Returns: whether a match was found
  **/
 gboolean
 gtk_text_iter_backward_search (const GtkTextIter *iter,
@@ -5304,7 +5307,7 @@ gtk_text_iter_backward_search (const GtkTextIter *iter,
             }
 
           forward_chars_with_skipping (&next, offset,
-                                       visible_only, !slice, TRUE);
+                                       visible_only, !slice, case_insensitive);
 
           if (match_end)
             *match_end = next;

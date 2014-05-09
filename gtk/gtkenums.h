@@ -51,6 +51,7 @@ G_BEGIN_DECLS
  *     or top
  * @GTK_ALIGN_CENTER: center natural width of widget inside the
  *     allocation
+ * @GTK_ALIGN_BASELINE: align the widget according to the baseline. Since 3.10.
  *
  * Controls how a widget deals with extra space in a single (x or y)
  * dimension.
@@ -64,13 +65,18 @@ G_BEGIN_DECLS
  *
  * Note that in horizontal context @GTK_ALIGN_START and @GTK_ALIGN_END
  * are interpreted relative to text direction.
+ *
+ * GTK_ALIGN_BASELINE support for it is optional for containers and widgets, and
+ * it is only supported for vertical alignment.  When its not supported by
+ * a child or a container it is treated as @GTK_ALIGN_FILL.
  */
 typedef enum
 {
   GTK_ALIGN_FILL,
   GTK_ALIGN_START,
   GTK_ALIGN_END,
-  GTK_ALIGN_CENTER
+  GTK_ALIGN_CENTER,
+  GTK_ALIGN_BASELINE
 } GtkAlign;
 
 
@@ -124,6 +130,28 @@ typedef enum
   GTK_SHRINK = 1 << 1,
   GTK_FILL   = 1 << 2
 } GtkAttachOptions;
+
+/**
+ * GtkBaselinePosition:
+ * @GTK_BASELINE_POSITION_TOP: Align the baseline at the top
+ * @GTK_BASELINE_POSITION_CENTER: Center the baseline
+ * @GTK_BASELINE_POSITION_BOTTOM: Align the baseline at the bottom
+ *
+ * Whenever a container has some form of natural row it may align
+ * children in that row along a common typographical baseline. If
+ * the amount of verical space in the row is taller than the total
+ * requested height of the baseline-aligned children then it can use a
+ * #GtkBaselinePosition to select where to put the baseline inside the
+ * extra availible space.
+ *
+ * Since: 3.10
+ */
+typedef enum
+{
+  GTK_BASELINE_POSITION_TOP,
+  GTK_BASELINE_POSITION_CENTER,
+  GTK_BASELINE_POSITION_BOTTOM
+} GtkBaselinePosition;
 
 /**
  * GtkButtonBoxStyle:

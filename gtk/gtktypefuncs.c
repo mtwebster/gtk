@@ -1,3 +1,4 @@
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 *tp++ = gdk_app_launch_context_get_type();
 *tp++ = gdk_axis_use_get_type();
 *tp++ = gdk_byte_order_get_type();
@@ -130,6 +131,7 @@
 *tp++ = gtk_assistant_get_type();
 *tp++ = gtk_assistant_page_type_get_type();
 *tp++ = gtk_attach_options_get_type();
+*tp++ = gtk_baseline_position_get_type();
 *tp++ = gtk_bin_get_type();
 *tp++ = gtk_border_get_type();
 *tp++ = gtk_border_style_get_type();
@@ -216,6 +218,7 @@
 *tp++ = gtk_handle_box_get_type();
 *tp++ = gtk_hbox_get_type();
 *tp++ = gtk_hbutton_box_get_type();
+*tp++ = gtk_header_bar_get_type();
 *tp++ = gtk_hpaned_get_type();
 *tp++ = gtk_hscale_get_type();
 *tp++ = gtk_hscrollbar_get_type();
@@ -251,6 +254,8 @@
 *tp++ = gtk_level_bar_mode_get_type();
 *tp++ = gtk_license_get_type();
 *tp++ = gtk_link_button_get_type();
+*tp++ = gtk_list_box_get_type();
+*tp++ = gtk_list_box_row_get_type();
 *tp++ = gtk_list_store_get_type();
 *tp++ = gtk_lock_button_get_type();
 *tp++ = gtk_menu_bar_get_type();
@@ -282,6 +287,8 @@
 *tp++ = gtk_paper_size_get_type();
 *tp++ = gtk_path_priority_type_get_type();
 *tp++ = gtk_path_type_get_type();
+*tp++ = gtk_places_open_flags_get_type();
+*tp++ = gtk_places_sidebar_get_type();
 #ifdef GDK_WINDOWING_X11
 *tp++ = gtk_plug_get_type();
 #endif
@@ -324,6 +331,8 @@
 *tp++ = gtk_requisition_get_type();
 *tp++ = gtk_resize_mode_get_type();
 *tp++ = gtk_response_type_get_type();
+*tp++ = gtk_revealer_get_type();
+*tp++ = gtk_revealer_transition_type_get_type();
 *tp++ = gtk_scale_button_get_type();
 *tp++ = gtk_scale_get_type();
 *tp++ = gtk_scrollable_get_type();
@@ -332,6 +341,7 @@
 *tp++ = gtk_scrolled_window_get_type();
 *tp++ = gtk_scroll_step_get_type();
 *tp++ = gtk_scroll_type_get_type();
+*tp++ = gtk_search_bar_get_type();
 *tp++ = gtk_search_entry_get_type();
 *tp++ = gtk_selection_data_get_type();
 *tp++ = gtk_selection_mode_get_type();
@@ -352,6 +362,9 @@
 *tp++ = gtk_spin_button_update_policy_get_type();
 *tp++ = gtk_spinner_get_type();
 *tp++ = gtk_spin_type_get_type();
+*tp++ = gtk_stack_get_type();
+*tp++ = gtk_stack_switcher_get_type();
+*tp++ = gtk_stack_transition_type_get_type();
 *tp++ = gtk_state_flags_get_type();
 *tp++ = gtk_state_type_get_type();
 *tp++ = gtk_statusbar_get_type();

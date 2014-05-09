@@ -73,6 +73,14 @@ static void      gtk_tree_menu_get_preferred_width            (GtkWidget        
 static void      gtk_tree_menu_get_preferred_height           (GtkWidget           *widget,
                                                                gint                *minimum_size,
                                                                gint                *natural_size);
+static void      gtk_tree_menu_get_preferred_width_for_height (GtkWidget           *widget,
+                                                               gint                 for_height,
+                                                               gint                *minimum_size,
+                                                               gint                *natural_size);
+static void      gtk_tree_menu_get_preferred_height_for_width (GtkWidget           *widget,
+                                                               gint                 for_width,
+                                                               gint                *minimum_size,
+                                                               gint                *natural_size);
 
 /* GtkCellLayoutIface */
 static void      gtk_tree_menu_cell_layout_init               (GtkCellLayoutIface  *iface);
@@ -197,44 +205,16 @@ static guint   tree_menu_signals[N_SIGNALS] = { 0 };
 static GQuark  tree_menu_path_quark = 0;
 
 G_DEFINE_TYPE_WITH_CODE (GtkTreeMenu, _gtk_tree_menu, GTK_TYPE_MENU,
+                         G_ADD_PRIVATE (GtkTreeMenu)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_CELL_LAYOUT,
                                                 gtk_tree_menu_cell_layout_init));
 
 static void
 _gtk_tree_menu_init (GtkTreeMenu *menu)
 {
-  GtkTreeMenuPrivate *priv;
-
-  menu->priv = G_TYPE_INSTANCE_GET_PRIVATE (menu,
-                                            GTK_TYPE_TREE_MENU,
-                                            GtkTreeMenuPrivate);
-  priv = menu->priv;
-
-  priv->model     = NULL;
-  priv->root      = NULL;
-  priv->area      = NULL;
-  priv->context   = NULL;
-
-  priv->size_changed_id  = 0;
-  priv->row_inserted_id  = 0;
-  priv->row_deleted_id   = 0;
-  priv->row_reordered_id = 0;
-  priv->row_changed_id   = 0;
-
-  priv->wrap_width   = 0;
-  priv->row_span_col = -1;
-  priv->col_span_col = -1;
-
-  priv->menu_with_header = FALSE;
-  priv->tearoff          = FALSE;
-
-  priv->row_separator_func    = NULL;
-  priv->row_separator_data    = NULL;
-  priv->row_separator_destroy = NULL;
-
-  priv->header_func    = NULL;
-  priv->header_data    = NULL;
-  priv->header_destroy = NULL;
+  menu->priv = _gtk_tree_menu_get_instance_private (menu);
+  menu->priv->row_span_col = -1;
+  menu->priv->col_span_col = -1;
 
   gtk_menu_set_reserve_toggle_size (GTK_MENU (menu), FALSE);
 }
@@ -255,6 +235,8 @@ _gtk_tree_menu_class_init (GtkTreeMenuClass *class)
 
   widget_class->get_preferred_width  = gtk_tree_menu_get_preferred_width;
   widget_class->get_preferred_height = gtk_tree_menu_get_preferred_height;
+  widget_class->get_preferred_width_for_height  = gtk_tree_menu_get_preferred_width_for_height;
+  widget_class->get_preferred_height_for_width = gtk_tree_menu_get_preferred_height_for_width;
 
   /*
    * GtkTreeMenu::menu-activate:
@@ -410,8 +392,6 @@ _gtk_tree_menu_class_init (GtkTreeMenuClass *class)
                                                      G_MAXINT,
                                                      -1,
                                                      GTK_PARAM_READWRITE));
-
-  g_type_class_add_private (object_class, sizeof (GtkTreeMenuPrivate));
 }
 
 /****************************************************************
@@ -643,6 +623,49 @@ gtk_tree_menu_get_preferred_height (GtkWidget           *widget,
   sync_reserve_submenu_size (menu);
 
   GTK_WIDGET_CLASS (_gtk_tree_menu_parent_class)->get_preferred_height (widget, minimum_size, natural_size);
+
+  g_signal_handler_unblock (priv->context, priv->size_changed_id);
+}
+
+static void
+gtk_tree_menu_get_preferred_width_for_height (GtkWidget           *widget,
+                                              gint                 for_height,
+                                              gint                *minimum_size,
+                                              gint                *natural_size)
+{
+  GtkTreeMenu        *menu = GTK_TREE_MENU (widget);
+  GtkTreeMenuPrivate *priv = menu->priv;
+
+  /* We leave the requesting work up to the cellviews which operate in the same
+   * context, reserving space for the submenu indicator if any of the items have
+   * submenus ensures that every cellview will receive the same allocated width.
+   *
+   * Since GtkMenu does hieght-for-width correctly, we know that the width of
+   * every cell will be requested before the height-for-widths are requested.
+   */
+  g_signal_handler_block (priv->context, priv->size_changed_id);
+
+  sync_reserve_submenu_size (menu);
+
+  GTK_WIDGET_CLASS (_gtk_tree_menu_parent_class)->get_preferred_width_for_height (widget, for_height, minimum_size, natural_size);
+
+  g_signal_handler_unblock (priv->context, priv->size_changed_id);
+}
+
+static void
+gtk_tree_menu_get_preferred_height_for_width (GtkWidget           *widget,
+                                              gint                 for_width,
+                                              gint                *minimum_size,
+                                              gint                *natural_size)
+{
+  GtkTreeMenu        *menu = GTK_TREE_MENU (widget);
+  GtkTreeMenuPrivate *priv = menu->priv;
+
+  g_signal_handler_block (priv->context, priv->size_changed_id);
+
+  sync_reserve_submenu_size (menu);
+
+  GTK_WIDGET_CLASS (_gtk_tree_menu_parent_class)->get_preferred_height_for_width (widget, for_width, minimum_size, natural_size);
 
   g_signal_handler_unblock (priv->context, priv->size_changed_id);
 }

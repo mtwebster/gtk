@@ -46,8 +46,7 @@
  * button pops up a dropdown menu.
  *
  * Use gtk_menu_tool_button_new() to create a new
- * #GtkMenuToolButton. Use gtk_menu_tool_button_new_from_stock() to
- * create a new #GtkMenuToolButton containing a stock item.
+ * #GtkMenuToolButton.
  *
  * <refsect2 id="GtkMenuToolButton-BUILDER-UI">
  * <title>GtkMenuToolButton as GtkBuildable</title>
@@ -101,6 +100,7 @@ static gint signals[LAST_SIGNAL];
 static GtkBuildableIface *parent_buildable_iface;
 
 G_DEFINE_TYPE_WITH_CODE (GtkMenuToolButton, gtk_menu_tool_button, GTK_TYPE_TOOL_BUTTON,
+                         G_ADD_PRIVATE (GtkMenuToolButton)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_menu_tool_button_buildable_interface_init))
 
@@ -250,10 +250,10 @@ gtk_menu_tool_button_class_init (GtkMenuToolButtonClass *klass)
    *
    * The ::show-menu signal is emitted before the menu is shown.
    *
-   * It can be used to populate the menu on demand, using 
+   * It can be used to populate the menu on demand, using
    * gtk_menu_tool_button_set_menu().
 
-   * Note that even if you populate the menu dynamically in this way, 
+   * Note that even if you populate the menu dynamically in this way,
    * you must set an empty menu on the #GtkMenuToolButton beforehand,
    * since the arrow is made insensitive if the menu is not set.
    */
@@ -273,8 +273,6 @@ gtk_menu_tool_button_class_init (GtkMenuToolButtonClass *klass)
                                                         P_("The dropdown menu"),
                                                         GTK_TYPE_MENU,
                                                         GTK_PARAM_READWRITE));
-
-  g_type_class_add_private (object_class, sizeof (GtkMenuToolButtonPrivate));
 }
 
 static void
@@ -284,9 +282,7 @@ gtk_menu_tool_button_init (GtkMenuToolButton *button)
   GtkWidget *arrow_button;
   GtkWidget *real_button;
 
-  button->priv = G_TYPE_INSTANCE_GET_PRIVATE (button,
-                                              GTK_TYPE_MENU_TOOL_BUTTON,
-                                              GtkMenuToolButtonPrivate);
+  button->priv = gtk_menu_tool_button_get_instance_private (button);
 
   gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (button), FALSE);
 
@@ -376,6 +372,8 @@ gtk_menu_tool_button_new (GtkWidget   *icon_widget,
  * Return value: the new #GtkMenuToolButton
  *
  * Since: 2.6
+ *
+ * Deprecated: 3.10: Use gtk_menu_tool_button_new() instead.
  **/
 GtkToolItem *
 gtk_menu_tool_button_new_from_stock (const gchar *stock_id)
@@ -478,8 +476,8 @@ gtk_menu_tool_button_set_arrow_tooltip_text (GtkMenuToolButton *button,
  * @markup: markup text to be used as tooltip text for button's arrow button
  *
  * Sets the tooltip markup text to be used as tooltip for the arrow button
- * which pops up the menu.  See gtk_tool_item_set_tooltip_text() for setting a
- * tooltip on the whole #GtkMenuToolButton.
+ * which pops up the menu.  See gtk_tool_item_set_tooltip_text() for setting
+ * a tooltip on the whole #GtkMenuToolButton.
  *
  * Since: 2.12
  **/

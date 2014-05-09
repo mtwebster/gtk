@@ -27,20 +27,18 @@
 #include "gtkrecentchooserprivate.h"
 #include "gtkrecentchoosermenu.h"
 
-#include "gtkstock.h"
 #include "gtkicontheme.h"
-#include "gtkiconfactory.h"
 #include "gtkintl.h"
 #include "gtksettings.h"
 #include "gtkmenushell.h"
 #include "gtkmenuitem.h"
-#include "gtkimagemenuitem.h"
+#include "deprecated/gtkimagemenuitem.h"
 #include "gtkseparatormenuitem.h"
 #include "gtkmenu.h"
 #include "gtkimage.h"
 #include "gtklabel.h"
 #include "gtktooltip.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtktypebuiltins.h"
 #include "gtkprivate.h"
 
@@ -184,14 +182,16 @@ static void gtk_recent_chooser_update                 (GtkActivatable       *act
 static void gtk_recent_chooser_sync_action_properties (GtkActivatable       *activatable,
 						       GtkAction            *action);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkRecentChooserMenu,
 			 gtk_recent_chooser_menu,
 			 GTK_TYPE_MENU,
+                         G_ADD_PRIVATE (GtkRecentChooserMenu)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_RECENT_CHOOSER,
 				 		gtk_recent_chooser_iface_init)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
 				 		gtk_recent_chooser_activatable_iface_init))
-
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_recent_chooser_iface_init (GtkRecentChooserIface *iface)
@@ -249,8 +249,6 @@ gtk_recent_chooser_menu_class_init (GtkRecentChooserMenuClass *klass)
 
   g_object_class_override_property (gobject_class, PROP_ACTIVATABLE_RELATED_ACTION, "related-action");
   g_object_class_override_property (gobject_class, PROP_ACTIVATABLE_USE_ACTION_APPEARANCE, "use-action-appearance");
-
-  g_type_class_add_private (klass, sizeof (GtkRecentChooserMenuPrivate));
 }
 
 static void
@@ -258,10 +256,7 @@ gtk_recent_chooser_menu_init (GtkRecentChooserMenu *menu)
 {
   GtkRecentChooserMenuPrivate *priv;
 
-  menu->priv = G_TYPE_INSTANCE_GET_PRIVATE (menu,
-                                            GTK_TYPE_RECENT_CHOOSER_MENU,
-                                            GtkRecentChooserMenuPrivate);
-
+  menu->priv = gtk_recent_chooser_menu_get_instance_private (menu);
   priv = menu->priv;
 
   priv->show_icons= TRUE;
@@ -836,22 +831,28 @@ gtk_recent_chooser_menu_create_item (GtkRecentChooserMenu *menu,
          * The %d is the number of the item, the %s is the name of the item.
          */
         text = g_strdup_printf (C_("recent menu label", "%d. %s"), count, escaped);
-      
+
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       item = gtk_image_menu_item_new_with_mnemonic (text);
-      
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+
       g_free (escaped);
       g_free (name);
     }
   else
     {
       text = g_strdup (gtk_recent_info_get_display_name (info));
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       item = gtk_image_menu_item_new_with_label (text);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 
   g_free (text);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item),
                                              TRUE);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   /* ellipsize the menu item label, in case the recent document
    * display name is huge.
@@ -868,8 +869,10 @@ gtk_recent_chooser_menu_create_item (GtkRecentChooserMenu *menu,
       icon = gtk_recent_info_get_gicon (info);
 
       image = gtk_image_new_from_gicon (icon, GTK_ICON_SIZE_MENU);
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), image);
       gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       if (icon)
         g_object_unref (icon);
     }
@@ -1192,8 +1195,12 @@ gtk_recent_chooser_update (GtkActivatable *activatable,
 			   GtkAction      *action,
 			   const gchar    *property_name)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   if (strcmp (property_name, "sensitive") == 0)
     gtk_widget_set_sensitive (GTK_WIDGET (activatable), gtk_action_is_sensitive (action));
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   _gtk_recent_chooser_update (activatable, action, property_name);
 }
@@ -1202,7 +1209,14 @@ static void
 gtk_recent_chooser_sync_action_properties (GtkActivatable *activatable,
 				           GtkAction      *action)
 {
+  if (!action)
+    return;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   gtk_widget_set_sensitive (GTK_WIDGET (activatable), gtk_action_is_sensitive (action));
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   _gtk_recent_chooser_sync_action_properties (activatable, action);
 }

@@ -18,6 +18,12 @@
     <ResourceCompile Include="..\..\..\gtk\gtk-win32.rc"><Filter>Resource Files</Filter></ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="..\..\..\gtk\gtkdbusinterfaces.xml"><Filter>Resource Files</Filter></CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkactivatable.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkaction.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkactiongroup.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkcolorsel.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkcolorseldialog.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkfontsel.c"><Filter>Source Files</Filter></ClCompile>
@@ -30,22 +36,30 @@
    <ClCompile Include="..\..\..\gtk\deprecated\gtkhscrollbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkhseparator.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkhsv.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkiconfactory.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkimagemenuitem.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkradioaction.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkrc.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkrecentaction.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkstock.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkstyle.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtksymboliccolor.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtktable.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtktearoffmenuitem.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtktoggleaction.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\deprecated\gtkuimanager.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvbbox.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvbox.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvscale.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvscrollbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvseparator.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\deprecated\gtkvpaned.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gactionmuxer.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gactionobserver.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gactionobservable.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkactionmuxer.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkactionobserver.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkactionobservable.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkactionable.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkquery.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtksearchbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtksearchentry.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtksearchengine.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtksearchenginesimple.c"><Filter>Source Files</Filter></ClCompile>
@@ -55,10 +69,7 @@
    <ClCompile Include="..\..\..\gtk\gtkaccellabel.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkaccelmap.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkaccessible.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkaction.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkactionhelper.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkactiongroup.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkactivatable.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkadjustment.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkalignment.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkallocatedbitmask.c"><Filter>Source Files</Filter></ClCompile>
@@ -76,6 +87,7 @@
    <ClCompile Include="..\..\..\gtk\gtkbbox.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkbin.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkbindings.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkbookmarksmanager.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkborder.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkborderimage.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkbox.c"><Filter>Source Files</Filter></ClCompile>
@@ -134,6 +146,7 @@
    <ClCompile Include="..\..\..\gtk\gtkcssimagelinear.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkcssimagesurface.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkcssimageurl.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkcssimagescaled.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkcssimagevalue.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkcssimagewin32.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkcssinheritvalue.c"><Filter>Source Files</Filter></ClCompile>
@@ -187,16 +200,16 @@
    <ClCompile Include="..\..\..\gtk\gtkfontchooserutils.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkfontchooserwidget.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkframe.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkgladecatalog.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkgrid.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkheaderbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkhsla.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkiconcache.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkiconcachevalidator.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkiconfactory.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkiconhelper.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkicontheme.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkiconview.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkimage.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkimagemenuitem.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkimcontext.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkimcontextsimple.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkimmodule.c"><Filter>Source Files</Filter></ClCompile>
@@ -208,6 +221,7 @@
    <ClCompile Include="..\..\..\gtk\gtklayout.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtklevelbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtklinkbutton.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtklistbox.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkliststore.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtklockbutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmain.c"><Filter>Source Files</Filter></ClCompile>
@@ -217,11 +231,12 @@
    <ClCompile Include="..\..\..\gtk\gtkmenubutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmenuitem.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmenushell.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkmenutracker.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkmenutrackeritem.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmenutoolbutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmessagedialog.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmisc.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmnemonichash.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkmodelmenu.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmodelmenuitem.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmodifierstyle.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmodules.c"><Filter>Source Files</Filter></ClCompile>
@@ -236,6 +251,7 @@
    <ClCompile Include="..\..\..\gtk\gtkpango.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkpapersize.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkpathbar.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkplacessidebar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkpressandhold.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkprintcontext.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkprintoperation.c"><Filter>Source Files</Filter></ClCompile>
@@ -245,13 +261,12 @@
    <ClCompile Include="..\..\..\gtk\gtkprivate.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkprivatetypebuiltins.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkprogressbar.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkradioaction.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkpixelcache.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkradiobutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkradiomenuitem.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkradiotoolbutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrange.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrbtree.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkrecentaction.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrecentchooserdefault.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrecentchooserdialog.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrecentchoosermenu.c"><Filter>Source Files</Filter></ClCompile>
@@ -261,6 +276,7 @@
    <ClCompile Include="..\..\..\gtk\gtkrecentfilter.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkrecentmanager.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkresources.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkrevealer.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkroundedbox.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkscale.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkscalebutton.c"><Filter>Source Files</Filter></ClCompile>
@@ -278,9 +294,10 @@
    <ClCompile Include="..\..\..\gtk\gtkshow.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkspinbutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkspinner.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkstack.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkstackswitcher.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkstatusbar.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkstatusicon.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkstock.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkstyleanimation.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkstylecascade.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkstylecontext.c"><Filter>Source Files</Filter></ClCompile>
@@ -309,7 +326,6 @@
    <ClCompile Include="..\..\..\gtk\gtktextview.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkthemingbackground.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkthemingengine.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtktoggleaction.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktogglebutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktoggletoolbutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktoolbar.c"><Filter>Source Files</Filter></ClCompile>
@@ -319,6 +335,7 @@
    <ClCompile Include="..\..\..\gtk\gtktoolpalette.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktoolshell.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktooltip.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtktrashmonitor.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktreedatalist.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktreednd.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktreemenu.c"><Filter>Source Files</Filter></ClCompile>
@@ -331,7 +348,6 @@
    <ClCompile Include="..\..\..\gtk\gtktreeview.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktreeviewcolumn.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtktypebuiltins.c"><Filter>Source Files</Filter></ClCompile>
-   <ClCompile Include="..\..\..\gtk\gtkuimanager.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkvolumebutton.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkviewport.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkwidget.c"><Filter>Source Files</Filter></ClCompile>
@@ -339,6 +355,7 @@
    <ClCompile Include="..\..\..\gtk\gtkwindow.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkwin32theme.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkclipboard.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkclipboard-wayland.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkdnd.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkappchooseronlinepk.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkprint-win32.c"><Filter>Source Files</Filter></ClCompile>
@@ -347,6 +364,7 @@
    <ClCompile Include="..\..\..\gtk\gtkwin32embed.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkwin32embedwidget.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\gtkmountoperation-stub.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\gtkdbusgenerated.c"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\..\..\modules\input\gtkimcontextime.c"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\..\..\modules\input\gtkimcontextmultipress.c"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\..\..\modules\input\gtkimcontextthai.c"><Filter>Source Files</Filter></ClCompile>
@@ -362,10 +380,5 @@
     <ClCompile Include="..\..\..\modules\input\imti-et.c"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\..\..\modules\input\imviqr.c"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="..\..\..\modules\input\thai-charprop.c"><Filter>Source Files</Filter></ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\..\..\gdk\gtk.symbols">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
   </ItemGroup>
 </Project>

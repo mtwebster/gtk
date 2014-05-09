@@ -26,8 +26,8 @@
 #include "gtkcheckmenuitem.h"
 #include "gtkmenuitemprivate.h"
 #include "gtkaccellabel.h"
-#include "gtkactivatable.h"
-#include "gtktoggleaction.h"
+#include "deprecated/gtkactivatable.h"
+#include "deprecated/gtktoggleaction.h"
 #include "gtkmarshalers.h"
 #include "gtkprivate.h"
 #include "gtkintl.h"
@@ -95,9 +95,12 @@ static void gtk_check_menu_item_sync_action_properties     (GtkActivatable      
 static GtkActivatableIface *parent_activatable_iface;
 static guint                check_menu_item_signals[LAST_SIGNAL] = { 0 };
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkCheckMenuItem, gtk_check_menu_item, GTK_TYPE_MENU_ITEM,
+                         G_ADD_PRIVATE (GtkCheckMenuItem)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
                                                 gtk_check_menu_item_activatable_interface_init))
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_check_menu_item_class_init (GtkCheckMenuItemClass *klass)
@@ -174,8 +177,6 @@ gtk_check_menu_item_class_init (GtkCheckMenuItemClass *klass)
                   NULL, NULL,
                   _gtk_marshal_VOID__VOID,
                   G_TYPE_NONE, 0);
-
-  g_type_class_add_private (klass, sizeof (GtkCheckMenuItemPrivate));
 }
 
 static void 
@@ -192,10 +193,13 @@ gtk_check_menu_item_update (GtkActivatable *activatable,
                             const gchar    *property_name)
 {
   GtkCheckMenuItem *check_menu_item;
+  gboolean use_action_appearance;
 
   check_menu_item = GTK_CHECK_MENU_ITEM (activatable);
 
   parent_activatable_iface->update (activatable, action, property_name);
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 
   if (strcmp (property_name, "active") == 0)
     {
@@ -204,12 +208,19 @@ gtk_check_menu_item_update (GtkActivatable *activatable,
       gtk_action_unblock_activate (action);
     }
 
-  if (!gtk_activatable_get_use_action_appearance (activatable))
+  use_action_appearance = gtk_activatable_get_use_action_appearance (activatable);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  if (!use_action_appearance)
     return;
 
   if (strcmp (property_name, "draw-as-radio") == 0)
-    gtk_check_menu_item_set_draw_as_radio (check_menu_item,
-                                           gtk_toggle_action_get_draw_as_radio (GTK_TOGGLE_ACTION (action)));
+    {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      gtk_check_menu_item_set_draw_as_radio (check_menu_item,
+                                             gtk_toggle_action_get_draw_as_radio (GTK_TOGGLE_ACTION (action)));
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+    }
 }
 
 static void
@@ -217,23 +228,35 @@ gtk_check_menu_item_sync_action_properties (GtkActivatable *activatable,
                                             GtkAction      *action)
 {
   GtkCheckMenuItem *check_menu_item;
+  gboolean use_action_appearance;
+  gboolean is_toggle_action;
 
   check_menu_item = GTK_CHECK_MENU_ITEM (activatable);
 
   parent_activatable_iface->sync_action_properties (activatable, action);
 
-  if (!GTK_IS_TOGGLE_ACTION (action))
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+  is_toggle_action = GTK_IS_TOGGLE_ACTION (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  if (!is_toggle_action)
     return;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_action_block_activate (action);
+
   gtk_check_menu_item_set_active (check_menu_item, gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
   gtk_action_unblock_activate (action);
-  
-  if (!gtk_activatable_get_use_action_appearance (activatable))
+  use_action_appearance = gtk_activatable_get_use_action_appearance (activatable);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  if (!use_action_appearance)
     return;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_check_menu_item_set_draw_as_radio (check_menu_item,
                                          gtk_toggle_action_get_draw_as_radio (GTK_TOGGLE_ACTION (action)));
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 /**
@@ -458,14 +481,8 @@ gtk_check_menu_item_get_draw_as_radio (GtkCheckMenuItem *check_menu_item)
 static void
 gtk_check_menu_item_init (GtkCheckMenuItem *check_menu_item)
 {
-  GtkCheckMenuItemPrivate *priv;
-
-  check_menu_item->priv = G_TYPE_INSTANCE_GET_PRIVATE (check_menu_item,
-                                                       GTK_TYPE_CHECK_MENU_ITEM,
-                                                       GtkCheckMenuItemPrivate);
-  priv = check_menu_item->priv; 
-
-  priv->active = FALSE;
+  check_menu_item->priv = gtk_check_menu_item_get_instance_private (check_menu_item);
+  check_menu_item->priv->active = FALSE;
 }
 
 static gint

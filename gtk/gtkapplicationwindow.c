@@ -34,6 +34,9 @@
 #ifdef GDK_WINDOWING_X11
 #include <gdk/x11/gdkx.h>
 #endif
+#ifdef GDK_WINDOWING_WAYLAND
+#include <gdk/wayland/gdkwayland.h>
+#endif
 
 #ifdef HAVE_GIO_UNIX
 #include <gio/gdesktopappinfo.h>
@@ -218,9 +221,9 @@ struct _GtkApplicationWindowPrivate
   GSList *accel_closures;
   guint accel_map_changed_id;
 
+  gboolean show_menubar;
   GMenu *app_menu_section;
   GMenu *menubar_section;
-  gboolean show_menubar;
 
   GDBusConnection *session;
   gchar           *object_path;
@@ -598,6 +601,7 @@ gtk_application_window_map_iface_init (GActionMapInterface *iface)
 }
 
 G_DEFINE_TYPE_WITH_CODE (GtkApplicationWindow, gtk_application_window, GTK_TYPE_WINDOW,
+                         G_ADD_PRIVATE (GtkApplicationWindow)
                          G_IMPLEMENT_INTERFACE (G_TYPE_ACTION_GROUP, gtk_application_window_group_iface_init)
                          G_IMPLEMENT_INTERFACE (G_TYPE_ACTION_MAP, gtk_application_window_map_iface_init))
 
@@ -704,31 +708,26 @@ gtk_application_window_real_size_allocate (GtkWidget     *widget,
 
   if (window->priv->menubar != NULL)
     {
-      GtkAllocation menubar_allocation = *allocation;
+      GtkAllocation menubar_allocation;
+      GtkAllocation child_allocation;
       gint menubar_height;
       GtkWidget *child;
 
-      _gtk_window_set_allocation (GTK_WINDOW (widget), allocation);
+      _gtk_window_set_allocation (GTK_WINDOW (widget), allocation, &child_allocation);
+      menubar_allocation = child_allocation;
 
-      gtk_widget_get_preferred_height_for_width (window->priv->menubar, allocation->width, &menubar_height, NULL);
+      gtk_widget_get_preferred_height_for_width (window->priv->menubar,
+                                                 menubar_allocation.width,
+                                                 &menubar_height, NULL);
 
       menubar_allocation.height = menubar_height;
       gtk_widget_size_allocate (window->priv->menubar, &menubar_allocation);
 
+      child_allocation.y += menubar_height;
+      child_allocation.height -= menubar_height;
       child = gtk_bin_get_child (GTK_BIN (window));
       if (child != NULL && gtk_widget_get_visible (child))
-        {
-          GtkAllocation child_allocation = *allocation;
-          gint border_width;
-
-          border_width = gtk_container_get_border_width (GTK_CONTAINER (window));
-          child_allocation.x += border_width;
-          child_allocation.y += border_width + menubar_height;
-          child_allocation.width = MAX (1, child_allocation.width - border_width * 2);
-          child_allocation.height = MAX (1, child_allocation.height - border_width * 2 - menubar_height);
-
-          gtk_widget_size_allocate (child, &child_allocation);
-        }
+        gtk_widget_size_allocate (child, &child_allocation);
     }
   else
     GTK_WIDGET_CLASS (gtk_application_window_parent_class)
@@ -861,8 +860,28 @@ gtk_application_window_real_map (GtkWidget *widget)
   if (window->priv->menubar)
     gtk_widget_map (window->priv->menubar);
 
-  GTK_WIDGET_CLASS (gtk_application_window_parent_class)
-    ->map (widget);
+#ifdef GDK_WINDOWING_WAYLAND
+  {
+    GdkWindow *gdkwindow;
+    GtkApplication *application;
+
+    application = gtk_window_get_application (GTK_WINDOW (window));
+    gdkwindow = gtk_widget_get_window (widget);
+
+    if (GDK_IS_WAYLAND_WINDOW (gdkwindow) && window->priv->session)
+      {
+	gdk_wayland_window_set_dbus_properties_libgtk_only (gdkwindow,
+							    g_application_get_application_id (G_APPLICATION (application)),
+							    gtk_application_get_app_menu_object_path (application),
+							    gtk_application_get_menubar_object_path (application),
+							    window->priv->object_path,
+							    g_application_get_dbus_object_path (G_APPLICATION (application)),
+							    g_dbus_connection_get_unique_name (window->priv->session));
+      }
+  }
+#endif
+
+  GTK_WIDGET_CLASS (gtk_application_window_parent_class)->map (widget);
 }
 
 static void
@@ -943,7 +962,7 @@ gtk_application_window_dispose (GObject *object)
 static void
 gtk_application_window_init (GtkApplicationWindow *window)
 {
-  window->priv = G_TYPE_INSTANCE_GET_PRIVATE (window, GTK_TYPE_APPLICATION_WINDOW, GtkApplicationWindowPrivate);
+  window->priv = gtk_application_window_get_instance_private (window);
 
   window->priv->actions = gtk_application_window_actions_new (window);
   window->priv->app_menu_section = g_menu_new ();
@@ -1004,7 +1023,6 @@ gtk_application_window_class_init (GtkApplicationWindowClass *class)
                              "menubar at the top of the window"),
                           TRUE, G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE);
   g_object_class_install_properties (object_class, N_PROPS, gtk_application_window_properties);
-  g_type_class_add_private (class, sizeof (GtkApplicationWindowPrivate));
 }
 
 /**

@@ -173,7 +173,7 @@ static void gtk_text_buffer_get_property (GObject         *object,
 static void gtk_text_buffer_notify       (GObject         *object,
                                           GParamSpec      *pspec);
 
-G_DEFINE_TYPE (GtkTextBuffer, gtk_text_buffer, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkTextBuffer, gtk_text_buffer, G_TYPE_OBJECT)
 
 static void
 gtk_text_buffer_class_init (GtkTextBufferClass *klass)
@@ -389,7 +389,7 @@ gtk_text_buffer_class_init (GtkTextBufferClass *klass)
    * Note that if your handler runs before the default handler it must not 
    * invalidate the @start and @end iters (or has to revalidate them). 
    * The default signal handler revalidates the @start and @end iters to 
-   * both point point to the location where text was deleted. Handlers
+   * both point to the location where text was deleted. Handlers
    * which run after the default handler (see g_signal_connect_after())
    * do not have access to the deleted text.
    * 
@@ -608,6 +608,7 @@ gtk_text_buffer_class_init (GtkTextBufferClass *klass)
    /**
    * GtkTextBuffer::paste-done:
    * @textbuffer: the object which received the signal
+   * @clipboard: the #GtkClipboard pasted from
    * 
    * The paste-done signal is emitted after paste operation has been completed.
    * This is useful to properly scroll the view to the end of the pasted text.
@@ -625,17 +626,12 @@ gtk_text_buffer_class_init (GtkTextBufferClass *klass)
                   G_TYPE_NONE,
                   1,
                   GTK_TYPE_CLIPBOARD);
-
-  g_type_class_add_private (object_class, sizeof (GtkTextBufferPrivate));
 }
 
 static void
 gtk_text_buffer_init (GtkTextBuffer *buffer)
 {
-  buffer->priv = G_TYPE_INSTANCE_GET_PRIVATE (buffer,
-                                              GTK_TYPE_TEXT_BUFFER,
-                                              GtkTextBufferPrivate);
-
+  buffer->priv = gtk_text_buffer_get_instance_private (buffer);
   buffer->priv->clipboard_contents_buffers = NULL;
   buffer->priv->tag_table = NULL;
 
@@ -2115,8 +2111,8 @@ gtk_text_buffer_set_mark (GtkTextBuffer     *buffer,
  * return value if you like. Marks are owned by the buffer and go 
  * away when the buffer does.
  *
- * Emits the "mark-set" signal as notification of the mark's initial
- * placement.
+ * Emits the #GtkTextBuffer::mark-set signal as notification of the mark's
+ * initial placement.
  *
  * Return value: (transfer none): the new #GtkTextMark object
  **/
@@ -2142,8 +2138,8 @@ gtk_text_buffer_create_mark (GtkTextBuffer     *buffer,
  * another buffer, and if its name is not %NULL then there must not
  * be another mark in the buffer with the same name.
  *
- * Emits the "mark-set" signal as notification of the mark's initial
- * placement.
+ * Emits the #GtkTextBuffer::mark-set signal as notification of the mark's
+ * initial placement.
  *
  * Since: 2.12
  **/
@@ -2176,8 +2172,8 @@ gtk_text_buffer_add_mark (GtkTextBuffer     *buffer,
  * @mark: a #GtkTextMark
  * @where: new location for @mark in @buffer
  *
- * Moves @mark to the new location @where. Emits the "mark-set" signal
- * as notification of the move.
+ * Moves @mark to the new location @where. Emits the #GtkTextBuffer::mark-set
+ * signal as notification of the move.
  **/
 void
 gtk_text_buffer_move_mark (GtkTextBuffer     *buffer,
@@ -2225,7 +2221,7 @@ gtk_text_buffer_get_iter_at_mark (GtkTextBuffer *buffer,
  * invalid, until it gets added to a buffer again with 
  * gtk_text_buffer_add_mark(). Use gtk_text_mark_get_deleted() to  
  * find out if a mark has been removed from its buffer.
- * The "mark-deleted" signal will be emitted as notification after 
+ * The #GtkTextBuffer::mark-deleted signal will be emitted as notification after
  * the mark is deleted.
  **/
 void
@@ -2915,8 +2911,9 @@ gtk_text_buffer_get_iter_at_line_index  (GtkTextBuffer *buffer,
  * @buffer: a #GtkTextBuffer 
  * @iter: (out): iterator to initialize
  * @line_number: line number counting from 0
- * 
- * Initializes @iter to the start of the given line.
+ *
+ * Initializes @iter to the start of the given line. If @line_number is greater
+ * than the number of lines in the @buffer, the end iterator is returned.
  **/
 void
 gtk_text_buffer_get_iter_at_line (GtkTextBuffer *buffer,
@@ -3322,27 +3319,11 @@ pre_paste_prep (ClipboardRequest *request_data,
   
   get_paste_point (buffer, insert_point, TRUE);
 
-  /* If we're going to replace the selection, we insert before it to
-   * avoid messing it up, then we delete the selection after inserting.
-   */
   if (request_data->replace_selection)
     {
       GtkTextIter start, end;
       
       if (gtk_text_buffer_get_selection_bounds (buffer, &start, &end))
-        *insert_point = start;
-    }
-}
-
-static void
-post_paste_cleanup (ClipboardRequest *request_data)
-{
-  if (request_data->replace_selection)
-    {
-      GtkTextIter start, end;
-      
-      if (gtk_text_buffer_get_selection_bounds (request_data->buffer,
-                                                &start, &end))
         {
           if (request_data->interactive)
             gtk_text_buffer_delete_interactive (request_data->buffer,
@@ -3351,6 +3332,8 @@ post_paste_cleanup (ClipboardRequest *request_data)
                                                 request_data->default_editable);
           else
             gtk_text_buffer_delete (request_data->buffer, &start, &end);
+
+          *insert_point = start;
         }
     }
 }
@@ -3395,8 +3378,6 @@ clipboard_text_received (GtkClipboard *clipboard,
         gtk_text_buffer_insert (buffer, &insert_point,
                                 str, -1);
 
-      post_paste_cleanup (request_data);
-      
       if (request_data->interactive) 
 	gtk_text_buffer_end_user_action (buffer);
 
@@ -3496,10 +3477,10 @@ clipboard_rich_text_received (GtkClipboard *clipboard,
 
   if (text != NULL && length > 0)
     {
-      pre_paste_prep (request_data, &insert_point);
-
       if (request_data->interactive)
         gtk_text_buffer_begin_user_action (request_data->buffer);
+
+      pre_paste_prep (request_data, &insert_point);
 
       if (!request_data->interactive ||
           gtk_text_iter_can_insert (&insert_point,
@@ -3525,10 +3506,7 @@ clipboard_rich_text_received (GtkClipboard *clipboard,
       emit_paste_done (request_data->buffer, clipboard);
 
       if (retval)
-        {
-          post_paste_cleanup (request_data);
-          return;
-        }
+        return;
     }
 
   /* Request the text selection instead */
@@ -3546,14 +3524,23 @@ paste_from_buffer (GtkClipboard      *clipboard,
 {
   GtkTextIter insert_point;
   GtkTextBuffer *buffer = request_data->buffer;
-  
+
   /* We're about to emit a bunch of signals, so be safe */
   g_object_ref (src_buffer);
-  
-  pre_paste_prep (request_data, &insert_point);
-  
+
+  /* Replacing the selection with itself */
+  if (request_data->replace_selection &&
+      buffer == src_buffer)
+    {
+      /* Clear the paste point if needed */
+      get_paste_point (buffer, &insert_point, TRUE);
+      goto done;
+    }
+
   if (request_data->interactive) 
     gtk_text_buffer_begin_user_action (buffer);
+
+  pre_paste_prep (request_data, &insert_point);
 
   if (!gtk_text_iter_equal (start, end))
     {
@@ -3567,11 +3554,10 @@ paste_from_buffer (GtkClipboard      *clipboard,
                                            request_data->interactive);
     }
 
-  post_paste_cleanup (request_data);
-      
   if (request_data->interactive) 
     gtk_text_buffer_end_user_action (buffer);
 
+done:
   emit_paste_done (buffer, clipboard);
 
   g_object_unref (src_buffer);
@@ -3778,14 +3764,16 @@ remove_all_selection_clipboards (GtkTextBuffer *buffer)
  * gtk_text_buffer_paste_clipboard:
  * @buffer: a #GtkTextBuffer
  * @clipboard: the #GtkClipboard to paste from
- * @override_location: (allow-none): location to insert pasted text, or %NULL for
- *                     at the cursor
+ * @override_location: (allow-none): location to insert pasted text, or %NULL
  * @default_editable: whether the buffer is editable by default
  *
- * Pastes the contents of a clipboard at the insertion point, or
- * at @override_location. (Note: pasting is asynchronous, that is,
- * we'll ask for the paste data and return, and at some point later
- * after the main loop runs, the paste data will be inserted.)
+ * Pastes the contents of a clipboard. If @override_location is %NULL, the
+ * pasted text will be inserted at the cursor position, or the buffer selection
+ * will be replaced if the selection is non-empty.
+ *
+ * Note: pasting is asynchronous, that is, we'll ask for the paste data and
+ * return, and at some point later after the main loop runs, the paste data will
+ * be inserted.
  **/
 void
 gtk_text_buffer_paste_clipboard (GtkTextBuffer *buffer,

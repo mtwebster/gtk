@@ -93,7 +93,7 @@ enum {
 
 static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
 
-G_DEFINE_TYPE (GtkNumerableIcon, gtk_numerable_icon, G_TYPE_EMBLEMED_ICON);
+G_DEFINE_TYPE_WITH_PRIVATE (GtkNumerableIcon, gtk_numerable_icon, G_TYPE_EMBLEMED_ICON)
 
 static gint
 get_surface_size (cairo_surface_t *surface)
@@ -196,7 +196,6 @@ draw_from_gicon (GtkNumerableIcon *self)
   GtkIconInfo *info;
   GdkPixbuf *pixbuf;
   cairo_surface_t *surface;
-  cairo_t *cr;
 
   if (self->priv->style != NULL)
     {
@@ -220,16 +219,7 @@ draw_from_gicon (GtkNumerableIcon *self)
   if (pixbuf == NULL)
     return NULL;
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                        gdk_pixbuf_get_width (pixbuf),
-                                        gdk_pixbuf_get_height (pixbuf));
-
-  cr = cairo_create (surface);
-
-  gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
-  cairo_paint (cr);
-
-  cairo_destroy (cr);
+  surface = gdk_cairo_surface_create_from_pixbuf (pixbuf, 1, NULL);
   g_object_unref (pixbuf);
 
   return surface;
@@ -646,8 +636,6 @@ gtk_numerable_icon_class_init (GtkNumerableIconClass *klass)
   oclass->dispose = gtk_numerable_icon_dispose;
   oclass->finalize = gtk_numerable_icon_finalize;
 
-  g_type_class_add_private (klass, sizeof (GtkNumerableIconPrivate));
-
   properties[PROP_COUNT] =
     g_param_spec_int ("count",
                       P_("Icon's count"),
@@ -692,9 +680,7 @@ gtk_numerable_icon_init (GtkNumerableIcon *self)
   GdkRGBA bg;
   GdkRGBA fg;
 
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
-                                            GTK_TYPE_NUMERABLE_ICON,
-                                            GtkNumerableIconPrivate);
+  self->priv = gtk_numerable_icon_get_instance_private (self);
 
   gdk_rgba_parse (&bg, DEFAULT_BACKGROUND);
   gdk_rgba_parse (&fg, DEFAULT_FOREGROUND);

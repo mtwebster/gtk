@@ -21,9 +21,9 @@ CFILE_GLOB=$(top_srcdir)/gtk/*.c
 # Header files to ignore when scanning
 IGNORE_HFILES=				\
 	fnmatch.h			\
-	gactionmuxer.h			\
-	gactionobserver.h		\
-	gactionobservable.h		\
+	gtkactionmuxer.h		\
+	gtkactionobserver.h		\
+	gtkactionobservable.h		\
 	gtk9slice.h			\
 	gtkanimationdescription.h	\
 	gtkdebug.h			\
@@ -141,7 +141,6 @@ content_files =					\
 	migrating-smclient-GtkApplication.xml	\
 	migrating-GtkGrid.xml			\
 	migrating-GtkStyleContext.xml		\
-	objects_grouped.sgml			\
 	osx.sgml				\
 	broadway.xml				\
 	wayland.xml				\
@@ -301,26 +300,26 @@ HTML_IMAGES = \
 	$(srcdir)/images/appchooserdialog.png				\
 	$(srcdir)/images/assistant.png					\
 	$(srcdir)/images/box-packing.png				\
-	$(srcdir)/images/box-expand.png				\
+	$(srcdir)/images/box-expand.png					\
 	$(srcdir)/images/button.png					\
 	$(srcdir)/images/check-button.png				\
 	$(srcdir)/images/color-button.png				\
-	$(srcdir)/images/colorsel.png					\
 	$(srcdir)/images/colorchooser.png				\
 	$(srcdir)/images/combo-box.png					\
 	$(srcdir)/images/combo-box-entry.png				\
+	$(srcdir)/images/combo-box-text.png				\
 	$(srcdir)/images/entry.png					\
-	$(srcdir)/images/search-entry.png				\
 	$(srcdir)/images/figure-hierarchical-drawing.png		\
 	$(srcdir)/images/figure-windowed-label.png			\
 	$(srcdir)/images/file-button.png				\
 	$(srcdir)/images/filechooser.png				\
 	$(srcdir)/images/font-button.png				\
-	$(srcdir)/images/fontsel.png					\
 	$(srcdir)/images/fontchooser.png				\
 	$(srcdir)/images/frame.png					\
+	$(srcdir)/images/headerbar.png					\
 	$(srcdir)/images/icon-view.png					\
 	$(srcdir)/images/image.png					\
+	$(srcdir)/images/info-bar.png					\
 	$(srcdir)/images/label.png					\
 	$(srcdir)/images/levelbar.png					\
 	$(srcdir)/images/link-button.png				\
@@ -337,15 +336,20 @@ HTML_IMAGES = \
 	$(srcdir)/images/notebook.png					\
 	$(srcdir)/images/panes.png					\
 	$(srcdir)/images/pagesetupdialog.png				\
+	$(srcdir)/images/placessidebar.png				\
 	$(srcdir)/images/printdialog.png				\
 	$(srcdir)/images/progressbar.png				\
 	$(srcdir)/images/radio-group.png				\
 	$(srcdir)/images/recentchooserdialog.png			\
 	$(srcdir)/images/scales.png					\
+	$(srcdir)/images/scrollbar.png					\
 	$(srcdir)/images/scrolledwindow.png				\
+	$(srcdir)/images/search-entry.png				\
 	$(srcdir)/images/separator.png					\
 	$(srcdir)/images/spinbutton.png					\
 	$(srcdir)/images/spinner.png					\
+	$(srcdir)/images/stack.png					\
+	$(srcdir)/images/stackswitcher.png				\
 	$(srcdir)/images/statusbar.png					\
 	$(srcdir)/images/toggle-button.png				\
 	$(srcdir)/images/toolbar.png					\
@@ -407,7 +411,17 @@ HTML_IMAGES = \
 	$(srcdir)/images/right-start.png				\
 	$(srcdir)/images/up-center.png					\
 	$(srcdir)/images/up-end.png					\
-	$(srcdir)/images/up-start.png
+	$(srcdir)/images/up-start.png					\
+	$(srcdir)/images/list-box.png					\
+	$(srcdir)/images/getting-started-app1.png			\
+	$(srcdir)/images/getting-started-app2.png			\
+	$(srcdir)/images/getting-started-app3.png			\
+	$(srcdir)/images/getting-started-app4.png			\
+	$(srcdir)/images/getting-started-app6.png			\
+	$(srcdir)/images/getting-started-app7.png			\
+	$(srcdir)/images/getting-started-app8.png			\
+	$(srcdir)/images/getting-started-app9.png			\
+	$(srcdir)/images/exampleapp.png
 
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS=--extra-dir=../gdk/html \

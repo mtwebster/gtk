@@ -1,7 +1,7 @@
 
 /* Generated data (by glib-mkenums) */
 
-#define GDK_ENABLE_BROKEN
+#include "config.h"
 #include "gdk.h"
 
 /* enumerations from "gdkcursor.h" */
@@ -390,6 +390,7 @@ gdk_window_state_get_type (void)
             { GDK_WINDOW_STATE_ABOVE, "GDK_WINDOW_STATE_ABOVE", "above" },
             { GDK_WINDOW_STATE_BELOW, "GDK_WINDOW_STATE_BELOW", "below" },
             { GDK_WINDOW_STATE_FOCUSED, "GDK_WINDOW_STATE_FOCUSED", "focused" },
+            { GDK_WINDOW_STATE_TILED, "GDK_WINDOW_STATE_TILED", "tiled" },
             { 0, NULL, NULL }
         };
         etype = g_flags_register_static (g_intern_static_string ("GdkWindowState"), values);

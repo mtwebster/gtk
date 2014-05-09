@@ -10,6 +10,7 @@ gdk_parse_args
 gdk_get_display_arg_name
 gdk_notify_startup_complete
 gdk_notify_startup_complete_with_id
+gdk_set_allowed_backends
 
 <SUBSECTION>
 gdk_get_program_class
@@ -51,6 +52,7 @@ gdk_error_trap_pop_ignored
 GDK_WINDOWING_X11
 GDK_WINDOWING_WIN32
 GDK_WINDOWING_QUARTZ
+GDK_WINDOWING_WAYLAND
 
 <SUBSECTION>
 GDK_VERSION_3_0
@@ -213,6 +215,7 @@ gdk_screen_get_monitor_at_window
 gdk_screen_get_monitor_height_mm
 gdk_screen_get_monitor_width_mm
 gdk_screen_get_monitor_plug_name
+gdk_screen_get_monitor_scale_factor
 gdk_screen_get_setting
 gdk_screen_get_font_options
 gdk_screen_set_font_options
@@ -383,6 +386,8 @@ gdk_window_begin_move_drag
 gdk_window_begin_move_drag_for_device
 gdk_window_constrain_size
 gdk_window_beep
+gdk_window_get_scale_factor
+gdk_window_set_opaque_region
 
 <SUBSECTION>
 gdk_window_get_clip_region
@@ -390,6 +395,8 @@ gdk_window_begin_paint_rect
 gdk_window_begin_paint_region
 gdk_window_end_paint
 gdk_window_get_visible_region
+GdkWindowInvalidateHandlerFunc
+gdk_window_set_invalidate_handler
 
 <SUBSECTION>
 gdk_window_invalidate_rect
@@ -453,10 +460,12 @@ gdk_window_get_origin
 gdk_window_get_root_coords
 gdk_window_get_pointer
 gdk_window_get_device_position
+gdk_window_get_device_position_double
 GdkModifierType
 gdk_window_get_parent
 gdk_window_get_toplevel
 gdk_window_get_children
+gdk_window_get_children_with_user_data
 gdk_window_peek_children
 gdk_window_get_events
 gdk_window_set_events
@@ -587,6 +596,7 @@ gdk_pango_context_get_for_screen
 <TITLE>Cairo Interaction</TITLE>
 <FILE>cairo_interaction</FILE>
 gdk_window_create_similar_surface
+gdk_window_create_similar_image_surface
 gdk_cairo_create
 gdk_cairo_get_clip_rectangle
 gdk_cairo_set_source_color
@@ -596,6 +606,7 @@ gdk_cairo_set_source_window
 gdk_cairo_rectangle
 gdk_cairo_region
 gdk_cairo_region_create_from_surface
+gdk_cairo_surface_create_from_pixbuf
 </SECTION>
 
 <SECTION>
@@ -712,7 +723,9 @@ gdk_device_ungrab
 <SUBSECTION>
 gdk_device_get_state
 gdk_device_get_position
+gdk_device_get_position_double
 gdk_device_get_window_at_position
+gdk_device_get_window_at_position_double
 gdk_device_get_history
 gdk_device_free_history
 GdkTimeCoord
@@ -796,6 +809,8 @@ gdk_event_get_scroll_direction
 gdk_event_get_scroll_deltas
 gdk_event_get_state
 gdk_event_get_time
+gdk_event_get_window
+gdk_event_get_event_type
 GdkEventSequence
 gdk_event_get_event_sequence
 gdk_event_request_motions
@@ -885,10 +900,12 @@ GdkCursor
 GdkCursorType
 gdk_cursor_new
 gdk_cursor_new_from_pixbuf
+gdk_cursor_new_from_surface
 gdk_cursor_new_from_name
 gdk_cursor_new_for_display
 gdk_cursor_get_display
 gdk_cursor_get_image
+gdk_cursor_get_surface
 gdk_cursor_get_cursor_type
 gdk_cursor_ref
 gdk_cursor_unref
@@ -975,6 +992,7 @@ gdk_x11_display_error_trap_push
 gdk_x11_display_error_trap_pop
 gdk_x11_display_error_trap_pop_ignored
 gdk_x11_display_set_cursor_theme
+gdk_x11_display_set_window_scale
 gdk_x11_register_standard_event_type
 gdk_x11_screen_get_screen_number
 gdk_x11_screen_get_xscreen
@@ -982,6 +1000,8 @@ gdk_x11_screen_get_window_manager_name
 gdk_x11_screen_get_monitor_output
 gdk_x11_screen_lookup_visual
 gdk_x11_screen_supports_net_wm_hint
+gdk_x11_screen_get_number_of_desktops
+gdk_x11_screen_get_current_desktop
 gdk_x11_window_foreign_new_for_display
 gdk_x11_window_lookup_for_display
 gdk_x11_window_get_xid
@@ -989,7 +1009,11 @@ gdk_x11_window_set_hide_titlebar_when_maximized
 gdk_x11_window_set_theme_variant
 gdk_x11_window_set_user_time
 gdk_x11_window_move_to_current_desktop
+gdk_x11_window_move_to_desktop
+gdk_x11_window_get_desktop
 gdk_x11_window_set_utf8_property
+gdk_x11_window_set_frame_extents
+gdk_x11_window_set_frame_sync_enabled
 gdk_x11_get_default_root_xwindow
 gdk_x11_get_default_screen
 gdk_x11_get_default_xdisplay
@@ -1124,6 +1148,54 @@ gdk_x11_screen_get_type
 gdk_x11_visual_get_type
 gdk_x11_window_get_type
 gdk_window_impl_x11_get_type
+</SECTION>
+
+<SECTION>
+<INCLUDE>gdk/gdkwayland.h</INCLUDE>
+<TITLE>Wayland Interaction</TITLE>
+<FILE>wayland_interaction</FILE>
+gdk_wayland_device_get_wl_keyboard
+gdk_wayland_device_get_wl_pointer
+gdk_wayland_device_get_wl_seat
+gdk_wayland_display_get_wl_compositor
+gdk_wayland_display_get_wl_display
+gdk_wayland_display_get_wl_shell
+gdk_wayland_window_get_wl_shell_surface
+gdk_wayland_window_get_wl_surface
+gdk_wayland_window_set_use_custom_surface
+
+<SUBSECTION Standard>
+GDK_TYPE_WAYLAND_DEVICE
+GDK_WAYLAND_DEVICE
+GDK_WAYLAND_DEVICE_CLASS
+GDK_WAYLAND_DEVICE_GET_CLASS
+GDK_IS_WAYLAND_DEVICE
+GDK_IS_WAYLAND_DEVICE_CLASS
+GDK_TYPE_WAYLAND_DISPLAY
+GDK_WAYLAND_DISPLAY
+GDK_WAYLAND_DISPLAY_CLASS
+GDK_WAYLAND_DISPLAY_GET_CLASS
+GDK_IS_WAYLAND_DISPLAY
+GDK_IS_WAYLAND_DISPLAY_CLASS
+GDK_TYPE_WAYLAND_DISPLAY_MANAGER
+GDK_WAYLAND_DISPLAY_MANAGER
+GDK_WAYLAND_DISPLAY_MANAGER_CLASS
+GDK_WAYLAND_DISPLAY_MANAGER_GET_CLASS
+GDK_IS_WAYLAND_DISPLAY_MANAGER
+GDK_IS_WAYLAND_DISPLAY_MANAGER_CLASS
+GDK_TYPE_WAYLAND_WINDOW
+GDK_WAYLAND_WINDOW
+GDK_WAYLAND_WINDOW_CLASS
+GDK_WAYLAND_WINDOW_GET_CLASS
+GDK_IS_WAYLAND_WINDOW
+GDK_IS_WAYLAND_WINDOW_CLASS
+
+<SUBSECTION Private>
+gdk_wayland_device_get_type
+gdk_wayland_display_get_type
+gdk_wayland_display_manager_get_type
+gdk_wayland_window_get_type
+
 </SECTION>
 
 <SECTION>

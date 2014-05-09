@@ -1,7 +1,7 @@
 ## Makefile.am for GTK+
 include $(top_srcdir)/Makefile.decl
 
-SRC_SUBDIRS = gdk gtk libgail-util modules demos tests perf examples
+SRC_SUBDIRS = gdk gtk libgail-util modules demos tests testsuite examples
 SUBDIRS = po po-properties $(SRC_SUBDIRS) docs m4macros build
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
@@ -11,19 +11,6 @@ EXTRA_DIST +=			\
 	HACKING			\
 	makecopyright		\
 	NEWS.pre-1-0		\
-	ChangeLog.pre-1-0	\
-	ChangeLog.pre-1-2	\
-	ChangeLog.pre-2-0	\
-	ChangeLog.pre-2-2	\
-	ChangeLog.pre-2-4	\
-	ChangeLog.pre-2-6	\
-	ChangeLog.pre-2-8	\
-	ChangeLog.pre-2-10	\
-	ChangeLog.pre-2-12	\
-	ChangeLog.pre-2-14	\
-	ChangeLog.pre-2-16	\
-	ChangeLog.gtk-async-file-chooser	\
-	ChangeLog.gtk-printing	\
 	README.commits	\
 	README.win32		\
 	config.h.win32		\
@@ -34,24 +21,15 @@ EXTRA_DIST +=			\
 	po/po2tbl.sed.in
 
 MAINTAINERCLEANFILES = \
+	$(GITIGNORE_MAINTAINERCLEANFILES_TOPLEVEL) \
+	$(GITIGNORE_MAINTAINERCLEANFILES_M4_LIBTOOL) \
+	$(GITIGNORE_MAINTAINERCLEANFILES_MAKEFILE_IN) \
 	$(srcdir)/INSTALL \
 	$(srcdir)/README \
-	$(srcdir)/aclocal.m4 \
-	$(srcdir)/autoscan.log \
-	$(srcdir)/compile \
-	$(srcdir)/config.guess \
-	$(srcdir)/config.h.in \
-	$(srcdir)/config.sub \
-	$(srcdir)/configure.scan \
-	$(srcdir)/depcomp \
-	$(srcdir)/install-sh \
-	$(srcdir)/ltmain.sh \
-	$(srcdir)/missing \
 	$(srcdir)/omf.make \
 	$(srcdir)/xmldocs.make \
 	$(srcdir)/gtk-doc.make \
-	$(srcdir)/ChangeLog \
-	`find "$(srcdir)" -type f -name Makefile.in -print`
+	$(srcdir)/ChangeLog
 
 
 ## Copy .pc files to target-specific names
@@ -77,8 +55,16 @@ DISTCLEANFILES = \
 	gtk+-unix-print-3.0.pc		\
 	gtk+-3.0.pc			\
 	gtk+-x11-3.0.pc			\
+	gtk+-win32-3.0.pc		\
+	gtk+-quartz-3.0.pc		\
+	gtk+-broadway-3.0.pc		\
+	gtk+-wayland-3.0.pc		\
 	gdk-3.0.pc			\
 	gdk-x11-3.0.pc			\
+	gdk-win32-3.0.pc		\
+	gdk-quartz-3.0.pc		\
+	gdk-broadway-3.0.pc		\
+	gdk-wayland-3.0.pc		\
 	gail-3.0.pc			\
 	config.lt
 

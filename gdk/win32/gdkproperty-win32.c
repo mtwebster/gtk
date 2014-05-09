@@ -205,7 +205,7 @@ _gdk_win32_window_change_property (GdkWindow    *window,
 	  wclen++;		/* Terminating 0 */
 	  size = wclen * 2;
 	  for (i = 0; i < wclen; i++)
-	    if (wcptr[i] == '\n')
+	    if (wcptr[i] == '\n' && (i == 0 || wcptr[i - 1] != '\r'))
 	      size += 2;
 	  
 	  if (!(hdata = GlobalAlloc (GMEM_MOVEABLE, size)))
@@ -222,7 +222,7 @@ _gdk_win32_window_change_property (GdkWindow    *window,
 	  p = (wchar_t *) ucptr;
 	  for (i = 0; i < wclen; i++)
 	    {
-	      if (wcptr[i] == '\n')
+	      if (wcptr[i] == '\n' && (i == 0 || wcptr[i - 1] != '\r'))
 		*p++ = '\r';
 	      *p++ = wcptr[i];
 	    }
@@ -307,27 +307,13 @@ _gdk_win32_window_delete_property (GdkWindow *window,
   "Net/CursorBlinkTime\0"     "gtk-cursor-blink-time\0"
   "Net/ThemeName\0"           "gtk-theme-name\0"
   "Net/IconThemeName\0"       "gtk-icon-theme-name\0"
-  "Gtk/CanChangeAccels\0"     "gtk-can-change-accels\0"
   "Gtk/ColorPalette\0"        "gtk-color-palette\0"
   "Gtk/FontName\0"            "gtk-font-name\0"
-  "Gtk/IconSizes\0"           "gtk-icon-sizes\0"
   "Gtk/KeyThemeName\0"        "gtk-key-theme-name\0"
-  "Gtk/ToolbarStyle\0"        "gtk-toolbar-style\0"
-  "Gtk/ToolbarIconSize\0"     "gtk-toolbar-icon-size\0"
-  "Gtk/IMPreeditStyle\0"      "gtk-im-preedit-style\0"
-  "Gtk/IMStatusStyle\0"       "gtk-im-status-style\0"
   "Gtk/Modules\0"             "gtk-modules\0"
-  "Gtk/FileChooserBackend\0"  "gtk-file-chooser-backend\0"
-  "Gtk/ButtonImages\0"        "gtk-button-images\0"
-  "Gtk/MenuImages\0"          "gtk-menu-images\0"
-  "Gtk/MenuBarAccel\0"        "gtk-menu-bar-accel\0"
   "Gtk/CursorBlinkTimeout\0"  "gtk-cursor-blink-timeout\0"
   "Gtk/CursorThemeName\0"     "gtk-cursor-theme-name\0"
   "Gtk/CursorThemeSize\0"     "gtk-cursor-theme-size\0"
-  "Gtk/ShowInputMethodMenu\0" "gtk-show-input-method-menu\0"
-  "Gtk/ShowUnicodeMenu\0"     "gtk-show-unicode-menu\0"
-  "Gtk/TimeoutInitial\0"      "gtk-timeout-initial\0"
-  "Gtk/TimeoutRepeat\0"       "gtk-timeout-repeat\0"
   "Gtk/ColorScheme\0"         "gtk-color-scheme\0"
   "Gtk/EnableAnimations\0"    "gtk-enable-animations\0"
   "Xft/Antialias\0"           "gtk-xft-antialias\0"
@@ -335,10 +321,7 @@ _gdk_win32_window_delete_property (GdkWindow *window,
   "Xft/HintStyle\0"           "gtk-xft-hintstyle\0"
   "Xft/RGBA\0"                "gtk-xft-rgba\0"
   "Xft/DPI\0"                 "gtk-xft-dpi\0"
-  "Net/FallbackIconTheme\0"   "gtk-fallback-icon-theme\0"
-  "Gtk/TouchscreenMode\0"     "gtk-touchscreen-mode\0"
   "Gtk/EnableAccels\0"        "gtk-enable-accels\0"
-  "Gtk/EnableMnemonics\0"     "gtk-enable-mnemonics\0"
   "Gtk/ScrolledWindowPlacement\0" "gtk-scrolled-window-placement\0"
   "Gtk/IMModule\0"            "gtk-im-module\0"
   "Fontconfig/Timestamp\0"    "gtk-fontconfig-timestamp\0"
@@ -406,14 +389,12 @@ _gdk_win32_screen_get_setting (GdkScreen   *screen,
       g_value_set_boolean (value, TRUE);
       return TRUE;
     }
-#if 0
-  /*
-   * With 'MS Sans Serif' as windows menu font (default on win98se) you'll get a 
-   * bunch of :
-   *   WARNING **: Couldn't load font "MS Sans Serif 8" falling back to "Sans 8"
-   * at least with testfilechooser (regardless of the bitmap check below)
-   * so just disabling this code seems to be the best we can do --hb
-   */
+  else if (strcmp ("gtk-shell-shows-desktop", name) == 0)
+    {
+      GDK_NOTE(MISC, g_print("gdk_screen_get_setting(\"%s\") : TRUE\n", name));
+      g_value_set_boolean (value, TRUE);
+      return TRUE;
+    }
   else if (strcmp ("gtk-font-name", name) == 0)
     {
       NONCLIENTMETRICS ncm;
@@ -423,7 +404,7 @@ _gdk_win32_screen_get_setting (GdkScreen   *screen,
           /* Pango finally uses GetDeviceCaps to scale, we use simple
 	   * approximation here.
 	   */
-          int nHeight = (0 > ncm.lfMenuFont.lfHeight ? -3*ncm.lfMenuFont.lfHeight/4 : 10);
+          int nHeight = (0 > ncm.lfMenuFont.lfHeight ? - 3 * ncm.lfMenuFont.lfHeight / 4 : 10);
           if (OUT_STRING_PRECIS == ncm.lfMenuFont.lfOutPrecision)
             GDK_NOTE(MISC, g_print("gdk_screen_get_setting(%s) : ignoring bitmap font '%s'\n", 
                                    name, ncm.lfMenuFont.lfFaceName));
@@ -431,7 +412,7 @@ _gdk_win32_screen_get_setting (GdkScreen   *screen,
                    /* Avoid issues like those described in bug #135098 */
                    g_utf8_validate (ncm.lfMenuFont.lfFaceName, -1, NULL))
             {
-              char* s = g_strdup_printf ("%s %d", ncm.lfMenuFont.lfFaceName, nHeight);
+              char *s = g_strdup_printf ("%s %d", ncm.lfMenuFont.lfFaceName, nHeight);
               GDK_NOTE(MISC, g_print("gdk_screen_get_setting(%s) : %s\n", name, s));
               g_value_set_string (value, s);
 
@@ -440,7 +421,6 @@ _gdk_win32_screen_get_setting (GdkScreen   *screen,
             }
         }
     }
-#endif
 
   return FALSE;
 }

@@ -22,11 +22,11 @@
 #include "gtkcheckmenuitem.h"
 #include "gtklabel.h"
 #include "gtktogglebutton.h"
-#include "gtkstock.h"
+#include "deprecated/gtkstock.h"
 #include "gtkintl.h"
 #include "gtkradiotoolbutton.h"
-#include "gtktoggleaction.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtktoggleaction.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkprivate.h"
 
 
@@ -40,8 +40,7 @@
  * button.
  *
  * Use gtk_toggle_tool_button_new() to create a new
- * #GtkToggleToolButton. Use gtk_toggle_tool_button_new_from_stock() to
- * create a new #GtkToggleToolButton containing a stock item.
+ * #GtkToggleToolButton.
  */
 
 
@@ -91,9 +90,12 @@ static void gtk_toggle_tool_button_sync_action_properties     (GtkActivatable   
 static GtkActivatableIface *parent_activatable_iface;
 static guint                toggle_signals[LAST_SIGNAL] = { 0 };
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkToggleToolButton, gtk_toggle_tool_button, GTK_TYPE_TOOL_BUTTON,
+                         G_ADD_PRIVATE (GtkToggleToolButton)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
 						gtk_toggle_tool_button_activatable_interface_init))
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_toggle_tool_button_class_init (GtkToggleToolButtonClass *klass)
@@ -141,8 +143,6 @@ gtk_toggle_tool_button_class_init (GtkToggleToolButtonClass *klass)
 		  NULL, NULL,
 		  g_cclosure_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
-
-  g_type_class_add_private (object_class, sizeof (GtkToggleToolButtonPrivate));
 }
 
 static void
@@ -151,9 +151,7 @@ gtk_toggle_tool_button_init (GtkToggleToolButton *button)
   GtkToolButton *tool_button = GTK_TOOL_BUTTON (button);
   GtkToggleButton *toggle_button = GTK_TOGGLE_BUTTON (_gtk_tool_button_get_button (tool_button));
 
-  button->priv = G_TYPE_INSTANCE_GET_PRIVATE (button,
-                                              GTK_TYPE_TOGGLE_TOOL_BUTTON,
-                                              GtkToggleToolButtonPrivate);
+  button->priv = gtk_toggle_tool_button_get_instance_private (button);
 
   /* If the real button is a radio button, it may have been
    * active at the time it was created.
@@ -223,6 +221,7 @@ gtk_toggle_tool_button_create_menu_proxy (GtkToolItem *item)
 
   label_widget = gtk_tool_button_get_label_widget (tool_button);
   label_text = gtk_tool_button_get_label (tool_button);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   stock_id = gtk_tool_button_get_stock_id (tool_button);
 
   if (GTK_IS_LABEL (label_widget))
@@ -243,7 +242,9 @@ gtk_toggle_tool_button_create_menu_proxy (GtkToolItem *item)
     {
       label = "";
     }
-  
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
   if (use_mnemonic)
     menu_item = gtk_check_menu_item_new_with_mnemonic (label);
   else
@@ -347,9 +348,11 @@ gtk_toggle_tool_button_update (GtkActivatable *activatable,
 
   if (strcmp (property_name, "active") == 0)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_action_block_activate (action);
       gtk_toggle_tool_button_set_active (button, gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
       gtk_action_unblock_activate (action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 }
 
@@ -358,17 +361,24 @@ gtk_toggle_tool_button_sync_action_properties (GtkActivatable *activatable,
 					       GtkAction      *action)
 {
   GtkToggleToolButton *button;
+  gboolean is_toggle_action;
 
   parent_activatable_iface->sync_action_properties (activatable, action);
 
-  if (!GTK_IS_TOGGLE_ACTION (action))
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+  is_toggle_action = GTK_IS_TOGGLE_ACTION (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  if (!is_toggle_action)
     return;
 
   button = GTK_TOGGLE_TOOL_BUTTON (activatable);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_action_block_activate (action);
   gtk_toggle_tool_button_set_active (button, gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
   gtk_action_unblock_activate (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 
@@ -405,6 +415,8 @@ gtk_toggle_tool_button_new (void)
  * Return value: A new #GtkToggleToolButton
  * 
  * Since: 2.4
+ *
+ * Deprecated: 3.10: Use gtk_toggle_tool_button_new() instead.
  **/
 GtkToolItem *
 gtk_toggle_tool_button_new_from_stock (const gchar *stock_id)

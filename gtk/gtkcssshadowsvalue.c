@@ -21,6 +21,7 @@
 
 #include "gtkcssshadowsvalueprivate.h"
 
+#include "gtkcairoblurprivate.h"
 #include "gtkcssshadowvalueprivate.h"
 
 #include <string.h>
@@ -51,6 +52,7 @@ static GtkCssValue *
 gtk_css_value_shadows_compute (GtkCssValue             *value,
                                guint                    property_id,
                                GtkStyleProviderPrivate *provider,
+			       int                      scale,
                                GtkCssComputedValues    *values,
                                GtkCssComputedValues    *parent_values,
                                GtkCssDependencies      *dependencies)
@@ -65,7 +67,7 @@ gtk_css_value_shadows_compute (GtkCssValue             *value,
   result = gtk_css_shadows_value_new (value->values, value->len);
   for (i = 0; i < value->len; i++)
     {
-      result->values[i] = _gtk_css_value_compute (value->values[i], property_id, provider, values, parent_values, &child_deps);
+      result->values[i] = _gtk_css_value_compute (value->values[i], property_id, provider, scale, values, parent_values, &child_deps);
       *dependencies = _gtk_css_dependencies_union (*dependencies, child_deps);
     }
 
@@ -287,7 +289,8 @@ _gtk_css_shadows_value_paint_spinner (const GtkCssValue *shadows,
 void
 _gtk_css_shadows_value_paint_box (const GtkCssValue   *shadows,
                                   cairo_t             *cr,
-                                  const GtkRoundedBox *padding_box)
+                                  const GtkRoundedBox *padding_box,
+                                  gboolean             inset)
 {
   guint i;
 
@@ -295,6 +298,42 @@ _gtk_css_shadows_value_paint_box (const GtkCssValue   *shadows,
 
   for (i = 0; i < shadows->len; i++)
     {
-      _gtk_css_shadow_value_paint_box (shadows->values[i], cr, padding_box);
+      if (inset == _gtk_css_shadow_value_get_inset (shadows->values[i]))
+        _gtk_css_shadow_value_paint_box (shadows->values[i], cr, padding_box);
+    }
+}
+
+void
+_gtk_css_shadows_value_get_extents (const GtkCssValue *shadows,
+                                    GtkBorder         *border)
+{
+  guint i;
+  GtkBorder b = { 0 };
+  const GtkCssValue *shadow;
+  gdouble hoffset, voffset, spread, radius, clip_radius;
+
+  g_return_if_fail (shadows->class == &GTK_CSS_VALUE_SHADOWS);
+
+  for (i = 0; i < shadows->len; i++)
+    {
+      shadow = shadows->values[i];
+
+      if (_gtk_css_shadow_value_get_inset (shadow))
+        continue;
+
+      _gtk_css_shadow_value_get_geometry (shadow,
+                                          &hoffset, &voffset,
+                                          &radius, &spread);
+      clip_radius = _gtk_cairo_blur_compute_pixels (radius);
+
+      b.top = MAX (0, clip_radius + spread - voffset);
+      b.right = MAX (0, clip_radius + spread + hoffset);
+      b.bottom = MAX (0, clip_radius + spread + voffset);
+      b.left = MAX (0, clip_radius + spread - hoffset);
+
+      border->top = MAX (border->top, b.top);
+      border->right = MAX (border->right, b.right);
+      border->bottom = MAX (border->bottom, b.bottom);
+      border->left = MAX (border->left, b.left);
     }
 }

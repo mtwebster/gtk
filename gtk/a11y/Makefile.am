@@ -23,8 +23,10 @@ gtka11y_c_sources =			\
 	gtkimageaccessible.c		\
 	gtkimagecellaccessible.c	\
 	gtklabelaccessible.c		\
-	gtklevelbaraccessible.c \
+	gtklevelbaraccessible.c 	\
 	gtklinkbuttonaccessible.c	\
+	gtklistboxaccessible.c		\
+	gtklistboxrowaccessible.c	\
 	gtklockbuttonaccessible.c	\
 	gtkmenuaccessible.c		\
 	gtkmenushellaccessible.c	\
@@ -70,8 +72,10 @@ gtka11yinclude_HEADERS =		\
 	gtkimageaccessible.h		\
 	gtkimagecellaccessible.h	\
 	gtklabelaccessible.h		\
-	gtklevelbaraccessible.h \
+	gtklevelbaraccessible.h 	\
 	gtklinkbuttonaccessible.h	\
+	gtklistboxaccessible.h		\
+	gtklistboxrowaccessible.h	\
 	gtklockbuttonaccessible.h	\
 	gtkmenuaccessible.h		\
 	gtkmenuitemaccessible.h		\
@@ -107,6 +111,7 @@ gtka11y_private_h_sources =		\
 	gtkcolorswatchaccessibleprivate.h \
 	gtkiconviewaccessibleprivate.h	\
 	gtklabelaccessibleprivate.h 	\
+	gtklistboxaccessibleprivate.h	\
 	gtklockbuttonaccessibleprivate.h \
 	gtktextviewaccessibleprivate.h  \
 	gtktreeviewaccessibleprivate.h	\
@@ -127,6 +132,7 @@ libgtka11y_la_CPPFLAGS = 		\
 	$(AM_CPPFLAGS)
 
 libgtka11y_la_CFLAGS = 			\
+	$(GDK_HIDDEN_VISIBILITY_CFLAGS) \
 	$(GTK_DEP_CFLAGS)		\
 	$(GTK_DEBUG_FLAGS)		\
 	$(AM_CFLAGS)

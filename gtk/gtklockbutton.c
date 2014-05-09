@@ -94,7 +94,7 @@ static void on_permission_changed (GPermission *permission,
                                    GParamSpec  *pspec,
                                    gpointer     user_data);
 
-G_DEFINE_TYPE (GtkLockButton, gtk_lock_button, GTK_TYPE_BUTTON);
+G_DEFINE_TYPE_WITH_PRIVATE (GtkLockButton, gtk_lock_button, GTK_TYPE_BUTTON)
 
 static void
 gtk_lock_button_finalize (GObject *object)
@@ -108,7 +108,6 @@ gtk_lock_button_finalize (GObject *object)
 
   g_object_unref (priv->icon_lock);
   g_object_unref (priv->icon_unlock);
-  g_object_unref (priv->label_group);
 
   if (priv->cancellable != NULL)
     {
@@ -222,30 +221,9 @@ gtk_lock_button_init (GtkLockButton *button)
   GtkLockButtonPrivate *priv;
   gchar *names[3];
 
-  button->priv = priv = G_TYPE_INSTANCE_GET_PRIVATE (button,
-                                                     GTK_TYPE_LOCK_BUTTON,
-                                                     GtkLockButtonPrivate);
+  button->priv = priv = gtk_lock_button_get_instance_private (button);
 
-  priv->label_group = gtk_size_group_new (GTK_SIZE_GROUP_BOTH);
-  priv->box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 6);
-  gtk_widget_set_halign (priv->box, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign (priv->box, GTK_ALIGN_CENTER);
-  gtk_widget_show (priv->box);
-  gtk_container_add (GTK_CONTAINER (button), priv->box);
-  priv->image = gtk_image_new ();
-  gtk_box_pack_start (GTK_BOX (priv->box), priv->image, FALSE, FALSE, 0);
-  gtk_widget_show (priv->image);
-  priv->label_lock = gtk_label_new ("");
-  gtk_misc_set_alignment (GTK_MISC (priv->label_lock), 0, 0.5);
-  gtk_widget_set_no_show_all (priv->label_lock, TRUE);
-  gtk_widget_show (priv->label_lock);
-  gtk_box_pack_start (GTK_BOX (priv->box), priv->label_lock, FALSE, FALSE, 0);
-  gtk_size_group_add_widget (priv->label_group, priv->label_lock);
-  priv->label_unlock = gtk_label_new ("");
-  gtk_misc_set_alignment (GTK_MISC (priv->label_unlock), 0, 0.5);
-  gtk_widget_set_no_show_all (priv->label_unlock, TRUE);
-  gtk_box_pack_start (GTK_BOX (priv->box), priv->label_unlock, FALSE, FALSE, 0);
-  gtk_size_group_add_widget (priv->label_group, priv->label_unlock);
+  gtk_widget_init_template (GTK_WIDGET (button));
 
   names[0] = "changes-allow-symbolic";
   names[1] = "changes-allow";
@@ -272,8 +250,6 @@ gtk_lock_button_class_init (GtkLockButtonClass *klass)
   gobject_class->set_property = gtk_lock_button_set_property;
 
   button_class->clicked = gtk_lock_button_clicked;
-
-  g_type_class_add_private (klass, sizeof (GtkLockButtonPrivate));
 
   g_object_class_install_property (gobject_class, PROP_PERMISSION,
     g_param_spec_object ("permission",
@@ -327,6 +303,15 @@ gtk_lock_button_class_init (GtkLockButtonClass *klass)
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT |
                          G_PARAM_STATIC_STRINGS));
+
+  /* Bind class to template
+   */
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/gtk/libgtk/gtklockbutton.ui");
+  gtk_widget_class_bind_template_child_private (widget_class, GtkLockButton, box);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkLockButton, image);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkLockButton, label_lock);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkLockButton, label_unlock);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkLockButton, label_group);
 
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_LOCK_BUTTON_ACCESSIBLE);
 }

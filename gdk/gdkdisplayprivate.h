@@ -136,15 +136,13 @@ struct _GdkDisplayClass
   GType window_type;          /* type for native windows for this display, set in class_init */
 
   const gchar *              (*get_name)           (GdkDisplay *display);
-  gint                       (*get_n_screens)      (GdkDisplay *display);
-  GdkScreen *                (*get_screen)         (GdkDisplay *display,
-                                                    gint        screen_num);
   GdkScreen *                (*get_default_screen) (GdkDisplay *display);
   void                       (*beep)               (GdkDisplay *display);
   void                       (*sync)               (GdkDisplay *display);
   void                       (*flush)              (GdkDisplay *display);
   gboolean                   (*has_pending)        (GdkDisplay *display);
   void                       (*queue_events)       (GdkDisplay *display);
+  void                       (*make_default)       (GdkDisplay *display);
   GdkWindow *                (*get_default_group)  (GdkDisplay *display);
   gboolean                   (*supports_selection_notification) (GdkDisplay *display);
   gboolean                   (*request_selection_notification)  (GdkDisplay *display,
@@ -172,10 +170,10 @@ struct _GdkDisplayClass
                                                          GdkCursorType  type);
   GdkCursor *                (*get_cursor_for_name)     (GdkDisplay    *display,
                                                          const gchar   *name);
-  GdkCursor *                (*get_cursor_for_pixbuf)   (GdkDisplay    *display,
-                                                         GdkPixbuf     *pixbuf,
-                                                         gint           x,
-                                                         gint           y);
+  GdkCursor *                (*get_cursor_for_surface)  (GdkDisplay    *display,
+                                                         cairo_surface_t *surface,
+                                                         gdouble          x,
+                                                         gdouble          y);
 
   GList *                    (*list_devices)       (GdkDisplay *display);
   GdkAppLaunchContext *      (*get_app_launch_context) (GdkDisplay *display);
@@ -239,6 +237,7 @@ struct _GdkDisplayClass
                                                         const gchar    *text);
 
   /* Signals */
+  void                   (*opened)                     (GdkDisplay     *display);
   void (*closed) (GdkDisplay *display,
                   gboolean    is_error);
 };

@@ -33,7 +33,6 @@
 #include "gtkstatusicon.h"
 
 #include "gtkintl.h"
-#include "gtkiconfactory.h"
 #include "gtkiconhelperprivate.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
@@ -200,7 +199,7 @@ static gboolean gtk_status_icon_button_release   (GtkStatusIcon  *status_icon,
 static void     gtk_status_icon_reset_image_data (GtkStatusIcon  *status_icon);
 static void     gtk_status_icon_update_image    (GtkStatusIcon *status_icon);
 
-G_DEFINE_TYPE (GtkStatusIcon, gtk_status_icon, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkStatusIcon, gtk_status_icon, G_TYPE_OBJECT)
 
 static void
 gtk_status_icon_class_init (GtkStatusIconClass *class)
@@ -233,13 +232,18 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 							NULL,
 							GTK_PARAM_WRITABLE));
 
+  /**
+   * GtkStatusIcon:stock:
+   *
+   * Deprecated: 3.10: Use #GtkStatusIcon:icon-name instead.
+   */
   g_object_class_install_property (gobject_class,
 				   PROP_STOCK,
 				   g_param_spec_string ("stock",
 							P_("Stock ID"),
 							P_("Stock ID for a stock image to display"),
 							NULL,
-							GTK_PARAM_READWRITE));
+							GTK_PARAM_READWRITE | G_PARAM_DEPRECATED));
   
   g_object_class_install_property (gobject_class,
                                    PROP_ICON_NAME,
@@ -600,7 +604,7 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
    * @keyboard_mode: %TRUE if the tooltip was trigged using the keyboard
    * @tooltip: a #GtkTooltip
    *
-   * Emitted when the #GtkSettings:gtk-tooltip-timeout has expired with the
+   * Emitted when the hover timeout has expired with the
    * cursor hovering above @status_icon; or emitted when @status_icon got
    * focus in keyboard mode.
    *
@@ -632,8 +636,6 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
 		  G_TYPE_INT,
 		  G_TYPE_BOOLEAN,
 		  GTK_TYPE_TOOLTIP);
-
-  g_type_class_add_private (class, sizeof (GtkStatusIconPrivate));
 }
 
 #ifdef GDK_WINDOWING_WIN32
@@ -831,8 +833,7 @@ gtk_status_icon_init (GtkStatusIcon *status_icon)
 {
   GtkStatusIconPrivate *priv;
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (status_icon, GTK_TYPE_STATUS_ICON,
-				      GtkStatusIconPrivate);
+  priv = gtk_status_icon_get_instance_private (status_icon);
   status_icon->priv = priv;
 
   priv->icon_helper = _gtk_icon_helper_new ();
@@ -1065,7 +1066,9 @@ gtk_status_icon_set_property (GObject      *object,
       gtk_status_icon_set_from_file (status_icon, g_value_get_string (value));
       break;
     case PROP_STOCK:
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_status_icon_set_from_stock (status_icon, g_value_get_string (value));
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       break;
     case PROP_ICON_NAME:
       gtk_status_icon_set_from_icon_name (status_icon, g_value_get_string (value));
@@ -1111,7 +1114,9 @@ gtk_status_icon_get_property (GObject    *object,
       g_value_set_object (value, gtk_status_icon_get_pixbuf (status_icon));
       break;
     case PROP_STOCK:
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       g_value_set_string (value, gtk_status_icon_get_stock (status_icon));
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       break;
     case PROP_ICON_NAME:
       g_value_set_string (value, gtk_status_icon_get_icon_name (status_icon));
@@ -1232,6 +1237,8 @@ gtk_status_icon_new_from_file (const gchar *filename)
  * Return value: a new #GtkStatusIcon
  *
  * Since: 2.10
+ *
+ * Deprecated: 3.10: Use gtk_status_icon_new_from_icon_name() instead.
  **/
 GtkStatusIcon *
 gtk_status_icon_new_from_stock (const gchar *stock_id)
@@ -1321,24 +1328,15 @@ static gint
 round_pixel_size (GtkWidget *widget, 
                   gint       pixel_size)
 {
-  GdkScreen *screen;
-  GtkSettings *settings;
   GtkIconSize s;
   gint w, h, d, dist, size;
-
-  screen = gtk_widget_get_screen (widget);
-
-  if (!screen)
-    return GTK_ICON_SIZE_MENU;
-
-  settings = gtk_settings_get_for_screen (screen);
 
   dist = G_MAXINT;
   size = 0;
 
   for (s = GTK_ICON_SIZE_MENU; s <= GTK_ICON_SIZE_DIALOG; s++)
     {
-      if (gtk_icon_size_lookup_for_settings (settings, s, &w, &h))
+      if (gtk_icon_size_lookup (s, &w, &h))
 	{
 	  d = MAX (abs (pixel_size - w), abs (pixel_size - h));
 	  if (d < dist)
@@ -1785,7 +1783,9 @@ gtk_status_icon_set_from_file (GtkStatusIcon *status_icon,
  * Makes @status_icon display the stock icon with the id @stock_id.
  * See gtk_status_icon_new_from_stock() for details.
  *
- * Since: 2.10 
+ * Since: 2.10
+ *
+ * Deprecated: 3.10: Use gtk_status_icon_set_from_icon_name() instead.
  **/
 void
 gtk_status_icon_set_from_stock (GtkStatusIcon *status_icon,
@@ -1901,6 +1901,8 @@ gtk_status_icon_get_pixbuf (GtkStatusIcon *status_icon)
  *   or %NULL if the image is empty.
  *
  * Since: 2.10
+ *
+ * Deprecated: 3.10: Use gtk_status_icon_get_icon_name() instead.
  **/
 const gchar *
 gtk_status_icon_get_stock (GtkStatusIcon *status_icon)
@@ -2275,7 +2277,7 @@ gtk_status_icon_position_menu (GtkMenu  *menu,
   status_icon = GTK_STATUS_ICON (user_data);
   priv = status_icon->priv;
 
-  gtk_widget_size_request (GTK_WIDGET (menu), &menu_req);
+  gtk_widget_get_preferred_size (GTK_WIDGET (menu), &menu_req, NULL);
 
   *x = priv->last_click_x;
   *y = priv->taskbar_top - menu_req.height;

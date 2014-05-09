@@ -208,7 +208,11 @@ _gdk_quartz_screen_update_window_sizes (GdkScreen *screen)
   windows = gdk_screen_get_toplevel_windows (screen);
 
   for (list = windows; list; list = list->next)
-    _gdk_quartz_window_update_position (list->data);
+    {
+      if (GDK_WINDOW_TYPE(list->data) == GDK_WINDOW_OFFSCREEN)
+        continue;
+      _gdk_quartz_window_update_position (list->data);
+    }
 
   g_list_free (windows);
 }
@@ -299,16 +303,6 @@ static gint
 gdk_quartz_screen_get_number (GdkScreen *screen)
 {
   return 0;
-}
-
-gchar *
-_gdk_windowing_substitute_screen_number (const gchar *display_name,
-					 int          screen_number)
-{
-  if (screen_number != 0)
-    return NULL;
-
-  return g_strdup (display_name);
 }
 
 static gint
@@ -437,6 +431,35 @@ gdk_quartz_screen_get_monitor_workarea (GdkScreen    *screen,
   GDK_QUARTZ_RELEASE_POOL;
 }
 
+/* Protocol to build cleanly for OSX < 10.7 */
+@protocol ScaleFactor
+- (CGFloat) backingScaleFactor;
+@end
+
+gint
+_gdk_quartz_screen_get_monitor_scale_factor (GdkScreen *screen,
+                                             gint       monitor_num)
+{
+  GdkQuartzScreen *quartz_screen;
+  NSArray *array;
+  NSScreen *nsscreen;
+  gint scale_factor = 1;
+
+  quartz_screen = GDK_QUARTZ_SCREEN (screen);
+
+  GDK_QUARTZ_ALLOC_POOL;
+
+  array = [NSScreen screens];
+  nsscreen = [array objectAtIndex:monitor_num];
+
+  if (gdk_quartz_osx_version() >= GDK_OSX_LION)
+    scale_factor = [(id <ScaleFactor>) nsscreen backingScaleFactor];
+
+  GDK_QUARTZ_RELEASE_POOL;
+
+  return scale_factor;
+}
+
 static gchar *
 gdk_quartz_screen_make_display_name (GdkScreen *screen)
 {
@@ -501,4 +524,5 @@ gdk_quartz_screen_class_init (GdkQuartzScreenClass *klass)
   screen_class->query_depths = _gdk_quartz_screen_query_depths;
   screen_class->query_visual_types = _gdk_quartz_screen_query_visual_types;
   screen_class->list_visuals = _gdk_quartz_screen_list_visuals;
+  screen_class->get_monitor_scale_factor = _gdk_quartz_screen_get_monitor_scale_factor;
 }

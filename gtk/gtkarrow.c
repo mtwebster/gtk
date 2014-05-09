@@ -32,7 +32,7 @@
  * one of the four cardinal directions (up, down, left, or right).  The
  * style of the arrow can be one of shadow in, shadow out, etched in, or
  * etched out.  Note that these directions and style types may be
- * ammended in versions of GTK+ to come.
+ * amended in versions of GTK+ to come.
  *
  * GtkArrow will fill any space alloted to it, but since it is inherited
  * from #GtkMisc, it can be padded and/or aligned, to fill exactly the
@@ -85,8 +85,7 @@ static void     gtk_arrow_get_preferred_height        (GtkWidget           *widg
                                                        gint                *minimum_size,
                                                        gint                *natural_size);
 
-G_DEFINE_TYPE (GtkArrow, gtk_arrow, GTK_TYPE_MISC)
-
+G_DEFINE_TYPE_WITH_PRIVATE (GtkArrow, gtk_arrow, GTK_TYPE_MISC)
 
 static void
 gtk_arrow_class_init (GtkArrowClass *class)
@@ -128,8 +127,6 @@ gtk_arrow_class_init (GtkArrowClass *class)
                                                                P_("Amount of space used up by arrow"),
                                                                0.0, 1.0, 0.7,
                                                                GTK_PARAM_READABLE));
-
-  g_type_class_add_private (class, sizeof (GtkArrowPrivate));
 
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_ARROW_ACCESSIBLE);
 }
@@ -187,17 +184,12 @@ gtk_arrow_get_property (GObject         *object,
 static void
 gtk_arrow_init (GtkArrow *arrow)
 {
-  GtkArrowPrivate *priv;
-
-  arrow->priv = G_TYPE_INSTANCE_GET_PRIVATE (arrow,
-                                             GTK_TYPE_ARROW,
-                                             GtkArrowPrivate);
-  priv = arrow->priv;
+  arrow->priv = gtk_arrow_get_instance_private (arrow);
 
   gtk_widget_set_has_window (GTK_WIDGET (arrow), FALSE);
 
-  priv->arrow_type = GTK_ARROW_RIGHT;
-  priv->shadow_type = GTK_SHADOW_OUT;
+  arrow->priv->arrow_type = GTK_ARROW_RIGHT;
+  arrow->priv->shadow_type = GTK_SHADOW_OUT;
 }
 
 static void

@@ -27,7 +27,7 @@
 
 #include "gtkcsstypesprivate.h"
 #include "gtkwidget.h"
-#include "gactionmuxer.h"
+#include "gtkactionmuxer.h"
 
 G_BEGIN_DECLS
 
@@ -45,6 +45,10 @@ void         _gtk_widget_set_shadowed       (GtkWidget *widget,
 gboolean     _gtk_widget_get_alloc_needed   (GtkWidget *widget);
 void         _gtk_widget_set_alloc_needed   (GtkWidget *widget,
                                              gboolean   alloc_needed);
+void         _gtk_widget_draw               (GtkWidget *widget,
+					     cairo_t   *cr);
+void          _gtk_widget_scale_changed     (GtkWidget *widget);
+
 
 void         _gtk_widget_add_sizegroup         (GtkWidget    *widget,
 						gpointer      group);
@@ -65,11 +69,19 @@ void _gtk_widget_override_size_request (GtkWidget *widget,
 void _gtk_widget_restore_size_request  (GtkWidget *widget,
                                         int        old_width,
                                         int        old_height);
-void _gtk_widget_compute_size_for_orientation  (GtkWidget         *widget,
+void _gtk_widget_get_preferred_size_for_size   (GtkWidget         *widget,
                                                 GtkOrientation     orientation,
-                                                gint               for_size,
-                                                gint              *minimum_size,
-                                                gint              *natural_size);
+                                                gint               size,
+                                                gint              *minimum,
+                                                gint              *natural,
+                                                gint              *minimum_baseline,
+                                                gint              *natural_baseline);
+void _gtk_widget_get_preferred_size_and_baseline(GtkWidget        *widget,
+                                                GtkRequisition    *minimum_size,
+                                                GtkRequisition    *natural_size,
+                                                gint              *minimum_baseline,
+                                                gint              *natural_baseline);
+gboolean _gtk_widget_has_baseline_support (GtkWidget *widget);
 
 gboolean _gtk_widget_get_translation_to_window (GtkWidget      *widget,
                                                 GdkWindow      *window,
@@ -81,11 +93,9 @@ const gchar*      _gtk_widget_get_accel_path               (GtkWidget *widget,
 
 AtkObject *       _gtk_widget_peek_accessible              (GtkWidget *widget);
 
+GdkWindow *       _gtk_cairo_get_event_window              (cairo_t *cr);
 GdkEventExpose *  _gtk_cairo_get_event                     (cairo_t *cr);
 
-void              _gtk_widget_draw_internal                (GtkWidget *widget,
-                                                            cairo_t   *cr,
-                                                            gboolean   clip_to_size);
 void              _gtk_widget_set_has_default              (GtkWidget *widget,
                                                             gboolean   has_default);
 void              _gtk_widget_set_has_grab                 (GtkWidget *widget,
@@ -137,7 +147,7 @@ void              _gtk_widget_invalidate_style_context     (GtkWidget    *widget
 void              _gtk_widget_style_context_invalidated    (GtkWidget    *widget);
 
 void              _gtk_widget_update_parent_muxer          (GtkWidget    *widget);
-GActionMuxer *    _gtk_widget_get_action_muxer             (GtkWidget    *widget);
+GtkActionMuxer *  _gtk_widget_get_action_muxer             (GtkWidget    *widget);
 
 G_END_DECLS
 

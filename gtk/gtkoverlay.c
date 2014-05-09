@@ -79,6 +79,7 @@ static guint signals[LAST_SIGNAL] = { 0 };
 static void gtk_overlay_buildable_init (GtkBuildableIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (GtkOverlay, gtk_overlay, GTK_TYPE_BIN,
+                         G_ADD_PRIVATE (GtkOverlay)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_overlay_buildable_init))
 
@@ -143,7 +144,8 @@ gtk_overlay_create_child_window (GtkOverlay *overlay,
   attributes.height = allocation.height;
   attributes.x = allocation.x;
   attributes.y = allocation.y;
-  attributes_mask = GDK_WA_X | GDK_WA_Y;
+  attributes.visual = gtk_widget_get_visual (widget);
+  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
   attributes.event_mask = gtk_widget_get_events (widget) | GDK_EXPOSURE_MASK;
 
   window = gdk_window_new (gtk_widget_get_window (widget),
@@ -204,12 +206,19 @@ gtk_overlay_get_main_widget_allocation (GtkOverlay *overlay,
       main_alloc.width = gtk_widget_get_allocated_width (grandchild);
       main_alloc.height = gtk_widget_get_allocated_height (grandchild);
     }
-  else
+  else if (GTK_IS_WIDGET (main_widget))
     {
       main_alloc.x = 0;
       main_alloc.y = 0;
       main_alloc.width = gtk_widget_get_allocated_width (main_widget);
       main_alloc.height = gtk_widget_get_allocated_height (main_widget);
+    }
+  else
+    {
+      main_alloc.x = 0;
+      main_alloc.y = 0;
+      main_alloc.width = 1;
+      main_alloc.height = 1;
     }
 
   if (main_alloc_out)
@@ -399,6 +408,10 @@ gtk_overlay_get_child_position (GtkOverlay    *overlay,
     case GTK_ALIGN_END:
       alloc->x += main_alloc.width - req.width;
       break;
+    case GTK_ALIGN_BASELINE:
+    default:
+      g_assert_not_reached ();
+      break;
     }
 
   alloc->y = main_alloc.y;
@@ -417,6 +430,10 @@ gtk_overlay_get_child_position (GtkOverlay    *overlay,
       break;
     case GTK_ALIGN_END:
       alloc->y += main_alloc.height - req.height;
+      break;
+    case GTK_ALIGN_BASELINE:
+    default:
+      g_assert_not_reached ();
       break;
     }
 
@@ -645,14 +662,12 @@ gtk_overlay_class_init (GtkOverlayClass *klass)
                   G_TYPE_BOOLEAN, 2,
                   GTK_TYPE_WIDGET,
                   GDK_TYPE_RECTANGLE | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  g_type_class_add_private (object_class, sizeof (GtkOverlayPrivate));
 }
 
 static void
 gtk_overlay_init (GtkOverlay *overlay)
 {
-  overlay->priv = G_TYPE_INSTANCE_GET_PRIVATE (overlay, GTK_TYPE_OVERLAY, GtkOverlayPrivate);
+  overlay->priv = gtk_overlay_get_instance_private (overlay);
 
   gtk_widget_set_has_window (GTK_WIDGET (overlay), FALSE);
 }

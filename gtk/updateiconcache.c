@@ -676,7 +676,7 @@ scan_directory (const gchar *base_path,
 		      directories = g_list_append (directories, g_strdup (subdir));
 		    }
 		  else
-		    continue;
+		    dir_index = 0xffff;
 		}
 		
 	      image = g_new0 (Image, 1);

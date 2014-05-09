@@ -117,6 +117,7 @@
 
 #define DEFAULT_EXPANDER_SIZE 10
 #define DEFAULT_EXPANDER_SPACING 2
+#define TIMEOUT_EXPAND 500
 
 enum
 {
@@ -228,6 +229,7 @@ static void  gtk_expander_get_preferred_width_for_height  (GtkWidget           *
                                                            gint                *natural_height);
 
 G_DEFINE_TYPE_WITH_CODE (GtkExpander, gtk_expander, GTK_TYPE_BIN,
+                         G_ADD_PRIVATE (GtkExpander)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_expander_buildable_init))
 
@@ -271,8 +273,6 @@ gtk_expander_class_init (GtkExpanderClass *klass)
   container_class->forall = gtk_expander_forall;
 
   klass->activate = gtk_expander_activate;
-
-  g_type_class_add_private (klass, sizeof (GtkExpanderPrivate));
 
   g_object_class_install_property (gobject_class,
                                    PROP_EXPANDED,
@@ -383,9 +383,7 @@ gtk_expander_init (GtkExpander *expander)
 {
   GtkExpanderPrivate *priv;
 
-  expander->priv = priv = G_TYPE_INSTANCE_GET_PRIVATE (expander,
-                                                       GTK_TYPE_EXPANDER,
-                                                       GtkExpanderPrivate);
+  expander->priv = priv = gtk_expander_get_instance_private (expander);
 
   gtk_widget_set_can_focus (GTK_WIDGET (expander), TRUE);
   gtk_widget_set_has_window (GTK_WIDGET (expander), FALSE);
@@ -538,8 +536,6 @@ gtk_expander_realize (GtkWidget *widget)
 
   priv = GTK_EXPANDER (widget)->priv;
 
-  gtk_widget_set_realized (widget, TRUE);
-
   border_width = gtk_container_get_border_width (GTK_CONTAINER (widget));
 
   get_expander_bounds (GTK_EXPANDER (widget), &expander_rect);
@@ -578,6 +574,8 @@ gtk_expander_realize (GtkWidget *widget)
   priv->event_window = gdk_window_new (gtk_widget_get_parent_window (widget),
                                        &attributes, attributes_mask);
   gtk_widget_register_window (widget, priv->event_window);
+
+  gtk_widget_set_realized (widget, TRUE);
 }
 
 static void
@@ -1043,7 +1041,8 @@ gtk_expander_button_release (GtkWidget      *widget,
 
   if (event->button == GDK_BUTTON_PRIMARY && expander->priv->button_down)
     {
-      gtk_widget_activate (widget);
+      if (expander->priv->prelight)
+        gtk_widget_activate (widget);
       expander->priv->button_down = FALSE;
       return TRUE;
     }
@@ -1147,13 +1146,7 @@ gtk_expander_drag_motion (GtkWidget        *widget,
 
   if (!priv->expanded && !priv->expand_timer)
     {
-      GtkSettings *settings;
-      guint timeout;
-
-      settings = gtk_widget_get_settings (widget);
-      g_object_get (settings, "gtk-timeout-expand", &timeout, NULL);
-
-      priv->expand_timer = gdk_threads_add_timeout (timeout, (GSourceFunc) expand_timeout, expander);
+      priv->expand_timer = gdk_threads_add_timeout (TIMEOUT_EXPAND, (GSourceFunc) expand_timeout, expander);
     }
 
   return TRUE;

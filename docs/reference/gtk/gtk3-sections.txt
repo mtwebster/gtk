@@ -486,6 +486,8 @@ gtk_box_set_spacing
 gtk_box_reorder_child
 gtk_box_query_child_packing
 gtk_box_set_child_packing
+gtk_box_get_baseline_position
+gtk_box_set_baseline_position
 <SUBSECTION Standard>
 GTK_BOX
 GTK_IS_BOX
@@ -496,6 +498,58 @@ GTK_BOX_GET_CLASS
 <SUBSECTION Private>
 GtkBoxPrivate
 gtk_box_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gtklistbox</FILE>
+<TITLE>GtkListBox</TITLE>
+GtkListBox
+GtkListBoxRow
+GtkListBoxFilterFunc
+GtkListBoxSortFunc
+GtkListBoxUpdateHeaderFunc
+
+gtk_list_box_new
+gtk_list_box_prepend
+gtk_list_box_insert
+gtk_list_box_select_row
+gtk_list_box_get_selected_row
+
+gtk_list_box_set_selection_mode
+gtk_list_box_get_selection_mode
+gtk_list_box_set_activate_on_single_click
+gtk_list_box_get_activate_on_single_click
+gtk_list_box_get_adjustment
+gtk_list_box_set_adjustment
+gtk_list_box_set_placeholder
+gtk_list_box_get_row_at_index
+gtk_list_box_get_row_at_y
+gtk_list_box_invalidate_filter
+gtk_list_box_invalidate_headers
+gtk_list_box_invalidate_sort
+gtk_list_box_set_filter_func
+gtk_list_box_set_header_func
+gtk_list_box_set_sort_func
+gtk_list_box_drag_highlight_row
+gtk_list_box_drag_unhighlight_row
+
+gtk_list_box_row_new
+gtk_list_box_row_changed
+gtk_list_box_row_get_header
+gtk_list_box_row_get_type
+gtk_list_box_row_set_header
+gtk_list_box_row_get_index
+
+<SUBSECTION Standard>
+GTK_IS_LIST_BOX
+GTK_IS_LIST_BOX_CLASS
+GTK_IS_LIST_BOX_ROW
+GTK_IS_LIST_BOX_ROW_CLASS
+GTK_TYPE_LIST_BOX
+GTK_TYPE_LIST_BOX_ROW
+
+<SUBSECTION Private>
+gtk_list_box_get_type
 </SECTION>
 
 <SECTION>
@@ -528,6 +582,12 @@ GtkBuilder
 GtkBuilderConnectFunc
 GtkBuilderError
 gtk_builder_new
+gtk_builder_new_from_file
+gtk_builder_new_from_resource
+gtk_builder_new_from_string
+gtk_builder_add_callback_symbol
+gtk_builder_add_callback_symbols
+gtk_builder_lookup_callback_symbol
 gtk_builder_add_from_file
 gtk_builder_add_from_resource
 gtk_builder_add_from_string
@@ -539,6 +599,9 @@ gtk_builder_get_objects
 gtk_builder_expose_object
 gtk_builder_connect_signals
 gtk_builder_connect_signals_full
+gtk_builder_add_callback_symbol
+gtk_builder_add_callback_symbols
+gtk_builder_lookup_callback_symbol
 gtk_builder_set_translation_domain
 gtk_builder_get_translation_domain
 gtk_builder_get_type_from_name
@@ -546,6 +609,13 @@ gtk_builder_value_from_string
 gtk_builder_value_from_string_type
 GTK_BUILDER_WARN_INVALID_CHILD_TYPE
 GTK_BUILDER_ERROR
+<SUBSECTION>
+gtk_builder_new
+gtk_builder_add_from_file
+gtk_builder_add_from_resource
+gtk_builder_add_from_string
+gtk_builder_add_objects_from_file
+gtk_builder_add_objects_from_string
 <SUBSECTION Standard>
 GTK_BUILDER
 GTK_IS_BUILDER
@@ -566,6 +636,7 @@ GtkButton
 gtk_button_new
 gtk_button_new_with_label
 gtk_button_new_with_mnemonic
+gtk_button_new_from_icon_name
 gtk_button_new_from_stock
 gtk_button_pressed
 gtk_button_released
@@ -1068,6 +1139,8 @@ gtk_entry_get_progress_pulse_step
 gtk_entry_progress_pulse
 gtk_entry_im_context_filter_keypress
 gtk_entry_reset_im_context
+gtk_entry_get_tabs
+gtk_entry_set_tabs
 GtkEntryIconPosition
 gtk_entry_set_icon_from_pixbuf
 gtk_entry_set_icon_from_stock
@@ -1258,6 +1331,7 @@ gtk_file_chooser_get_do_overwrite_confirmation
 gtk_file_chooser_set_create_folders
 gtk_file_chooser_get_create_folders
 gtk_file_chooser_set_current_name
+gtk_file_chooser_get_current_name
 gtk_file_chooser_get_filename
 gtk_file_chooser_set_filename
 gtk_file_chooser_select_filename
@@ -1981,6 +2055,7 @@ gtk_label_set_width_chars
 gtk_label_set_max_width_chars
 gtk_label_set_line_wrap
 gtk_label_set_line_wrap_mode
+gtk_label_set_lines
 gtk_label_get_layout_offsets
 gtk_label_get_mnemonic_keyval
 gtk_label_get_selectable
@@ -1999,6 +2074,7 @@ gtk_label_get_label
 gtk_label_get_layout
 gtk_label_get_line_wrap
 gtk_label_get_line_wrap_mode
+gtk_label_get_lines
 gtk_label_get_mnemonic_widget
 gtk_label_get_selection_bounds
 gtk_label_get_use_markup
@@ -2312,6 +2388,8 @@ gtk_info_bar_set_message_type
 gtk_info_bar_get_message_type
 gtk_info_bar_get_action_area
 gtk_info_bar_get_content_area
+gtk_info_bar_get_show_close_button
+gtk_info_bar_set_show_close_button
 
 <SUBSECTION Standard>
 GTK_TYPE_INFO_BAR
@@ -2481,6 +2559,35 @@ gtk_paned_get_type
 </SECTION>
 
 <SECTION>
+<FILE>gtkplacessidebar</FILE>
+<TITLE>GtkPlacesSidebar</TITLE>
+GtkPlacesSidebar
+GtkPlacesOpenFlags
+gtk_places_sidebar_new
+gtk_places_sidebar_set_open_flags
+gtk_places_sidebar_get_open_flags
+gtk_places_sidebar_set_location
+gtk_places_sidebar_get_location
+gtk_places_sidebar_set_show_desktop
+gtk_places_sidebar_get_show_desktop
+gtk_places_sidebar_add_shortcut
+gtk_places_sidebar_remove_shortcut
+gtk_places_sidebar_list_shortcuts
+gtk_places_sidebar_get_nth_bookmark
+gtk_places_sidebar_get_show_connect_to_server
+gtk_places_sidebar_set_show_connect_to_server
+<SUBSECTION Standard>
+GTK_PLACES_SIDEBAR
+GTK_IS_PLACES_SIDEBAR
+GTK_TYPE_PLACES_SIDEBAR
+GTK_PLACES_SIDEBAR_CLASS
+GTK_IS_PLACES_SIDEBAR_CLASS
+GTK_PLACES_SIDEBAR_GET_CLASS
+<SUBSECTION Private>
+gtk_places_sidebar_get_type
+</SECTION>
+
+<SECTION>
 <FILE>gtkplug</FILE>
 <TITLE>GtkPlug</TITLE>
 GtkPlug
@@ -2637,7 +2744,6 @@ gtk_range_get_slider_range
 gtk_range_get_slider_size_fixed
 gtk_range_set_min_slider_size
 gtk_range_set_slider_size_fixed
-gtk_range_get_event_window
 
 <SUBSECTION Standard>
 GTK_RANGE
@@ -3003,6 +3109,28 @@ GTK_SCROLLED_WINDOW_GET_CLASS
 <SUBSECTION Private>
 gtk_scrolled_window_get_type
 GtkScrolledWindowPrivate
+</SECTION>
+
+<SECTION>
+<FILE>gtksearchbar</FILE>
+<TITLE>GtkSearchBar</TITLE>
+GtkSearchBar
+gtk_search_bar_new
+gtk_search_bar_connect_entry
+gtk_search_bar_get_search_mode
+gtk_search_bar_set_search_mode
+gtk_search_bar_get_show_close_button
+gtk_search_bar_set_show_close_button
+gtk_search_bar_handle_event
+<SUBSECTION Standard>
+GTK_TYPE_SEARCH_BAR
+GTK_SEARCH_BAR
+GTK_SEARCH_BAR_CLASS
+GTK_IS_SEARCH_BAR
+GTK_IS_SEARCH_BAR_CLASS
+GTK_SEARCH_BAR_GET_CLASS
+<SUBSECTION Private>
+gtk_search_bar_get_type
 </SECTION>
 
 <SECTION>
@@ -3576,12 +3704,11 @@ gtk_text_mark_get_type
 <FILE>gtktexttag</FILE>
 <TITLE>GtkTextTag</TITLE>
 GtkTextTag
-GtkWrapMode
-GtkTextAttributes
 gtk_text_tag_new
 gtk_text_tag_get_priority
 gtk_text_tag_set_priority
 gtk_text_tag_event
+GtkTextAttributes
 GtkTextAppearance
 gtk_text_attributes_new
 gtk_text_attributes_copy
@@ -3629,6 +3756,7 @@ gtk_text_tag_table_get_type
 <TITLE>GtkTextView</TITLE>
 GtkTextView
 GtkTextWindowType
+GtkWrapMode
 gtk_text_view_new
 gtk_text_view_new_with_buffer
 gtk_text_view_set_buffer
@@ -5154,12 +5282,14 @@ gtk_widget_queue_draw
 gtk_widget_queue_resize
 gtk_widget_queue_resize_no_redraw
 gtk_widget_get_frame_clock
+gtk_widget_get_scale_factor
 GtkTickCallback
 gtk_widget_add_tick_callback
 gtk_widget_remove_tick_callback
 gtk_widget_size_request
 gtk_widget_get_child_requisition
 gtk_widget_size_allocate
+gtk_widget_size_allocate_with_baseline
 gtk_widget_add_accelerator
 gtk_widget_remove_accelerator
 gtk_widget_set_accel_path
@@ -5262,6 +5392,7 @@ gtk_widget_get_display
 gtk_widget_get_root_window
 gtk_widget_get_screen
 gtk_widget_has_screen
+gtk_widget_get_scale_factor
 gtk_widget_get_size_request
 gtk_widget_set_child_visible
 gtk_widget_set_size_request
@@ -5292,6 +5423,7 @@ gtk_widget_get_allocated_width
 gtk_widget_get_allocated_height
 gtk_widget_get_allocation
 gtk_widget_set_allocation
+gtk_widget_get_allocated_baseline
 gtk_widget_get_app_paintable
 gtk_widget_get_can_default
 gtk_widget_set_can_default
@@ -5352,6 +5484,7 @@ gtk_widget_get_preferred_height
 gtk_widget_get_preferred_width
 gtk_widget_get_preferred_height_for_width
 gtk_widget_get_preferred_width_for_height
+gtk_widget_get_preferred_height_and_baseline_for_width
 gtk_widget_get_request_mode
 gtk_widget_get_preferred_size
 gtk_distribute_natural_allocation
@@ -5361,6 +5494,7 @@ GtkAlign
 gtk_widget_get_halign
 gtk_widget_set_halign
 gtk_widget_get_valign
+gtk_widget_get_valign_with_baseline
 gtk_widget_set_valign
 gtk_widget_get_margin_left
 gtk_widget_set_margin_left
@@ -5382,6 +5516,20 @@ gtk_widget_get_vexpand_set
 gtk_widget_set_vexpand_set
 gtk_widget_queue_compute_expand
 gtk_widget_compute_expand
+
+<SUBSECTION Templates>
+gtk_widget_init_template
+gtk_widget_class_set_template
+gtk_widget_class_set_template_from_resource
+gtk_widget_get_template_child
+gtk_widget_class_bind_template_child
+gtk_widget_class_bind_template_child_internal
+gtk_widget_class_bind_template_child_private
+gtk_widget_class_bind_template_child_internal_private
+gtk_widget_class_bind_template_child_full
+gtk_widget_class_bind_template_callback
+gtk_widget_class_bind_template_callback_full
+gtk_widget_class_set_connect_func
 
 <SUBSECTION Standard>
 GTK_WIDGET
@@ -5437,6 +5585,7 @@ gtk_window_get_default_widget
 gtk_window_set_default
 gtk_window_present
 gtk_window_present_with_time
+gtk_window_close
 gtk_window_iconify
 gtk_window_deiconify
 gtk_window_stick
@@ -5514,6 +5663,7 @@ gtk_window_get_resize_grip_area
 gtk_window_get_application
 gtk_window_set_application
 gtk_window_set_has_user_ref_count
+gtk_window_set_titlebar
 
 <SUBSECTION Standard>
 GTK_WINDOW
@@ -5799,6 +5949,7 @@ GTK_STYLE_CLASS_OSD
 GTK_STYLE_CLASS_LEVEL_BAR
 GTK_STYLE_CLASS_CURSOR_HANDLE
 GTK_STYLE_CLASS_INSERTION_CURSOR
+GTK_STYLE_CLASS_TITLEBAR
 GTK_STYLE_REGION_COLUMN
 GTK_STYLE_REGION_COLUMN_HEADER
 GTK_STYLE_REGION_ROW
@@ -5859,6 +6010,8 @@ gtk_style_context_list_regions
 gtk_style_context_set_screen
 gtk_style_context_set_frame_clock
 gtk_style_context_set_state
+gtk_style_context_set_scale
+gtk_style_context_get_scale
 
 <SUBSECTION>
 GtkBorder
@@ -5882,6 +6035,7 @@ gtk_render_option
 gtk_render_slider
 gtk_render_activity
 gtk_render_icon_pixbuf
+gtk_render_icon_surface
 gtk_render_icon
 gtk_render_insertion_cursor
 
@@ -6479,9 +6633,14 @@ gtk_icon_theme_prepend_search_path
 gtk_icon_theme_set_custom_theme
 gtk_icon_theme_has_icon
 gtk_icon_theme_lookup_icon
+gtk_icon_theme_lookup_icon_for_scale
 gtk_icon_theme_choose_icon
+gtk_icon_theme_choose_icon_for_scale
 gtk_icon_theme_lookup_by_gicon
+gtk_icon_theme_lookup_by_gicon_for_scale
 gtk_icon_theme_load_icon
+gtk_icon_theme_load_icon_for_scale
+gtk_icon_theme_load_surface
 gtk_icon_theme_list_contexts
 gtk_icon_theme_list_icons
 gtk_icon_theme_get_icon_sizes
@@ -6492,9 +6651,11 @@ gtk_icon_info_copy
 gtk_icon_info_free
 gtk_icon_info_new_for_pixbuf
 gtk_icon_info_get_base_size
+gtk_icon_info_get_base_scale
 gtk_icon_info_get_filename
 gtk_icon_info_get_builtin_pixbuf
 gtk_icon_info_load_icon
+gtk_icon_info_load_surface
 gtk_icon_info_load_icon_async
 gtk_icon_info_load_icon_finish
 gtk_icon_info_load_symbolic
@@ -6546,6 +6707,7 @@ gtk_icon_set_new_from_pixbuf
 gtk_icon_set_ref
 gtk_icon_set_render_icon
 gtk_icon_set_render_icon_pixbuf
+gtk_icon_set_render_icon_surface
 gtk_icon_set_unref
 gtk_icon_size_lookup
 gtk_icon_size_lookup_for_settings
@@ -7092,6 +7254,7 @@ gtk_test_text_get
 gtk_test_text_set
 gtk_test_widget_click
 gtk_test_widget_send_key
+gtk_test_widget_wait_for_draw
 </SECTION>
 
 <SECTION>
@@ -7238,6 +7401,8 @@ gtk_grid_attach_next_to
 gtk_grid_get_child_at
 gtk_grid_insert_row
 gtk_grid_insert_column
+gtk_grid_remove_row
+gtk_grid_remove_column
 gtk_grid_insert_next_to
 gtk_grid_set_row_homogeneous
 gtk_grid_get_row_homogeneous
@@ -7247,6 +7412,10 @@ gtk_grid_set_column_homogeneous
 gtk_grid_get_column_homogeneous
 gtk_grid_set_column_spacing
 gtk_grid_get_column_spacing
+gtk_grid_get_baseline_row
+gtk_grid_set_baseline_row
+gtk_grid_get_row_baseline_position
+gtk_grid_set_row_baseline_position
 
 <SUBSECTION Standard>
 GtkGridClass
@@ -7494,4 +7663,77 @@ GTK_COLOR_CHOOSER_DIALOG_GET_CLASS
 <SUBSECTION Private>
 GtkColorChooserDialogPrivate
 gtk_color_chooser_dialog_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gtkheaderbar</FILE>
+<TITLE>GtkHeaderBar</TITLE>
+GtkHeaderBar
+gtk_header_bar_new
+gtk_header_bar_set_title
+gtk_header_bar_get_title
+gtk_header_bar_set_subtitle
+gtk_header_bar_get_subtitle
+gtk_header_bar_set_custom_title
+gtk_header_bar_get_custom_title
+gtk_header_bar_pack_start
+gtk_header_bar_pack_end
+gtk_header_bar_set_show_close_button
+gtk_header_bar_get_show_close_button
+
+<SUBSECTION Standard>
+GTK_TYPE_HEADER_BAR
+GTK_HEADER_BAR
+GTK_HEADER_BAR_CLASS
+GTK_IS_HEADER_BAR
+GTK_IS_HEADER_BAR_CLASS
+GTK_HEADER_BAR_GET_CLASS
+
+<SUBSECTION Private>
+gtk_header_bar_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gtkstack</FILE>
+<TITLE>GtkStack</TITLE>
+GtkStack
+gtk_stack_new
+gtk_stack_add_named
+gtk_stack_add_titled
+gtk_stack_set_visible_child
+gtk_stack_get_visible_child
+gtk_stack_set_visible_child_name
+gtk_stack_get_visible_child_name
+gtk_stack_set_visible_child_full
+gtk_stack_set_homogeneous
+gtk_stack_get_homogeneous
+gtk_stack_set_transition_duration
+gtk_stack_get_transition_duration
+GtkStackTransitionType
+gtk_stack_set_transition_type
+gtk_stack_get_transition_type
+</SECTION>
+
+<SECTION>
+<FILE>gtkstackswitcher</FILE>
+<TITLE>GtkStackSwitcher</TITLE>
+GtkStackSwitcher
+gtk_stack_switcher_new
+gtk_stack_switcher_set_stack
+gtk_stack_switcher_get_stack
+</SECTION>
+
+<SECTION>
+<FILE>gtkrevealer</FILE>
+<TITLE>GtkRevealer</TITLE>
+GtkRevealer
+gtk_revealer_new
+gtk_revealer_get_reveal_child
+gtk_revealer_set_reveal_child
+gtk_revealer_get_child_revealed
+gtk_revealer_get_transition_duration
+gtk_revealer_set_transition_duration
+GtkRevealerTransitionType
+gtk_revealer_get_transition_type
+gtk_revealer_set_transition_type
 </SECTION>

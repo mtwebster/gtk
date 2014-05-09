@@ -228,8 +228,8 @@ struct _SortElt
   gint           offset;
   gint           ref_count;
   gint           zero_ref_count;
-  GSequenceIter *siter; /* iter into seq */
   gint           old_index; /* used while sorting */
+  GSequenceIter *siter; /* iter into seq */
 };
 
 struct _SortLevel
@@ -247,8 +247,8 @@ struct _SortData
   gpointer sort_data;
 
   GtkTreePath *parent_path;
-  gint parent_path_depth;
   gint *parent_path_indices;
+  gint parent_path_depth;
 };
 
 /* Properties */
@@ -447,6 +447,7 @@ static void         gtk_tree_model_sort_clear_cache_helper  (GtkTreeModelSort *t
 
 
 G_DEFINE_TYPE_WITH_CODE (GtkTreeModelSort, gtk_tree_model_sort, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE (GtkTreeModelSort)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_TREE_MODEL,
 						gtk_tree_model_sort_tree_model_init)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_TREE_SORTABLE,
@@ -459,10 +460,8 @@ gtk_tree_model_sort_init (GtkTreeModelSort *tree_model_sort)
 {
   GtkTreeModelSortPrivate *priv;
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (tree_model_sort,
-                                      GTK_TYPE_TREE_MODEL_SORT,
-                                      GtkTreeModelSortPrivate);
-  tree_model_sort->priv = priv;
+  tree_model_sort->priv = priv =
+    gtk_tree_model_sort_get_instance_private (tree_model_sort);
   priv->sort_column_id = GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID;
   priv->stamp = 0;
   priv->zero_ref_count = 0;
@@ -490,8 +489,6 @@ gtk_tree_model_sort_class_init (GtkTreeModelSortClass *class)
 							P_("The model for the TreeModelSort to sort"),
 							GTK_TYPE_TREE_MODEL,
 							GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-
-  g_type_class_add_private (class, sizeof (GtkTreeModelSortPrivate));
 }
 
 static void
@@ -1061,7 +1058,7 @@ gtk_tree_model_sort_row_deleted (GtkTreeModel *s_model,
     gtk_tree_model_sort_free_level (tree_model_sort,
                                     elt->children, FALSE);
 
-  if (level->ref_count == 0)
+  if (level->ref_count == 0 && g_sequence_get_length (level->seq) == 1)
     {
       gtk_tree_model_sort_increment_stamp (tree_model_sort);
       gtk_tree_model_row_deleted (GTK_TREE_MODEL (data), path);

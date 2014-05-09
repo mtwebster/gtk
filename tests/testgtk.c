@@ -258,7 +258,7 @@ create_alpha_window (GtkWidget *widget)
       
       window = gtk_dialog_new_with_buttons ("Alpha Window",
 					    GTK_WINDOW (gtk_widget_get_toplevel (widget)), 0,
-					    GTK_STOCK_CLOSE, 0,
+					    "_Close", 0,
 					    NULL);
 
       gtk_widget_set_app_paintable (window, TRUE);
@@ -553,7 +553,7 @@ create_big_windows (GtkWidget *widget)
       
       window = gtk_dialog_new_with_buttons ("Big Windows",
                                             NULL, 0,
-                                            GTK_STOCK_CLOSE,
+                                            "_Close",
                                             GTK_RESPONSE_NONE,
                                             NULL);
  
@@ -662,6 +662,7 @@ create_buttons (GtkWidget *widget)
       gtk_container_set_border_width (GTK_CONTAINER (grid), 10);
       gtk_box_pack_start (GTK_BOX (box1), grid, TRUE, TRUE, 0);
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       button[0] = gtk_button_new_with_label ("button1");
       button[1] = gtk_button_new_with_mnemonic ("_button2");
       button[2] = gtk_button_new_with_mnemonic ("_button3");
@@ -671,6 +672,7 @@ create_buttons (GtkWidget *widget)
       button[6] = gtk_button_new_with_label ("button7");
       button[7] = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
       button[8] = gtk_button_new_with_label ("button9");
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       
       for (i = 0; i < 9; i++)
         {
@@ -845,7 +847,7 @@ create_check_buttons (GtkWidget *widget)
     {
       window = gtk_dialog_new_with_buttons ("Check Buttons",
                                             NULL, 0,
-                                            GTK_STOCK_CLOSE,
+                                            "_Close",
                                             GTK_RESPONSE_NONE,
                                             NULL);
 
@@ -910,7 +912,7 @@ create_radio_buttons (GtkWidget *widget)
     {
       window = gtk_dialog_new_with_buttons ("Radio Buttons",
                                             NULL, 0,
-                                            GTK_STOCK_CLOSE,
+                                            "_Close",
                                             GTK_RESPONSE_NONE,
                                             NULL);
 
@@ -1198,22 +1200,7 @@ set_toolbar_both_horiz (GtkWidget *widget,
   gtk_toolbar_set_style (GTK_TOOLBAR (data), GTK_TOOLBAR_BOTH_HORIZ);
 }
 
-static void
-set_toolbar_enable (GtkWidget *widget,
-		    gpointer   data)
-{
-  GtkSettings *settings = gtk_widget_get_settings (widget);
-  g_object_set (settings, "gtk-enable-tooltips", TRUE, NULL);
-}
-
-static void
-set_toolbar_disable (GtkWidget *widget,
-		     gpointer   data)
-{
-  GtkSettings *settings = gtk_widget_get_settings (widget);
-  g_object_set (settings, "gtk-enable-tooltips", FALSE, NULL);
-}
-
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 static GtkActionEntry create_toolbar_items[] = {
     { NULL, GTK_STOCK_NEW, NULL, NULL, "Stock icon: New",
       G_CALLBACK (set_toolbar_small_stock) },
@@ -1237,11 +1224,6 @@ static GtkActionEntry create_toolbar_items[] = {
       NULL },
     { NULL },
     { NULL },
-    { NULL, NULL, "Enable", NULL, "Enable tooltips",
-      G_CALLBACK (set_toolbar_enable) },
-    { NULL, NULL, "Disable", NULL, "Disable tooltips",
-      G_CALLBACK (set_toolbar_disable) },
-    { NULL },
     { NULL, NULL, "Frobate", NULL, "Frobate tooltip",
       NULL },
     { NULL, NULL, "Baz", NULL, "Baz tooltip",
@@ -1252,6 +1234,7 @@ static GtkActionEntry create_toolbar_items[] = {
     { NULL, NULL, "Bar", NULL, "Bar tooltip",
       NULL },
 };
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 create_toolbar (GtkWidget *widget)
@@ -1292,7 +1275,11 @@ create_toolbar (GtkWidget *widget)
               gtk_container_add (GTK_CONTAINER (toolitem), entry);
             }
           else if (create_toolbar_items[i].stock_id)
-            toolitem = gtk_tool_button_new_from_stock (create_toolbar_items[i].stock_id);
+            {
+              G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+              toolitem = gtk_tool_button_new_from_stock (create_toolbar_items[i].stock_id);
+              G_GNUC_END_IGNORE_DEPRECATIONS;
+            }
           else
             {
               GtkWidget *icon;
@@ -1923,7 +1910,7 @@ create_rotated_label (GtkWidget *widget)
     {
       window = gtk_dialog_new_with_buttons ("Rotated Label",
 					    GTK_WINDOW (gtk_widget_get_toplevel (widget)), 0,
-					    GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					    "_Close", GTK_RESPONSE_CLOSE,
 					    NULL);
 
       gtk_window_set_resizable (GTK_WINDOW (window), TRUE);
@@ -2054,7 +2041,7 @@ create_rotated_text (GtkWidget *widget)
 
       window = gtk_dialog_new_with_buttons ("Rotated Text",
 					    GTK_WINDOW (gtk_widget_get_toplevel (widget)), 0,
-					    GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					    "_Close", GTK_RESPONSE_CLOSE,
 					    NULL);
 
       gtk_window_set_resizable (GTK_WINDOW (window), TRUE);
@@ -2785,8 +2772,8 @@ create_image (GtkWidget *widget)
       gtk_container_add (GTK_CONTAINER (window), vbox);
 
       pack_image (vbox, "Stock Warning Dialog",
-                  gtk_image_new_from_stock (GTK_STOCK_DIALOG_WARNING,
-                                            GTK_ICON_SIZE_DIALOG));
+                  gtk_image_new_from_icon_name ("dialog-warning",
+                                                GTK_ICON_SIZE_DIALOG));
 
       pixbuf = gdk_pixbuf_new_from_xpm_data ((const char **) openfile);
       
@@ -2801,7 +2788,176 @@ create_image (GtkWidget *widget)
   else
     gtk_widget_destroy (window);
 }
-     
+
+/*
+ * ListBox demo
+ */
+
+static int
+list_sort_cb (GtkListBoxRow *a, GtkListBoxRow *b, gpointer data)
+{
+  gint aa = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (a), "value"));
+  gint bb = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (b), "value"));
+  return aa - bb;
+}
+
+static gboolean
+list_filter_all_cb (GtkListBoxRow *row, gpointer data)
+{
+  return FALSE;
+}
+
+static gboolean
+list_filter_odd_cb (GtkListBoxRow *row, gpointer data)
+{
+  gint value = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (row), "value"));
+
+  return value % 2 == 0;
+}
+
+static void
+list_sort_clicked_cb (GtkButton *button,
+                      gpointer data)
+{
+  GtkListBox *list = data;
+
+  gtk_list_box_set_sort_func (list, list_sort_cb, NULL, NULL);
+}
+
+static void
+list_filter_odd_clicked_cb (GtkButton *button,
+                            gpointer data)
+{
+  GtkListBox *list = data;
+
+  gtk_list_box_set_filter_func (list, list_filter_odd_cb, NULL, NULL);
+}
+
+static void
+list_filter_all_clicked_cb (GtkButton *button,
+                            gpointer data)
+{
+  GtkListBox *list = data;
+
+  gtk_list_box_set_filter_func (list, list_filter_all_cb, NULL, NULL);
+}
+
+
+static void
+list_unfilter_clicked_cb (GtkButton *button,
+                          gpointer data)
+{
+  GtkListBox *list = data;
+
+  gtk_list_box_set_filter_func (list, NULL, NULL, NULL);
+}
+
+static void
+add_placeholder_clicked_cb (GtkButton *button,
+                            gpointer data)
+{
+  GtkListBox *list = data;
+  GtkWidget *label;
+
+  label = gtk_label_new ("You filtered everything!!!");
+  gtk_widget_show (label);
+  gtk_list_box_set_placeholder (GTK_LIST_BOX (list), label);
+}
+
+static void
+remove_placeholder_clicked_cb (GtkButton *button,
+                            gpointer data)
+{
+  GtkListBox *list = data;
+
+  gtk_list_box_set_placeholder (GTK_LIST_BOX (list), NULL);
+}
+
+
+static void
+create_listbox (GtkWidget *widget)
+{
+  static GtkWidget *window = NULL;
+
+  if (!window)
+    {
+      GtkWidget *hbox, *vbox, *scrolled, *scrolled_box, *list, *label, *button;
+      GdkScreen *screen = gtk_widget_get_screen (widget);
+      int i;
+
+      window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+      gtk_window_set_screen (GTK_WINDOW (window), screen);
+
+      g_signal_connect (window, "destroy",
+                        G_CALLBACK (gtk_widget_destroyed),
+                        &window);
+      g_signal_connect (window, "delete-event",
+                        G_CALLBACK (gtk_true),
+                        NULL);
+
+      gtk_window_set_title (GTK_WINDOW (window), "listbox");
+
+      hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+      gtk_container_add (GTK_CONTAINER (window), hbox);
+
+      scrolled = gtk_scrolled_window_new (NULL, NULL);
+      gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+      gtk_container_add (GTK_CONTAINER (hbox), scrolled);
+
+      scrolled_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+      gtk_container_add (GTK_CONTAINER (scrolled), scrolled_box);
+
+      label = gtk_label_new ("This is \na LABEL\nwith rows");
+      gtk_container_add (GTK_CONTAINER (scrolled_box), label);
+
+      list = gtk_list_box_new();
+      gtk_list_box_set_adjustment (GTK_LIST_BOX (list), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolled)));
+      gtk_container_add (GTK_CONTAINER (scrolled_box), list);
+
+      for (i = 0; i < 1000; i++)
+        {
+          gint value = g_random_int_range (0, 10000);
+          label = gtk_label_new (g_strdup_printf ("Value %u", value));
+          gtk_widget_show (label);
+          gtk_container_add (GTK_CONTAINER (list), label);
+          g_object_set_data (G_OBJECT (gtk_widget_get_parent (label)), "value", GINT_TO_POINTER (value));
+        }
+
+      vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+      gtk_container_add (GTK_CONTAINER (hbox), vbox);
+
+      button = gtk_button_new_with_label ("sort");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (list_sort_clicked_cb), list);
+
+      button = gtk_button_new_with_label ("filter odd");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (list_filter_odd_clicked_cb), list);
+
+      button = gtk_button_new_with_label ("filter all");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (list_filter_all_clicked_cb), list);
+
+      button = gtk_button_new_with_label ("unfilter");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (list_unfilter_clicked_cb), list);
+
+      button = gtk_button_new_with_label ("add placeholder");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (add_placeholder_clicked_cb), list);
+
+      button = gtk_button_new_with_label ("remove placeholder");
+      gtk_container_add (GTK_CONTAINER (vbox), button);
+      g_signal_connect (button, "clicked", G_CALLBACK (remove_placeholder_clicked_cb), list);
+    }
+
+  if (!gtk_widget_get_visible (window))
+    gtk_widget_show_all (window);
+  else
+    gtk_widget_destroy (window);
+}
+
+
 /*
  * Menu demo
  */
@@ -2824,11 +2980,14 @@ create_menu (GdkScreen *screen, gint depth, gint length)
 
   group = NULL;
 
-  image = gtk_image_new_from_stock (GTK_STOCK_OPEN,
-                                    GTK_ICON_SIZE_MENU);
+  image = gtk_image_new_from_icon_name ("document-open",
+                                        GTK_ICON_SIZE_MENU);
   gtk_widget_show (image);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   menuitem = gtk_image_menu_item_new_with_label ("Image item");
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
+  gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (menuitem), TRUE);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
   gtk_widget_show (menuitem);
   
@@ -2881,11 +3040,14 @@ create_table_menu (GdkScreen *screen, gint cols, gint rows)
   j++;
 
   /* now fill the items submenu */
-  image = gtk_image_new_from_stock (GTK_STOCK_HELP,
-				    GTK_ICON_SIZE_MENU);
+  image = gtk_image_new_from_icon_name ("help-broswer",
+                                        GTK_ICON_SIZE_MENU);
   gtk_widget_show (image);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   menuitem = gtk_image_menu_item_new_with_label ("Image");
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
+  gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (menuitem), TRUE);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
   gtk_menu_attach (GTK_MENU (submenu), menuitem, 0, 1, 0, 1);
   gtk_widget_show (menuitem);
 
@@ -2897,11 +3059,14 @@ create_table_menu (GdkScreen *screen, gint cols, gint rows)
   gtk_menu_attach (GTK_MENU (submenu), menuitem, 0, 1, 1, 2);
   gtk_widget_show (menuitem);
   
-  image = gtk_image_new_from_stock (GTK_STOCK_HELP,
-				    GTK_ICON_SIZE_MENU);
+  image = gtk_image_new_from_icon_name ("help-browser",
+                                        GTK_ICON_SIZE_MENU);
   gtk_widget_show (image);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   menuitem = gtk_image_menu_item_new_with_label ("Image");
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
+  gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (menuitem), TRUE);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
   gtk_menu_attach (GTK_MENU (submenu), menuitem, 1, 2, 1, 2);
   gtk_widget_show (menuitem);
 
@@ -3102,11 +3267,14 @@ create_menus (GtkWidget *widget)
       gtk_menu_shell_append (GTK_MENU_SHELL (menubar), menuitem);
       gtk_widget_show (menuitem);
 
-      image = gtk_image_new_from_stock (GTK_STOCK_HELP,
-                                        GTK_ICON_SIZE_MENU);
+      image = gtk_image_new_from_icon_name ("help-browser",
+                                            GTK_ICON_SIZE_MENU);
       gtk_widget_show (image);
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       menuitem = gtk_image_menu_item_new_with_label ("Help");
       gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
+      gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (menuitem), TRUE);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), create_menu (screen, 4, 5));
       gtk_widget_set_hexpand (menuitem, TRUE);
       gtk_widget_set_halign (menuitem, GTK_ALIGN_END);
@@ -3132,10 +3300,6 @@ create_menus (GtkWidget *widget)
       menu = create_menu (screen, 1, 5);
       gtk_menu_set_accel_group (GTK_MENU (menu), accel_group);
 
-      menuitem = gtk_image_menu_item_new_from_stock (GTK_STOCK_NEW, accel_group);
-      gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
-      gtk_widget_show (menuitem);
-      
       menuitem = gtk_check_menu_item_new_with_label ("Accelerate Me");
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), menuitem);
       gtk_widget_show (menuitem);
@@ -3337,7 +3501,7 @@ create_key_lookup (GtkWidget *widget)
       GtkWidget *content_area;
 
       window = gtk_dialog_new_with_buttons ("Key Lookup", NULL, 0,
-					    GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					    "_Close", GTK_RESPONSE_CLOSE,
 					    NULL);
 
       gtk_window_set_screen (GTK_WINDOW (window),
@@ -3430,10 +3594,11 @@ cmw_file (GtkWidget *widget, GtkWidget *parent)
     GtkWidget *fs;
 
     fs = gtk_file_chooser_dialog_new ("This is a modal file selection dialog",
-      GTK_WINDOW (parent), GTK_FILE_CHOOSER_ACTION_OPEN,
-      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-      NULL);
+                                      GTK_WINDOW (parent),
+                                      GTK_FILE_CHOOSER_ACTION_OPEN,
+                                      "_Open", GTK_RESPONSE_ACCEPT,
+                                      "_Cancel", GTK_RESPONSE_CANCEL,
+                                      NULL);
     gtk_window_set_screen (GTK_WINDOW (fs), gtk_widget_get_screen (parent));
     gtk_window_set_modal (GTK_WINDOW (fs), TRUE);
 
@@ -4122,7 +4287,7 @@ create_size_group_window (GdkScreen    *screen,
 
   window = gtk_dialog_new_with_buttons ("GtkSizeGroup",
 					NULL, 0,
-					GTK_STOCK_CLOSE,
+					"_Close",
 					GTK_RESPONSE_NONE,
 					NULL);
 
@@ -4801,27 +4966,30 @@ create_cursors (GtkWidget *widget)
 			NULL);
 
 #ifdef GDK_WINDOWING_X11
-      hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-      gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
-      gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
+      if (GDK_IS_X11_DISPLAY (gtk_widget_get_display (vbox)))
+        {
+          hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+          gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
+          gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
 
-      label = gtk_label_new ("Cursor Theme : ");
-      gtk_widget_set_halign (label, GTK_ALIGN_START);
-      gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
-      gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+          label = gtk_label_new ("Cursor Theme : ");
+          gtk_widget_set_halign (label, GTK_ALIGN_START);
+          gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
+          gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
 
-      entry = gtk_entry_new ();
-      gtk_entry_set_text (GTK_ENTRY (entry), "default");
-      gtk_box_pack_start (GTK_BOX (hbox), entry, FALSE, TRUE, 0);
+          entry = gtk_entry_new ();
+          gtk_entry_set_text (GTK_ENTRY (entry), "default");
+          gtk_box_pack_start (GTK_BOX (hbox), entry, FALSE, TRUE, 0);
 
-      size = gtk_spin_button_new_with_range (1.0, 64.0, 1.0);
-      gtk_spin_button_set_value (GTK_SPIN_BUTTON (size), 24.0);
-      gtk_box_pack_start (GTK_BOX (hbox), size, TRUE, TRUE, 0);
-      
-      g_signal_connect (entry, "changed", 
-			G_CALLBACK (change_cursor_theme), hbox);
-      g_signal_connect (size, "changed", 
-			G_CALLBACK (change_cursor_theme), hbox);
+          size = gtk_spin_button_new_with_range (1.0, 64.0, 1.0);
+          gtk_spin_button_set_value (GTK_SPIN_BUTTON (size), 24.0);
+          gtk_box_pack_start (GTK_BOX (hbox), size, TRUE, TRUE, 0);
+
+          g_signal_connect (entry, "changed", 
+                            G_CALLBACK (change_cursor_theme), hbox);
+          g_signal_connect (size, "changed", 
+                            G_CALLBACK (change_cursor_theme), hbox);
+        }
 #endif
 
       hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
@@ -5016,8 +5184,8 @@ create_forward_back (const char       *title,
 {
   GtkWidget *frame = gtk_frame_new (title);
   GtkWidget *bbox = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
-  GtkWidget *back_button = gtk_button_new_from_stock (GTK_STOCK_GO_BACK);
-  GtkWidget *forward_button = gtk_button_new_from_stock (GTK_STOCK_GO_FORWARD);
+  GtkWidget *back_button = gtk_button_new_with_label ("Back");
+  GtkWidget *forward_button = gtk_button_new_with_label ("Forward");
 
   gtk_container_set_border_width (GTK_CONTAINER (bbox), 5);
   
@@ -5148,7 +5316,7 @@ create_focus (GtkWidget *widget)
       
       window = gtk_dialog_new_with_buttons ("Keyboard focus navigation",
                                             NULL, 0,
-                                            GTK_STOCK_CLOSE,
+                                            "_Close",
                                             GTK_RESPONSE_NONE,
                                             NULL);
 
@@ -5325,7 +5493,6 @@ typedef struct
 {
   GtkWidget *combo;
   GtkWidget *entry;
-  GtkWidget *radio_dpy;
   GtkWidget *toplevel;
   GtkWidget *dialog_window;
 } ScreenDisplaySelection;
@@ -5339,58 +5506,43 @@ screen_display_check (GtkWidget *widget, ScreenDisplaySelection *data)
   GdkScreen *new_screen = NULL;
   GdkScreen *current_screen = gtk_widget_get_screen (widget);
   
-  if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (data->radio_dpy)))
-    {
-      display_name = gtk_entry_get_text (GTK_ENTRY (data->entry));
-      display = gdk_display_open (display_name);
+  display_name = gtk_entry_get_text (GTK_ENTRY (data->entry));
+  display = gdk_display_open (display_name);
       
-      if (!display)
-	{
-	  dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (widget)),
-					   GTK_DIALOG_DESTROY_WITH_PARENT,
-					   GTK_MESSAGE_ERROR,
-					   GTK_BUTTONS_OK,
-					   "The display :\n%s\ncannot be opened",
-					   display_name);
-	  gtk_window_set_screen (GTK_WINDOW (dialog), current_screen);
-	  gtk_widget_show (dialog);
-	  g_signal_connect (dialog, "response",
-			    G_CALLBACK (gtk_widget_destroy),
-			    NULL);
-	}
-      else
-        {
-          GtkTreeModel *model = gtk_combo_box_get_model (GTK_COMBO_BOX (data->combo));
-          gint i = 0;
-          GtkTreeIter iter;
-          gboolean found = FALSE;
-          while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
-            {
-              gchar *name;
-              gtk_tree_model_get (model, &iter, 0, &name, -1);
-              found = !g_ascii_strcasecmp (display_name, name);
-              g_free (name);
-
-              if (found)
-                break;
-            }
-          if (!found)
-            gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (data->combo), display_name);
-          new_screen = gdk_display_get_default_screen (display);
-        }
+  if (!display)
+    {
+      dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (widget)),
+                                       GTK_DIALOG_DESTROY_WITH_PARENT,
+                                       GTK_MESSAGE_ERROR,
+                                       GTK_BUTTONS_OK,
+                                       "The display :\n%s\ncannot be opened",
+                                       display_name);
+      gtk_window_set_screen (GTK_WINDOW (dialog), current_screen);
+      gtk_widget_show (dialog);
+      g_signal_connect (dialog, "response",
+                        G_CALLBACK (gtk_widget_destroy),
+                        NULL);
     }
   else
     {
-      gint number_of_screens = gdk_display_get_n_screens (display);
-      gint screen_num = gdk_screen_get_number (current_screen);
-      if ((screen_num +1) < number_of_screens)
-	new_screen = gdk_display_get_screen (display, screen_num + 1);
-      else
-	new_screen = gdk_display_get_screen (display, 0);
-    }
-  
-  if (new_screen) 
-    {
+      GtkTreeModel *model = gtk_combo_box_get_model (GTK_COMBO_BOX (data->combo));
+      gint i = 0;
+      GtkTreeIter iter;
+      gboolean found = FALSE;
+      while (gtk_tree_model_iter_nth_child (model, &iter, NULL, i++))
+        {
+          gchar *name;
+          gtk_tree_model_get (model, &iter, 0, &name, -1);
+          found = !g_ascii_strcasecmp (display_name, name);
+          g_free (name);
+
+          if (found)
+            break;
+        }
+      if (!found)
+        gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (data->combo), display_name);
+      new_screen = gdk_display_get_default_screen (display);
+
       gtk_window_set_screen (GTK_WINDOW (data->toplevel), new_screen);
       gtk_widget_destroy (data->dialog_window);
     }
@@ -5406,11 +5558,10 @@ void
 create_display_screen (GtkWidget *widget)
 {
   GtkWidget *grid, *frame, *window, *combo_dpy, *vbox;
-  GtkWidget *radio_dpy, *radio_scr, *applyb, *cancelb;
+  GtkWidget *label_dpy, *applyb, *cancelb;
   GtkWidget *bbox;
   ScreenDisplaySelection *scr_dpy_data;
   GdkScreen *screen = gtk_widget_get_screen (widget);
-  GdkDisplay *display = gdk_screen_get_display (screen);
 
   window = g_object_new (gtk_window_get_type (),
 			 "screen", screen,
@@ -5424,7 +5575,7 @@ create_display_screen (GtkWidget *widget)
   vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 3);
   gtk_container_add (GTK_CONTAINER (window), vbox);
   
-  frame = gtk_frame_new ("Select screen or display");
+  frame = gtk_frame_new ("Select display");
   gtk_container_add (GTK_CONTAINER (vbox), frame);
   
   grid = gtk_grid_new ();
@@ -5433,30 +5584,19 @@ create_display_screen (GtkWidget *widget)
 
   gtk_container_add (GTK_CONTAINER (frame), grid);
 
-  radio_dpy = gtk_radio_button_new_with_label (NULL, "move to another X display");
-  if (gdk_display_get_n_screens(display) > 1)
-    radio_scr = gtk_radio_button_new_with_label 
-    (gtk_radio_button_get_group (GTK_RADIO_BUTTON (radio_dpy)), "move to next screen");
-  else
-    {    
-      radio_scr = gtk_radio_button_new_with_label 
-	(gtk_radio_button_get_group (GTK_RADIO_BUTTON (radio_dpy)), 
-	 "only one screen on the current display");
-      gtk_widget_set_sensitive (radio_scr, FALSE);
-    }
+  label_dpy = gtk_label_new ("move to another X display");
   combo_dpy = gtk_combo_box_text_new_with_entry ();
   gtk_widget_set_hexpand (combo_dpy, TRUE);
   gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (combo_dpy), "diabolo:0.0");
   gtk_entry_set_text (GTK_ENTRY (gtk_bin_get_child (GTK_BIN (combo_dpy))),
                       "<hostname>:<X Server Num>.<Screen Num>");
 
-  gtk_grid_attach (GTK_GRID (grid), radio_dpy, 0, 0, 1, 1);
-  gtk_grid_attach (GTK_GRID (grid), radio_scr, 0, 1, 1, 1);
-  gtk_grid_attach (GTK_GRID (grid), combo_dpy, 1, 0, 1, 1);
+  gtk_grid_attach (GTK_GRID (grid), label_dpy, 0, 0, 1, 1);
+  gtk_grid_attach (GTK_GRID (grid), combo_dpy, 0, 1, 1, 1);
 
   bbox = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
-  applyb = gtk_button_new_from_stock (GTK_STOCK_APPLY);
-  cancelb = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+  applyb = gtk_button_new_with_label ("_Apply");
+  cancelb = gtk_button_new_with_label ("_Cancel");
   
   gtk_container_add (GTK_CONTAINER (vbox), bbox);
 
@@ -5466,7 +5606,6 @@ create_display_screen (GtkWidget *widget)
   scr_dpy_data = g_new0 (ScreenDisplaySelection, 1);
 
   scr_dpy_data->entry = gtk_bin_get_child (GTK_BIN (combo_dpy));
-  scr_dpy_data->radio_dpy = radio_dpy;
   scr_dpy_data->toplevel = gtk_widget_get_toplevel (widget);
   scr_dpy_data->dialog_window = window;
 
@@ -7766,6 +7905,7 @@ window_controls (GtkWidget *window)
 			    control_window);
   gtk_box_pack_end (GTK_BOX (vbox), button, FALSE, FALSE, 0);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   button = gtk_button_new_with_label ("Reshow with initial size");
   g_signal_connect_object (button,
 			   "clicked",
@@ -7773,6 +7913,7 @@ window_controls (GtkWidget *window)
 			   window,
 			   G_CONNECT_SWAPPED);
   gtk_box_pack_end (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
   
   button = gtk_button_new_with_label ("Queue resize");
   g_signal_connect_object (button,
@@ -8526,7 +8667,7 @@ create_properties (GtkWidget *widget)
       vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
       gtk_container_add (GTK_CONTAINER (window), vbox);
             
-      label = gtk_label_new ("This is just a dumb test to test properties.\nIf you need a generic module, get GLE.");
+      label = gtk_label_new ("This is just a dumb test to test properties.\nIf you need a generic module, get gtkparasite.");
       gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 0);
       
       button = gtk_button_new_with_label ("Query properties");
@@ -9748,7 +9889,7 @@ struct {
   { "composited window", create_composited_window },
   { "cursors", create_cursors },
   { "dialog", create_dialog },
-  { "display & screen", create_display_screen, TRUE },
+  { "display", create_display_screen, TRUE },
   { "entry", create_entry },
   { "event box", create_event_box },
   { "event watcher", create_event_watcher },
@@ -9760,6 +9901,7 @@ struct {
   { "key lookup", create_key_lookup },
   { "labels", create_labels },
   { "layout", create_layout },
+  { "listbox", create_listbox },
   { "menus", create_menus },
   { "message dialog", create_message_dialog },
   { "modal window", create_modal_window, TRUE },

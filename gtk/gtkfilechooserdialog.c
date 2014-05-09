@@ -61,8 +61,8 @@
  * dialog = gtk_file_chooser_dialog_new ("Open File",
  *                                       parent_window,
  *                                       GTK_FILE_CHOOSER_ACTION_OPEN,
- *                                       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
- *                                       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+ *                                       _("_Cancel"), GTK_RESPONSE_CANCEL,
+ *                                       _("_Open"), GTK_RESPONSE_ACCEPT,
  *                                       NULL);
  *
  * if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
@@ -85,8 +85,8 @@
  * dialog = gtk_file_chooser_dialog_new ("Save File",
  *                                       parent_window,
  *                                       GTK_FILE_CHOOSER_ACTION_SAVE,
- *                                       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
- *                                       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+ *                                       _("_Cancel"), GTK_RESPONSE_CANCEL,
+ *                                       _("_Save"), GTK_RESPONSE_ACCEPT,
  *                                       NULL);
  * gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
  *
@@ -157,8 +157,8 @@
  * dialog = gtk_file_chooser_dialog_new ("Open File",
  *                                       parent_window,
  *                                       GTK_FILE_CHOOSER_ACTION_OPEN,
- *                                       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
- *                                       GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+ *                                       _("_Cancel"), GTK_RESPONSE_CANCEL,
+ *                                       _("_Open"), GTK_RESPONSE_ACCEPT,
  *                                       NULL);
  * </programlisting></informalexample>
  * </para>
@@ -193,13 +193,14 @@
  */
 
 
-#define GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE(o)  (GTK_FILE_CHOOSER_DIALOG (o)->priv)
+struct _GtkFileChooserDialogPrivate
+{
+  GtkWidget *widget;
 
-static void gtk_file_chooser_dialog_finalize   (GObject                   *object);
+  /* for use with GtkFileChooserEmbed */
+  gboolean response_requested;
+};
 
-static GObject* gtk_file_chooser_dialog_constructor  (GType                  type,
-						      guint                  n_construct_properties,
-						      GObjectConstructParam *construct_params);
 static void     gtk_file_chooser_dialog_set_property (GObject               *object,
 						      guint                  prop_id,
 						      const GValue          *value,
@@ -211,11 +212,18 @@ static void     gtk_file_chooser_dialog_get_property (GObject               *obj
 
 static void     gtk_file_chooser_dialog_map          (GtkWidget             *widget);
 static void     gtk_file_chooser_dialog_unmap        (GtkWidget             *widget);
+static void     file_chooser_widget_file_activated   (GtkFileChooser        *chooser,
+						      GtkFileChooserDialog  *dialog);
+static void     file_chooser_widget_default_size_changed (GtkWidget            *widget,
+							  GtkFileChooserDialog *dialog);
+static void     file_chooser_widget_response_requested (GtkWidget            *widget,
+							GtkFileChooserDialog *dialog);
 
 static void response_cb (GtkDialog *dialog,
 			 gint       response_id);
 
 G_DEFINE_TYPE_WITH_CODE (GtkFileChooserDialog, gtk_file_chooser_dialog, GTK_TYPE_DIALOG,
+                         G_ADD_PRIVATE (GtkFileChooserDialog)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_FILE_CHOOSER,
 						_gtk_file_chooser_delegate_iface_init))
 
@@ -225,10 +233,8 @@ gtk_file_chooser_dialog_class_init (GtkFileChooserDialogClass *class)
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (class);
 
-  gobject_class->constructor = gtk_file_chooser_dialog_constructor;
   gobject_class->set_property = gtk_file_chooser_dialog_set_property;
   gobject_class->get_property = gtk_file_chooser_dialog_get_property;
-  gobject_class->finalize = gtk_file_chooser_dialog_finalize;
 
   widget_class->map       = gtk_file_chooser_dialog_map;
   widget_class->unmap     = gtk_file_chooser_dialog_unmap;
@@ -237,47 +243,28 @@ gtk_file_chooser_dialog_class_init (GtkFileChooserDialogClass *class)
 
   _gtk_file_chooser_install_properties (gobject_class);
 
-  g_type_class_add_private (class, sizeof (GtkFileChooserDialogPrivate));
+  /* Bind class to template
+   */
+  gtk_widget_class_set_template_from_resource (widget_class,
+					       "/org/gtk/libgtk/gtkfilechooserdialog.ui");
+
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserDialog, widget);
+  gtk_widget_class_bind_template_callback (widget_class, response_cb);
+  gtk_widget_class_bind_template_callback (widget_class, file_chooser_widget_file_activated);
+  gtk_widget_class_bind_template_callback (widget_class, file_chooser_widget_default_size_changed);
+  gtk_widget_class_bind_template_callback (widget_class, file_chooser_widget_response_requested);
 }
 
 static void
 gtk_file_chooser_dialog_init (GtkFileChooserDialog *dialog)
 {
-  GtkWidget *action_area, *content_area;
-  GtkFileChooserDialogPrivate *priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog,
-								   GTK_TYPE_FILE_CHOOSER_DIALOG,
-								   GtkFileChooserDialogPrivate);
-  GtkDialog *fc_dialog = GTK_DIALOG (dialog);
-
-  dialog->priv = priv;
+  dialog->priv = gtk_file_chooser_dialog_get_instance_private (dialog);
   dialog->priv->response_requested = FALSE;
 
-  content_area = gtk_dialog_get_content_area (fc_dialog);
-  action_area = gtk_dialog_get_action_area (fc_dialog);
+  gtk_widget_init_template (GTK_WIDGET (dialog));
 
-  gtk_container_set_border_width (GTK_CONTAINER (fc_dialog), 5);
-  gtk_box_set_spacing (GTK_BOX (content_area), 2); /* 2 * 5 + 2 = 12 */
-  gtk_container_set_border_width (GTK_CONTAINER (action_area), 5);
-
-  gtk_window_set_role (GTK_WINDOW (dialog), "GtkFileChooserDialog");
-
-  /* We do a signal connection here rather than overriding the method in
-   * class_init because GtkDialog::response is a RUN_LAST signal.  We want *our*
-   * handler to be run *first*, regardless of whether the user installs response
-   * handlers of his own.
-   */
-  g_signal_connect (dialog, "response",
-		    G_CALLBACK (response_cb), NULL);
-}
-
-static void
-gtk_file_chooser_dialog_finalize (GObject *object)
-{
-  GtkFileChooserDialog *dialog = GTK_FILE_CHOOSER_DIALOG (object);
-
-  g_free (dialog->priv->file_system);
-
-  G_OBJECT_CLASS (gtk_file_chooser_dialog_parent_class)->finalize (object);  
+  _gtk_file_chooser_set_delegate (GTK_FILE_CHOOSER (dialog),
+				  GTK_FILE_CHOOSER (dialog->priv->widget));
 }
 
 static gboolean
@@ -352,7 +339,7 @@ file_chooser_widget_default_size_changed (GtkWidget            *widget,
   gint default_width, default_height;
   GtkRequisition req, widget_req;
 
-  priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (dialog);
+  priv = gtk_file_chooser_dialog_get_instance_private (dialog);
 
   /* Unset any previously set size */
   gtk_widget_set_size_request (GTK_WIDGET (dialog), -1, -1);
@@ -429,50 +416,6 @@ file_chooser_widget_response_requested (GtkWidget            *widget,
 
   g_list_free (children);
 }
-  
-static GObject*
-gtk_file_chooser_dialog_constructor (GType                  type,
-				     guint                  n_construct_properties,
-				     GObjectConstructParam *construct_params)
-{
-  GtkFileChooserDialogPrivate *priv;
-  GtkWidget *content_area;
-  GObject *object;
-
-  object = G_OBJECT_CLASS (gtk_file_chooser_dialog_parent_class)->constructor (type,
-									       n_construct_properties,
-									       construct_params);
-  priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (object);
-
-  gtk_widget_push_composite_child ();
-
-  if (priv->file_system)
-    priv->widget = g_object_new (GTK_TYPE_FILE_CHOOSER_WIDGET,
-				 NULL);
-  else
-    priv->widget = g_object_new (GTK_TYPE_FILE_CHOOSER_WIDGET, NULL);
-
-  g_signal_connect (priv->widget, "file-activated",
-		    G_CALLBACK (file_chooser_widget_file_activated), object);
-  g_signal_connect (priv->widget, "default-size-changed",
-		    G_CALLBACK (file_chooser_widget_default_size_changed), object);
-  g_signal_connect (priv->widget, "response-requested",
-		    G_CALLBACK (file_chooser_widget_response_requested), object);
-
-  content_area = gtk_dialog_get_content_area (GTK_DIALOG (object));
-
-  gtk_container_set_border_width (GTK_CONTAINER (priv->widget), 5);
-  gtk_box_pack_start (GTK_BOX (content_area), priv->widget, TRUE, TRUE, 0);
-
-  gtk_widget_show (priv->widget);
-
-  _gtk_file_chooser_set_delegate (GTK_FILE_CHOOSER (object),
-				  GTK_FILE_CHOOSER (priv->widget));
-
-  gtk_widget_pop_composite_child ();
-
-  return object;
-}
 
 static void
 gtk_file_chooser_dialog_set_property (GObject         *object,
@@ -481,7 +424,9 @@ gtk_file_chooser_dialog_set_property (GObject         *object,
 				      GParamSpec      *pspec)
 
 {
-  GtkFileChooserDialogPrivate *priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (object);
+  GtkFileChooserDialogPrivate *priv;
+
+  priv = gtk_file_chooser_dialog_get_instance_private (GTK_FILE_CHOOSER_DIALOG (object));
 
   switch (prop_id)
     {
@@ -497,7 +442,9 @@ gtk_file_chooser_dialog_get_property (GObject         *object,
 				      GValue          *value,
 				      GParamSpec      *pspec)
 {
-  GtkFileChooserDialogPrivate *priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (object);
+  GtkFileChooserDialogPrivate *priv;
+  
+  priv = gtk_file_chooser_dialog_get_instance_private (GTK_FILE_CHOOSER_DIALOG (object));
 
   g_object_get_property (G_OBJECT (priv->widget), pspec->name, value);
 }
@@ -530,7 +477,7 @@ static void
 gtk_file_chooser_dialog_map (GtkWidget *widget)
 {
   GtkFileChooserDialog *dialog = GTK_FILE_CHOOSER_DIALOG (widget);
-  GtkFileChooserDialogPrivate *priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (dialog);
+  GtkFileChooserDialogPrivate *priv = dialog->priv;
 
   ensure_default_response (dialog);
 
@@ -568,14 +515,18 @@ gtk_file_chooser_dialog_unmap (GtkWidget *widget)
   GTK_WIDGET_CLASS (gtk_file_chooser_dialog_parent_class)->unmap (widget);
 }
 
-/* GtkDialog::response handler */
+/* We do a signal connection here rather than overriding the method in
+ * class_init because GtkDialog::response is a RUN_LAST signal.  We want *our*
+ * handler to be run *first*, regardless of whether the user installs response
+ * handlers of his own.
+ */
 static void
 response_cb (GtkDialog *dialog,
 	     gint       response_id)
 {
   GtkFileChooserDialogPrivate *priv;
 
-  priv = GTK_FILE_CHOOSER_DIALOG_GET_PRIVATE (dialog);
+  priv = gtk_file_chooser_dialog_get_instance_private (GTK_FILE_CHOOSER_DIALOG (dialog));
 
   /* Act only on response IDs we recognize */
   if (is_stock_accept_response_id (response_id)

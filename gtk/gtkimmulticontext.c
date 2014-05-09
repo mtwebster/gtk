@@ -106,7 +106,7 @@ static void propagate_purpose (GtkIMMulticontext *context);
 
 static const gchar *global_context_id = NULL;
 
-G_DEFINE_TYPE (GtkIMMulticontext, gtk_im_multicontext, GTK_TYPE_IM_CONTEXT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkIMMulticontext, gtk_im_multicontext, GTK_TYPE_IM_CONTEXT)
 
 static void
 gtk_im_multicontext_class_init (GtkIMMulticontextClass *class)
@@ -128,8 +128,6 @@ gtk_im_multicontext_class_init (GtkIMMulticontextClass *class)
   im_context_class->get_surrounding = gtk_im_multicontext_get_surrounding;
 
   gobject_class->finalize = gtk_im_multicontext_finalize;
-
-  g_type_class_add_private (gobject_class, sizeof (GtkIMMulticontextPrivate));   
 }
 
 static void
@@ -137,7 +135,7 @@ gtk_im_multicontext_init (GtkIMMulticontext *multicontext)
 {
   GtkIMMulticontextPrivate *priv;
   
-  multicontext->priv = G_TYPE_INSTANCE_GET_PRIVATE (multicontext, GTK_TYPE_IM_MULTICONTEXT, GtkIMMulticontextPrivate);
+  multicontext->priv = gtk_im_multicontext_get_instance_private (multicontext);
   priv = multicontext->priv;
 
   priv->slave = NULL;
@@ -592,6 +590,11 @@ pathnamecmp (const char *a,
  * Add menuitems for various available input methods to a menu;
  * the menuitems, when selected, will switch the input method
  * for the context and the global default input method.
+ *
+ * Deprecated: 3.10: It is better to use the system-wide input
+ *     method framework for changing input methods. Modern
+ *     desktop shells offer on-screen displays for this that
+ *     can triggered with a keyboard shortcut, e.g. Super-Space.
  **/
 void
 gtk_im_multicontext_append_menuitems (GtkIMMulticontext *context,

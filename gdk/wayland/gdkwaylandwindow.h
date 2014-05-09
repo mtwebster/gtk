@@ -42,10 +42,25 @@ typedef struct _GdkWaylandWindowClass GdkWaylandWindowClass;
 #define GDK_IS_WAYLAND_WINDOW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GDK_TYPE_WAYLAND_WINDOW))
 #define GDK_WAYLAND_WINDOW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GDK_TYPE_WAYLAND_WINDOW, GdkWaylandWindowClass))
 
+GDK_AVAILABLE_IN_ALL
 GType                    gdk_wayland_window_get_type             (void);
 
+GDK_AVAILABLE_IN_ALL
 struct wl_surface       *gdk_wayland_window_get_wl_surface       (GdkWindow *window);
+GDK_AVAILABLE_IN_ALL
 struct wl_shell_surface *gdk_wayland_window_get_wl_shell_surface (GdkWindow *window);
+
+GDK_AVAILABLE_IN_ALL
+void                     gdk_wayland_window_set_use_custom_surface (GdkWindow *window);
+
+GDK_AVAILABLE_IN_3_10
+void                     gdk_wayland_window_set_dbus_properties_libgtk_only (GdkWindow  *window,
+									     const char *application_id,
+									     const char *app_menu_path,
+									     const char *menubar_path,
+									     const char *window_object_path,
+									     const char *application_object_path,
+									     const char *unique_bus_name);
 
 G_END_DECLS
 

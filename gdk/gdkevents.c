@@ -96,16 +96,16 @@ _gdk_event_queue_find_first (GdkDisplay *display)
     {
       GdkEventPrivate *event = tmp_list->data;
 
-      if (event->flags & GDK_EVENT_PENDING)
-        continue;
+      if (!(event->flags & GDK_EVENT_PENDING))
+        {
+          if (pending_motion)
+            return pending_motion;
 
-      if (pending_motion)
-        return pending_motion;
-
-      if (event->event.type == GDK_MOTION_NOTIFY && !display->flushing_events)
-        pending_motion = tmp_list;
-      else
-        return tmp_list;
+          if (event->event.type == GDK_MOTION_NOTIFY && !display->flushing_events)
+            pending_motion = tmp_list;
+          else
+            return tmp_list;
+        }
 
       tmp_list = g_list_next (tmp_list);
     }
@@ -796,6 +796,24 @@ gdk_event_free (GdkEvent *event)
 
   g_hash_table_remove (event_hash, event);
   g_slice_free (GdkEventPrivate, (GdkEventPrivate*) event);
+}
+
+/**
+ * gdk_event_get_window:
+ * @event: a #GdkEvent
+ *
+ * Extracts the #GdkWindow associated with an event.
+ *
+ * Return value: (transfer none): The #GdkWindow associated with the event
+ *
+ * Since: 3.10
+ */
+GdkWindow *
+gdk_event_get_window (const GdkEvent *event)
+{
+  g_return_val_if_fail (event != NULL, NULL);
+
+  return event->any.window;
 }
 
 /**
@@ -2183,4 +2201,22 @@ gdk_setting_get (const gchar *name,
 		 GValue      *value)
 {
   return gdk_screen_get_setting (gdk_screen_get_default (), name, value);
+}
+
+/**
+ * gdk_event_get_event_type:
+ * @event: a #GdkEvent
+ *
+ * Retrieves the type of the event.
+ *
+ * Return value: a #GdkEventType
+ *
+ * Since: 3.10
+ */
+GdkEventType
+gdk_event_get_event_type (const GdkEvent *event)
+{
+  g_return_val_if_fail (event != NULL, GDK_NOTHING);
+
+  return event->type;
 }

@@ -524,9 +524,11 @@ gail_focus_notify (GtkWidget *widget)
       /*
        * Do not report focus on redundant object
        */
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       if (atk_obj &&
 	  (atk_object_get_role(atk_obj) != ATK_ROLE_REDUNDANT_OBJECT))
 	  atk_focus_tracker_notify (atk_obj);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       if (atk_obj && transient)
         g_object_unref (atk_obj);
       if (subsequent_focus_widget)
@@ -967,35 +969,6 @@ do_window_event_initialization (void)
   g_signal_connect (root, "children-changed::remove", (GCallback) window_removed, NULL);
 }
 
-static void
-undo_window_event_initialization (void)
-{
-  AtkObject *root;
-
-  root = atk_get_root ();
-
-  g_signal_handlers_disconnect_by_func (root, (GCallback) window_added, NULL);
-  g_signal_handlers_disconnect_by_func (root, (GCallback) window_removed, NULL);
-}
-
-
-void
-_gtk_accessibility_shutdown (void)
-{
-  if (!initialized)
-    return;
-
-  initialized = FALSE;
-
-  g_clear_object (&atk_misc_instance);
-
-#ifdef GDK_WINDOWING_X11
-  atk_bridge_adaptor_cleanup ();
-#endif
-
-  undo_window_event_initialization ();
-}
-
 void
 _gtk_accessibility_init (void)
 {
@@ -1005,8 +978,10 @@ _gtk_accessibility_init (void)
   initialized = TRUE;
   quark_focus_object = g_quark_from_static_string ("gail-focus-object");
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   atk_focus_tracker_init (gail_focus_tracker_init);
   focus_tracker_id = atk_add_focus_tracker (gail_focus_tracker);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   _gtk_accessibility_override_atk_util ();
   do_window_event_initialization ();

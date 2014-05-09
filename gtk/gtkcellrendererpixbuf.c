@@ -17,8 +17,9 @@
 
 #include "config.h"
 #include <stdlib.h>
+#include <cairo-gobject.h>
 #include "gtkcellrendererpixbuf.h"
-#include "gtkiconfactory.h"
+#include "deprecated/gtkiconfactory.h"
 #include "gtkiconhelperprivate.h"
 #include "gtkicontheme.h"
 #include "gtkintl.h"
@@ -33,8 +34,8 @@
  *
  * A #GtkCellRendererPixbuf can be used to render an image in a cell. It allows
  * to render either a given #GdkPixbuf (set via the
- * #GtkCellRendererPixbuf:pixbuf property) or a stock icon (set via the
- * #GtkCellRendererPixbuf:stock-id property).
+ * #GtkCellRendererPixbuf:pixbuf property) or a named icon (set via the
+ * #GtkCellRendererPixbuf:icon-name property).
  *
  * To support the tree view, #GtkCellRendererPixbuf also supports rendering two
  * alternative pixbufs, when the #GtkCellRenderer:is-expander property is %TRUE.
@@ -74,6 +75,7 @@ enum {
   PROP_PIXBUF,
   PROP_PIXBUF_EXPANDER_OPEN,
   PROP_PIXBUF_EXPANDER_CLOSED,
+  PROP_SURFACE,
   PROP_STOCK_ID,
   PROP_STOCK_SIZE,
   PROP_STOCK_DETAIL,
@@ -96,19 +98,16 @@ struct _GtkCellRendererPixbufPrivate
   gchar *stock_detail;
 };
 
-
-G_DEFINE_TYPE (GtkCellRendererPixbuf, gtk_cell_renderer_pixbuf, GTK_TYPE_CELL_RENDERER)
-
+G_DEFINE_TYPE_WITH_PRIVATE (GtkCellRendererPixbuf, gtk_cell_renderer_pixbuf, GTK_TYPE_CELL_RENDERER)
 
 static void
 gtk_cell_renderer_pixbuf_init (GtkCellRendererPixbuf *cellpixbuf)
 {
   GtkCellRendererPixbufPrivate *priv;
 
-  cellpixbuf->priv = G_TYPE_INSTANCE_GET_PRIVATE (cellpixbuf,
-                                                  GTK_TYPE_CELL_RENDERER_PIXBUF,
-                                                  GtkCellRendererPixbufPrivate);
+  cellpixbuf->priv = gtk_cell_renderer_pixbuf_get_instance_private (cellpixbuf);
   priv = cellpixbuf->priv;
+
   priv->icon_helper = _gtk_icon_helper_new ();
   priv->icon_size = GTK_ICON_SIZE_MENU;
 }
@@ -168,14 +167,26 @@ gtk_cell_renderer_pixbuf_class_init (GtkCellRendererPixbufClass *class)
 							P_("Pixbuf for closed expander"),
 							GDK_TYPE_PIXBUF,
 							GTK_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+				   PROP_SURFACE,
+				   g_param_spec_boxed ("surface",
+						       P_("surface"),
+						       P_("The surface to render"),
+						       CAIRO_GOBJECT_TYPE_SURFACE,
+						       GTK_PARAM_READWRITE));
 
+  /**
+   * GtkCellRendererPixbuf:stock-id:
+   *
+   * Deprecated: 3.10: Use #GtkCellRendererPixbuf:icon-name instead.
+   */
   g_object_class_install_property (object_class,
 				   PROP_STOCK_ID,
 				   g_param_spec_string ("stock-id",
 							P_("Stock ID"),
 							P_("The stock ID of the stock icon to render"),
 							NULL,
-							GTK_PARAM_READWRITE));
+							GTK_PARAM_READWRITE | G_PARAM_DEPRECATED));
 
   g_object_class_install_property (object_class,
 				   PROP_STOCK_SIZE,
@@ -249,8 +260,6 @@ gtk_cell_renderer_pixbuf_class_init (GtkCellRendererPixbufClass *class)
 
 
 
-  g_type_class_add_private (object_class, sizeof (GtkCellRendererPixbufPrivate));
-
   gtk_cell_renderer_class_set_accessible_type (cell_class, GTK_TYPE_IMAGE_CELL_ACCESSIBLE);
 }
 
@@ -273,6 +282,9 @@ gtk_cell_renderer_pixbuf_get_property (GObject        *object,
       break;
     case PROP_PIXBUF_EXPANDER_CLOSED:
       g_value_set_object (value, priv->pixbuf_expander_closed);
+      break;
+    case PROP_SURFACE:
+      g_value_set_boxed (value, _gtk_icon_helper_peek_surface (priv->icon_helper));
       break;
     case PROP_STOCK_ID:
       g_value_set_string (value, _gtk_icon_helper_get_stock_id (priv->icon_helper));
@@ -306,6 +318,9 @@ gtk_cell_renderer_pixbuf_reset (GtkCellRendererPixbuf *cellpixbuf)
 
   switch (storage_type)
     {
+    case GTK_IMAGE_SURFACE:
+      g_object_notify (G_OBJECT (cellpixbuf), "surface");
+      break;
     case GTK_IMAGE_PIXBUF:
       g_object_notify (G_OBJECT (cellpixbuf), "pixbuf");
       break;
@@ -350,6 +365,10 @@ gtk_cell_renderer_pixbuf_set_property (GObject      *object,
       if (priv->pixbuf_expander_closed)
         g_object_unref (priv->pixbuf_expander_closed);
       priv->pixbuf_expander_closed = (GdkPixbuf*) g_value_dup_object (value);
+      break;
+    case PROP_SURFACE:
+      gtk_cell_renderer_pixbuf_reset (cellpixbuf);
+      _gtk_icon_helper_set_surface (priv->icon_helper, g_value_get_boxed (value));
       break;
     case PROP_STOCK_ID:
       gtk_cell_renderer_pixbuf_reset (cellpixbuf);
@@ -512,15 +531,10 @@ gtk_cell_renderer_pixbuf_render (GtkCellRenderer      *cell,
   context = gtk_widget_get_style_context (widget);
   gtk_style_context_save (context);
 
-  state = GTK_STATE_FLAG_NORMAL;
+  state = gtk_cell_renderer_get_state (cell, widget, flags);
 
-  if (!gtk_widget_get_sensitive (widget) ||
-      !gtk_cell_renderer_get_sensitive (cell))
-    state |= GTK_STATE_FLAG_INSENSITIVE;
-  else if (priv->follow_state && 
-	   (flags & (GTK_CELL_RENDERER_SELECTED |
-		     GTK_CELL_RENDERER_PRELIT)) != 0)
-    state = gtk_cell_renderer_get_state (cell, widget, flags);
+  if (!priv->follow_state)
+    state &= ~(GTK_STATE_FLAG_FOCUSED | GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_SELECTED);
 
   gtk_style_context_set_state (context, state);
   gtk_style_context_add_class (context, GTK_STYLE_CLASS_IMAGE);
@@ -547,6 +561,8 @@ gtk_cell_renderer_pixbuf_render (GtkCellRenderer      *cell,
   if (icon_helper == NULL)
     icon_helper = g_object_ref (priv->icon_helper);
 
+  _gtk_icon_helper_set_window (icon_helper,
+			       gtk_widget_get_window (widget));
   _gtk_icon_helper_draw (icon_helper,
                          context, cr,
                          pix_rect.x, pix_rect.y);

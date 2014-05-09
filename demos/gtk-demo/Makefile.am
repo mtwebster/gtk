@@ -5,7 +5,6 @@ include $(top_srcdir)/Makefile.decl
 ## demo app, which means alphabetized by demo title, not filename
 demos =						\
 	application.c				\
-	appwindow.c				\
 	assistant.c				\
 	builder.c				\
 	button_box.c				\
@@ -30,6 +29,7 @@ demos =						\
 	images.c				\
 	infobar.c				\
 	links.c					\
+	listbox.c				\
 	list_store.c				\
 	menus.c					\
 	offscreen_window.c			\
@@ -39,18 +39,19 @@ demos =						\
 	pickers.c				\
 	pixbufs.c				\
 	printing.c				\
+	revealer.c				\
 	rotated_text.c				\
 	search_entry.c				\
+	search_entry2.c				\
 	sizegroup.c				\
 	spinner.c				\
-	stock_browser.c				\
+	stack.c					\
 	textview.c				\
 	textscroll.c				\
 	theming_style_classes.c			\
 	toolpalette.c				\
 	transparent.c				\
-	tree_store.c				\
-	ui_manager.c
+	tree_store.c
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir) 			\
@@ -84,8 +85,8 @@ gsettings_SCHEMAS = \
 
 @GSETTINGS_RULES@
 
-demos.h: @REBUILD@ $(demos) geninclude.pl
-	$(AM_V_GEN) (here=`pwd` ; cd $(srcdir) && $(PERL) $$here/geninclude.pl $(demos)) > demos.h
+demos.h: $(demos) geninclude.pl
+	 $(AM_V_GEN) (here=`pwd` ; cd $(srcdir) && $(PERL) $$here/geninclude.pl $(demos)) > demos.h
 
 gtk3_demo_SOURCES = 		\
 	$(demos)		\
@@ -110,9 +111,14 @@ RESOURCES=	$(demos)			\
 		application.ui			\
 		demo.ui				\
 		menus.ui			\
+		stack.ui			\
+		revealer.ui			\
 		theming.ui			\
+		listbox.ui			\
 		alphatest.png			\
 		apple-red.png			\
+		brick.png			\
+		brick2.png			\
 		background.jpg			\
 		floppybuddy.gif			\
 		gnome-applets.png		\
@@ -127,6 +133,7 @@ RESOURCES=	$(demos)			\
 		gtk-logo-24.png			\
 		gtk-logo-48.png			\
 		gtk-logo-old.png		\
+		messages.txt			\
 		css_accordion.css		\
 		css_basics.css			\
 		css_multiplebgs.css		\

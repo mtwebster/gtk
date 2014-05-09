@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <wayland-client.h>
 #include <wayland-cursor.h>
+#include <gdk/wayland/gtk-shell-client-protocol.h>
 
 #include <glib.h>
 #include <gdk/gdkkeys.h>
@@ -41,9 +42,6 @@ struct _GdkWaylandDisplay
 {
   GdkDisplay parent_instance;
   GdkScreen *screen;
-
-  /* Keyboard related information */
-  GdkKeymap *keymap;
 
   /* input GdkDevice list */
   GList *input_devices;
@@ -61,12 +59,17 @@ struct _GdkWaylandDisplay
   struct wl_compositor *compositor;
   struct wl_shm *shm;
   struct wl_shell *shell;
+  struct gtk_shell *gtk_shell;
   struct wl_input_device *input_device;
   struct wl_data_device_manager *data_device_manager;
 
   struct wl_cursor_theme *cursor_theme;
+  GSList *cursor_cache;
 
   GSource *event_source;
+
+  int init_ref_count;
+  int compositor_version;
 
   struct xkb_context *xkb_context;
 };

@@ -40,6 +40,10 @@
 #include <pango/pangofc-fontmap.h>
 #endif
 
+#ifdef GDK_WINDOWING_WAYLAND
+#include "wayland/gdkwayland.h"
+#endif
+
 #ifdef GDK_WINDOWING_QUARTZ
 #include "quartz/gdkquartz.h"
 #endif
@@ -48,13 +52,7 @@
 #include "gtkwin32themeprivate.h"
 #endif
 
-#undef GDK_DEPRECATED
-#undef GDK_DEPRECATED_FOR
-#define GDK_DEPRECATED
-#define GDK_DEPRECATED_FOR(f)
-
 #include "deprecated/gtkrc.h"
-
 
 /**
  * SECTION:gtksettings
@@ -90,7 +88,7 @@
  *   /&ast; make sure the type is realized &ast;/
  *   g_type_class_unref (g_type_class_ref (GTK_TYPE_IMAGE_MENU_ITEM));
  *
- *   g_object_set (gtk_settings_get_default (), "gtk-menu-images", FALSE, NULL);
+ *   g_object_set (gtk_settings_get_default (), "gtk-enable-animations", FALSE, NULL);
  * </programlisting></informalexample>
  *
  * There is one GtkSettings instance per screen. It can be obtained with
@@ -100,8 +98,8 @@
  */
 
 
-#define DEFAULT_TIMEOUT_INITIAL 200
-#define DEFAULT_TIMEOUT_REPEAT   20
+#define DEFAULT_TIMEOUT_INITIAL 500
+#define DEFAULT_TIMEOUT_REPEAT   50
 #define DEFAULT_TIMEOUT_EXPAND  500
 
 typedef struct _GtkSettingsPropertyValue GtkSettingsPropertyValue;
@@ -211,6 +209,7 @@ enum {
   PROP_IM_STATUS_STYLE,
   PROP_SHELL_SHOWS_APP_MENU,
   PROP_SHELL_SHOWS_MENUBAR,
+  PROP_SHELL_SHOWS_DESKTOP,
   PROP_ENABLE_PRIMARY_PASTE,
   PROP_RECENT_FILES_ENABLED
 };
@@ -262,6 +261,7 @@ static guint             class_n_properties = 0;
 
 
 G_DEFINE_TYPE_EXTENDED (GtkSettings, gtk_settings, G_TYPE_OBJECT, 0,
+                        G_ADD_PRIVATE (GtkSettings)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_STYLE_PROVIDER,
                                                gtk_settings_provider_iface_init)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_STYLE_PROVIDER_PRIVATE,
@@ -278,11 +278,9 @@ gtk_settings_init (GtkSettings *settings)
   const gchar * const *config_dirs;
   const gchar *config_dir;
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (settings,
-                                      GTK_TYPE_SETTINGS,
-                                      GtkSettingsPrivate);
-
+  priv = gtk_settings_get_instance_private (settings);
   settings->priv = priv;
+
   g_datalist_init (&priv->queued_settings);
   object_list = g_slist_prepend (object_list, settings);
 
@@ -315,6 +313,11 @@ gtk_settings_init (GtkSettings *settings)
       i++;
     }
   g_free (pspecs);
+
+  path = g_build_filename (_gtk_get_data_prefix (), "share", "gtk-3.0", "settings.ini", NULL);
+  if (g_file_test (path, G_FILE_TEST_EXISTS))
+    gtk_settings_load_from_key_file (settings, path, GTK_SETTINGS_SOURCE_DEFAULT);
+  g_free (path);
 
   path = g_build_filename (_gtk_get_sysconfdir (), "gtk-3.0", "settings.ini", NULL);
   if (g_file_test (path, G_FILE_TEST_EXISTS))
@@ -380,7 +383,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                    P_("Cursor Blink"),
                                                                    P_("Whether the cursor should blink"),
                                                                    TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_CURSOR_BLINK);
   result = settings_install_property_parser (class,
@@ -388,7 +391,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                P_("Cursor Blink Time"),
                                                                P_("Length of the cursor blink cycle, in milliseconds"),
                                                                100, G_MAXINT, 1200,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_CURSOR_BLINK_TIME);
 
@@ -407,8 +410,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              g_param_spec_int ("gtk-cursor-blink-timeout",
                                                                P_("Cursor Blink Timeout"),
                                                                P_("Time after which the cursor stops blinking, in seconds"),
-                                                               1, G_MAXINT, G_MAXINT,
-                                                               GTK_PARAM_READWRITE),
+                                                               1, G_MAXINT, 10,
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_CURSOR_BLINK_TIMEOUT);
   result = settings_install_property_parser (class,
@@ -441,12 +444,19 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              NULL);
   g_assert (result == PROP_ICON_THEME_NAME);
 
+  /**
+   * GtkSettings:gtk-fallback-icon-theme:
+   *
+   * Name of a icon theme to fall back to.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-fallback-icon-theme",
                                                                   P_("Fallback Icon Theme Name"),
                                                                   P_("Name of a icon theme to fall back to"),
-                                                                  "gnome",
-                                                                  GTK_PARAM_READWRITE),
+                                                                  NULL,
+                                                                  GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_FALLBACK_ICON_THEME);
 
@@ -459,6 +469,14 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              NULL);
   g_assert (result == PROP_KEY_THEME_NAME);
 
+  /**
+   * GtkSettings:gtk-menu-bar-accel:
+   *
+   * Keybinding to activate the menu bar.
+   *
+   * Deprecated: 3.10: This setting can still be used for application
+   *      overrides, but will be ignored in the future
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-menu-bar-accel",
                                                                   P_("Menu bar accelerator"),
@@ -499,13 +517,15 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * gtk-button, gtk-small-toolbar, gtk-large-toolbar, gtk-dnd,
    * gtk-dialog. Applications can register their own named icon
    * sizes with gtk_icon_size_register().
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-icon-sizes",
                                                                    P_("Icon Sizes"),
                                                                    P_("List of icon sizes (gtk-menu=16,16:gtk-button=20,20..."),
                                                                   NULL,
-                                                                  GTK_PARAM_READWRITE),
+                                                                  GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_ICON_SIZES);
 
@@ -614,50 +634,75 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              NULL);
   g_assert (result == PROP_ALTERNATIVE_SORT_ARROWS);
 
+  /**
+   * GtkSettings:gtk-show-input-method-menu:
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-show-input-method-menu",
                                                                    P_("Show the 'Input Methods' menu"),
                                                                    P_("Whether the context menus of entries and text views should offer to change the input method"),
-                                                                   TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   FALSE,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_SHOW_INPUT_METHOD_MENU);
 
+  /**
+   * GtkSettings:gtk-show-unicode-menu:
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-show-unicode-menu",
                                                                    P_("Show the 'Insert Unicode Control Character' menu"),
                                                                    P_("Whether the context menus of entries and text views should offer to insert control characters"),
-                                                                   TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   FALSE,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_SHOW_UNICODE_MENU);
 
+  /**
+   * GtkSettings:gtk-timeout-initial:
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-timeout-initial",
                                                                P_("Start timeout"),
                                                                P_("Starting value for timeouts, when button is pressed"),
                                                                0, G_MAXINT, DEFAULT_TIMEOUT_INITIAL,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TIMEOUT_INITIAL);
 
+  /**
+   * GtkSettings:gtk-timeout-repeat:
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-timeout-repeat",
                                                                P_("Repeat timeout"),
                                                                P_("Repeat value for timeouts, when button is pressed"),
                                                                0, G_MAXINT, DEFAULT_TIMEOUT_REPEAT,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TIMEOUT_REPEAT);
 
+  /**
+   * GtkSettings:gtk-timeout-expand:
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-timeout-expand",
                                                                P_("Expand timeout"),
                                                                P_("Expand value for timeouts, when a widget is expanding a new region"),
                                                                0, G_MAXINT, DEFAULT_TIMEOUT_EXPAND,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TIMEOUT_EXPAND);
@@ -696,7 +741,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                   P_("Color scheme"),
                                                                   P_("A palette of named colors for use in themes"),
                                                                   "",
-                                                                  GTK_PARAM_READWRITE),
+                                                                  GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_COLOR_SCHEME);
@@ -740,6 +785,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * cursor is hovering on top of a widget.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-tooltip-timeout",
@@ -747,7 +794,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                P_("Timeout before tooltip is shown"),
                                                                0, G_MAXINT,
                                                                500,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TOOLTIP_TIMEOUT);
@@ -766,6 +813,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * for the new object.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-tooltip-browse-timeout",
@@ -773,7 +822,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                P_("Timeout before tooltip is shown when browse mode is enabled"),
                                                                0, G_MAXINT,
                                                                60,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TOOLTIP_BROWSE_TIMEOUT);
@@ -788,6 +837,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * about browse mode.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-tooltip-browse-mode-timeout",
@@ -795,7 +846,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                P_("Timeout after which browse mode is disabled"),
                                                                0, G_MAXINT,
                                                                500,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_TOOLTIP_BROWSE_MODE_TIMEOUT);
@@ -808,13 +859,16 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * to be present on the used input device.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: Generally, the behavior for touchscreen input should be
+   *             performed dynamically based on gdk_event_get_source_device().
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-keynav-cursor-only",
                                                                    P_("Keynav Cursor Only"),
                                                                    P_("When TRUE, there are only cursor keys available to navigate widgets"),
                                                                    FALSE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_KEYNAV_CURSOR_ONLY);
@@ -826,13 +880,15 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * navigation, such as menus, menubars and notebooks.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-keynav-wrap-around",
                                                                    P_("Keynav Wrap Around"),
                                                                    P_("Whether to wrap around when keyboard-navigating widgets"),
                                                                    TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
 
   g_assert (result == PROP_KEYNAV_WRAP_AROUND);
@@ -873,16 +929,23 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                  P_("Color Hash"),
                                                                  P_("A hash table representation of the color scheme."),
                                                                  G_TYPE_HASH_TABLE,
-                                                                 GTK_PARAM_READABLE),
+                                                                 GTK_PARAM_READABLE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_COLOR_HASH);
 
+  /**
+   * GtkSettings:gtk-file-chooser-backend:
+   *
+   * Name of the GtkFileChooser backend to use by default.
+   *
+   * Deprecated: 3.10: This setting is ignored. #GtkFileChooser uses GIO by default.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-file-chooser-backend",
                                                                   P_("Default file chooser backend"),
                                                                   P_("Name of the GtkFileChooser backend to use by default"),
                                                                   NULL,
-                                                                  GTK_PARAM_READWRITE),
+                                                                  GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_FILE_CHOOSER_BACKEND);
 
@@ -935,6 +998,9 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * can be activated.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting can still be used for application
+   *      overrides, but will be ignored in the future
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-enable-mnemonics",
@@ -970,6 +1036,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * -1 means every recently used file stored.
    *
    * Since: 2.12
+   *
+   * Deprecated: 3.10: This setting is ignored
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-recent-files-limit",
@@ -977,7 +1045,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                P_("Number of recently used files"),
                                                                -1, G_MAXINT,
                                                                50,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_RECENT_FILES_LIMIT);
 
@@ -990,7 +1058,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * This also can be a colon-separated list of input methods, which GTK+
    * will try in turn until it finds one available on the system.
    *
-   * See #GtkIMContext and see the #GtkSettings:gtk-show-input-method-menu property.
+   * See #GtkIMContext.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-im-module",
@@ -1104,13 +1172,15 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * Whether tooltips should be shown on widgets.
    *
    * Since: 2.14
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-enable-tooltips",
                                                                    P_("Enable Tooltips"),
                                                                    P_("Whether tooltips should be shown on widgets"),
                                                                    TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_ENABLE_TOOLTIPS);
 
@@ -1118,14 +1188,16 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * GtkSettings:gtk-toolbar-style:
    *
    * The size of icons in default toolbars.
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-toolbar-style",
                                                                    P_("Toolbar style"),
                                                                    P_("Whether default toolbars have text only, text and icons, icons only, etc."),
                                                                    GTK_TYPE_TOOLBAR_STYLE,
-                                                                   GTK_TOOLBAR_BOTH,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_TOOLBAR_BOTH_HORIZ,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_TOOLBAR_STYLE);
 
@@ -1133,6 +1205,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * GtkSettings:gtk-toolbar-icon-size:
    *
    * The size of icons in default toolbars.
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-toolbar-icon-size",
@@ -1140,7 +1214,7 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                    P_("The size of icons in default toolbars."),
                                                                    GTK_TYPE_ICON_SIZE,
                                                                    GTK_ICON_SIZE_LARGE_TOOLBAR,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_TOOLBAR_ICON_SIZE);
 
@@ -1151,13 +1225,15 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * presses the mnemonic activator.
    *
    * Since: 2.20
+   *
+   * Deprecated: 3.10: This setting is ignored
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-auto-mnemonics",
                                                                    P_("Auto Mnemonics"),
                                                                    P_("Whether mnemonics should be automatically shown and hidden when the user presses the mnemonic activator."),
-                                                                   FALSE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   TRUE,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_AUTO_MNEMONICS);
 
@@ -1185,14 +1261,16 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * or hidden until the user starts to use the keyboard.
    *
    * Since: 3.2
+   *
+   * Deprecated: 3.10: This setting is ignored
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-visible-focus",
                                                                 P_("Visible Focus"),
                                                                 P_("Whether 'focus rectangles' should be hidden until the user starts to use the keyboard."),
                                                                 GTK_TYPE_POLICY_TYPE,
-                                                                GTK_POLICY_ALWAYS,
-                                                                GTK_PARAM_READWRITE),
+                                                                GTK_POLICY_AUTOMATIC,
+                                                                GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_VISIBLE_FOCUS);
 
@@ -1228,13 +1306,15 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * Whether images should be shown on buttons
    *
    * Since: 2.4
+   *
+   * Deprecated: 3.10: This setting is deprecated
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-button-images",
                                                                    P_("Show button images"),
                                                                    P_("Whether images should be shown on buttons"),
-                                                                   TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   FALSE,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_BUTTON_IMAGES);
 
@@ -1266,22 +1346,36 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              NULL);
   g_assert (result == PROP_ENTRY_PASSWORD_HINT_TIMEOUT);
 
+  /**
+   * GtkSettings::gtk-menu-images:
+   *
+   * Whether images should be shown in menu items
+   *
+   * Deprecated: 3.10: This setting is deprecated
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-menu-images",
                                                                    P_("Show menu images"),
                                                                    P_("Whether images should be shown in menus"),
-                                                                   TRUE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   FALSE,
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_MENU_IMAGES);
 
+  /**
+   * GtkSettings:gtk-menu-bar-popup-delay:
+   *
+   * Delay before the submenus of a menu bar appear.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-menu-bar-popup-delay",
                                                                P_("Delay before drop down menus appear"),
                                                                P_("Delay before the submenus of a menu bar appear"),
                                                                0, G_MAXINT,
                                                                0,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_MENU_BAR_POPUP_DELAY);
 
@@ -1292,6 +1386,8 @@ gtk_settings_class_init (GtkSettingsClass *class)
    * scrollbars, if not overridden by the scrolled window's own placement.
    *
    * Since: 2.10
+   *
+   * Deprecated: 3.10: This setting is ignored.
    */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-scrolled-window-placement",
@@ -1299,36 +1395,57 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                 P_("Where the contents of scrolled windows are located with respect to the scrollbars, if not overridden by the scrolled window's own placement."),
                                                                 GTK_TYPE_CORNER_TYPE,
                                                                 GTK_CORNER_TOP_LEFT,
-                                                                GTK_PARAM_READWRITE),
+                                                                GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_SCROLLED_WINDOW_PLACEMENT);
 
+  /**
+   * GtkSettings:gtk-can-change-accels:
+   *
+   * Whether menu accelerators can be changed by pressing a key over the menu item.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_boolean ("gtk-can-change-accels",
                                                                    P_("Can change accelerators"),
                                                                    P_("Whether menu accelerators can be changed by pressing a key over the menu item"),
                                                                    FALSE,
-                                                                   GTK_PARAM_READWRITE),
+                                                                   GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_CAN_CHANGE_ACCELS);
 
+  /**
+   * GtkSettings:gtk-menu-popup-delay:
+   *
+   * Minimum time the pointer must stay over a menu item before the submenu appear.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-menu-popup-delay",
                                                                P_("Delay before submenus appear"),
                                                                P_("Minimum time the pointer must stay over a menu item before the submenu appear"),
                                                                0, G_MAXINT,
                                                                225,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_MENU_POPUP_DELAY);
 
+  /**
+   * GtkSettings:gtk-menu-popdown-delay:
+   *
+   * The time before hiding a submenu when the pointer is moving towards the submenu.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_int ("gtk-menu-popdown-delay",
                                                                P_("Delay before hiding a submenu"),
                                                                P_("The time before hiding a submenu when the pointer is moving towards the submenu"),
                                                                0, G_MAXINT,
                                                                1000,
-                                                               GTK_PARAM_READWRITE),
+                                                               GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_MENU_POPDOWN_DELAY);
 
@@ -1341,32 +1458,53 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                              NULL);
   g_assert (result == PROP_LABEL_SELECT_ON_FOCUS);
 
+  /**
+   * GtkSettings:gtk-color-palette:
+   *
+   * Palette to use in the deprecated color selector.
+   *
+   * Deprecated: 3.10: Only used by the deprecated color selector widget.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_string ("gtk-color-palette",
                                                                   P_("Custom palette"),
                                                                   P_("Palette to use in the color selector"),
                                                                   default_color_palette,
-                                                                  GTK_PARAM_READWRITE),
+                                                                  GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              NULL);
   g_assert (result == PROP_COLOR_PALETTE);
 
+  /**
+   * GtkSettings:gtk-im-preedit-style:
+   *
+   * How to draw the input method preedit string.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-im-preedit-style",
                                                                 P_("IM Preedit style"),
                                                                 P_("How to draw the input method preedit string"),
                                                                 GTK_TYPE_IM_PREEDIT_STYLE,
                                                                 GTK_IM_PREEDIT_CALLBACK,
-                                                                GTK_PARAM_READWRITE),
+                                                                GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_IM_PREEDIT_STYLE);
 
+  /**
+   * GtkSettings:gtk-im-status-style:
+   *
+   * How to draw the input method statusbar.
+   *
+   * Deprecated: 3.10: This setting is ignored.
+   */
   result = settings_install_property_parser (class,
                                              g_param_spec_enum ("gtk-im-status-style",
                                                                 P_("IM Status style"),
                                                                 P_("How to draw the input method statusbar"),
                                                                 GTK_TYPE_IM_STATUS_STYLE,
                                                                 GTK_IM_STATUS_CALLBACK,
-                                                                GTK_PARAM_READWRITE),
+                                                                GTK_PARAM_READWRITE | G_PARAM_DEPRECATED),
                                              gtk_rc_property_parse_enum);
   g_assert (result == PROP_IM_STATUS_STYLE);
 
@@ -1389,6 +1527,16 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                    FALSE, GTK_PARAM_READWRITE),
                                              NULL);
   g_assert (result == PROP_SHELL_SHOWS_MENUBAR);
+
+  result = settings_install_property_parser (class,
+                                             g_param_spec_boolean ("gtk-shell-shows-desktop",
+                                                                   P_("Desktop environment shows the desktop folder"),
+                                                                   P_("Set to TRUE if the desktop environment "
+                                                                      "is displaying the desktop folder, FALSE "
+                                                                      "if not."),
+                                                                   TRUE, GTK_PARAM_READWRITE),
+                                             NULL);
+  g_assert (result == PROP_SHELL_SHOWS_DESKTOP);
 
   /**
    * GtkSettings:gtk-enable-primary-paste:
@@ -1423,8 +1571,6 @@ gtk_settings_class_init (GtkSettingsClass *class)
                                                                    GTK_PARAM_READWRITE),
                                              NULL);
   g_assert (result == PROP_RECENT_FILES_ENABLED);
-
-  g_type_class_add_private (class, sizeof (GtkSettingsPrivate));
 }
 
 static void
@@ -2109,6 +2255,8 @@ gtk_settings_set_double_property (GtkSettings *settings,
   g_value_unset (&svalue.value);
 }
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 /**
  * gtk_rc_property_parse_color:
  * @pspec: a #GParamSpec
@@ -2444,6 +2592,8 @@ gtk_rc_property_parse_border (const GParamSpec *pspec,
   return success;
 }
 
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 void
 _gtk_settings_handle_event (GdkEventSetting *event)
 {
@@ -2552,23 +2702,28 @@ settings_update_modules (GtkSettings *settings)
 static void
 settings_update_cursor_theme (GtkSettings *settings)
 {
-#ifdef GDK_WINDOWING_X11
-  GdkDisplay *display = gdk_screen_get_display (settings->priv->screen);
   gchar *theme = NULL;
   gint size = 0;
+  GdkDisplay *display = gdk_screen_get_display (settings->priv->screen);
 
+  g_object_get (settings,
+                "gtk-cursor-theme-name", &theme,
+                "gtk-cursor-theme-size", &size,
+                NULL);
+  if (theme == NULL)
+    return;
+#ifdef GDK_WINDOWING_X11
   if (GDK_IS_X11_DISPLAY (display))
-    {
-      g_object_get (settings,
-                    "gtk-cursor-theme-name", &theme,
-                    "gtk-cursor-theme-size", &size,
-                    NULL);
-
-      gdk_x11_display_set_cursor_theme (display, theme, size);
-
-      g_free (theme);
-    }
+    gdk_x11_display_set_cursor_theme (display, theme, size);
+  else
 #endif
+#ifdef GDK_WINDOWING_WAYLAND
+  if (GDK_IS_WAYLAND_DISPLAY (display))
+    gdk_wayland_display_set_cursor_theme (display, theme, size);
+  else
+#endif
+    g_warning ("GtkSettings Cursor Theme: Unsupported GDK backend\n");
+  g_free (theme);
 }
 
 static void
@@ -2691,6 +2846,8 @@ settings_update_resolution (GtkSettings *settings)
   GtkSettingsPrivate *priv = settings->priv;
   gint dpi_int;
   gdouble dpi;
+  const char *scale_env;
+  double scale;
 
   g_object_get (settings,
                 "gtk-xft-dpi", &dpi_int,
@@ -2701,6 +2858,14 @@ settings_update_resolution (GtkSettings *settings)
   else
     dpi = -1.;
 
+  scale_env = g_getenv ("GDK_DPI_SCALE");
+  if (scale_env)
+    {
+      scale = g_ascii_strtod (scale_env, NULL);
+      if (scale != 0 && dpi > 0)
+	dpi *= scale;
+    }
+
   gdk_screen_set_resolution (priv->screen, dpi);
 }
 
@@ -2709,7 +2874,7 @@ settings_update_provider (GdkScreen       *screen,
                           GtkCssProvider **old,
                           GtkCssProvider  *new)
 {
-  if (*old != new)
+  if (screen != NULL && *old != new)
     {
       if (*old)
         {
@@ -2862,6 +3027,7 @@ gtk_settings_load_from_key_file (GtkSettings       *settings,
           }
 
         case G_TYPE_INT:
+        case G_TYPE_UINT:
           {
             gint i_val;
 

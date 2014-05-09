@@ -55,7 +55,23 @@ Duis eu lectus quam. Vivamus eget metus a mauris molestie venenatis pulvinar ele
 Nulla facilisi. Pellentesque at dolor sit amet purus dapibus pulvinar molestie quis neque.
 Suspendisse feugiat quam quis dolor accumsan cursus. </property>
   </object>
-  <object class="GtkAccelGroup" id="accelgroup1"/>
+  <object class="GtkTextBuffer" id="textbuffer2">
+    <property name="text">* Translation updates:
+ Aragonese
+ Assamese
+ Basque
+ Brazilian Portuguese
+ Dutch
+ German
+ Hebrew
+ Hungarian
+ Polish
+ Portuguese
+ Serbian
+ Slovenian
+ Spanish
+ Uyghur</property>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="can_focus">False</property>
     <property name="title">GTK+ Widget Factory</property>
@@ -82,43 +98,39 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem1">
-                        <property name="label">gtk-new</property>
+                      <object class="GtkMenuItem" id="menuitem101">
+                        <property name="label" translatable="yes">_New</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem2">
-                        <property name="label">gtk-open</property>
+                      <object class="GtkMenuItem" id="menuitem102">
+                        <property name="label" translatable="yes">_Open</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem3">
-                        <property name="label">gtk-save</property>
+                      <object class="GtkMenuItem" id="menuitem103">
+                        <property name="label" translatable="yes">_Save</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem4">
-                        <property name="label">gtk-save-as</property>
+                      <object class="GtkMenuItem" id="menuitem104">
+                        <property name="label" translatable="yes">Save _As</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
@@ -129,13 +141,12 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem5">
-                        <property name="label">gtk-quit</property>
+                      <object class="GtkMenuItem" id="menuitem105">
+                        <property name="label" translatable="yes">_Quit</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                         <signal name="activate" handler="gtk_main_quit" swapped="no"/>
                       </object>
                     </child>
@@ -155,47 +166,39 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem6">
-                        <property name="label">gtk-cut</property>
-                        <property name="accel_group">accelgroup1</property>
+                      <object class="GtkMenuItem" id="menuitem106">
+                        <property name="label" translatable="yes">Cu_t</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem7">
-                        <property name="label">gtk-copy</property>
-                        <property name="accel_group">accelgroup1</property>
+                      <object class="GtkMenuItem" id="menuitem107">
+                        <property name="label" translatable="yes">_Copy</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem8">
-                        <property name="label">gtk-paste</property>
-                        <property name="accel_group">accelgroup1</property>
+                      <object class="GtkMenuItem" id="menuitem108">
+                        <property name="label" translatable="yes">_Paste</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="imagemenuitem9">
-                        <property name="label">gtk-delete</property>
-                        <property name="accel_group">accelgroup1</property>
+                      <object class="GtkMenuItem" id="menuitem109">
+                        <property name="label" translatable="yes">_Delete</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                     <child>
@@ -395,13 +398,12 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="aboutmenuitem">
-                        <property name="label">gtk-about</property>
+                      <object class="GtkMenuItem" id="aboutmenuitem">
+                        <property name="label" translatable="yes">_About</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
                         <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
                       </object>
                     </child>
                   </object>
@@ -427,9 +429,9 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_action_appearance">False</property>
-                <property name="label" translatable="yes">Save</property>
+                <property name="label" translatable="yes">_Save</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-save</property>
+                <property name="icon-name">document-save</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -443,7 +445,7 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                 <property name="use_action_appearance">False</property>
                 <property name="label" translatable="yes">Open</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-open</property>
+                <property name="icon-name">document-open</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -468,7 +470,7 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
                 <property name="use_action_appearance">False</property>
                 <property name="label" translatable="yes">Find</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-find</property>
+                <property name="icon_name">edit-find</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -2146,30 +2148,158 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
               </object>
             </child>
             <child>
-              <object class="GtkBox" id="page2">
+              <object class="GtkOverlay" id="page2">
                 <property name="visible">True</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">6</property>
-                <property name="border-width">6</property>
-                <child>
-                  <object class="GtkBox" id="page2box1">
+                <child type="overlay">
+                  <object class="GtkRevealer" id="page2revealer">
                     <property name="visible">True</property>
-                    <property name="orientation">horizontal</property>
-                    <property name="spacing">4</property>
+                    <property name="halign">center</property>
+                    <property name="valign">start</property>
                     <child>
-                      <object class="GtkSpinButton" id="verticalspin1">
+                      <object class="GtkFrame" id="page2frame">
                         <property name="visible">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="adjustment">adjustment2</property>
+                        <property name="margin-top">2</property>
+                        <child>
+                          <object class="GtkBox" id="page2box">
+                            <property name="visible">True</property>
+                            <property name="margin-top">10</property>
+                            <property name="margin-bottom">10</property>
+                            <property name="margin-left">10</property>
+                            <property name="margin-right">10</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="page2note">
+                                <property name="visible">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="halign">start</property>
+                                <property name="label">NEWS!</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="page2dismiss">
+                                <property name="visible">True</property>
+                                <child>
+                                  <object class="GtkImage" id="page2dismissi">
+                                    <property name="visible">True</property>
+                                    <property name="icon-name">window-close-symbolic</property>
+                                    <property name="icon-size">0</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkGrid" id="page2grid">
+                    <property name="visible">True</property>
+                    <property name="column-homogeneous">True</property>
+                    <property name="row-spacing">6</property>
+                    <property name="column-spacing">6</property>
+                    <property name="border-width">6</property>
                     <child>
-                      <object class="GtkSpinButton" id="verticalspin2">
+                      <object class="GtkBox" id="page2box1">
                         <property name="visible">True</property>
-                        <property name="sensitive">False</property>
-                        <property name="orientation">vertical</property>
-                        <property name="adjustment">adjustment1</property>
+                        <property name="orientation">horizontal</property>
+                        <property name="spacing">4</property>
+                        <child>
+                          <object class="GtkSpinButton" id="verticalspin1">
+                            <property name="visible">True</property>
+                            <property name="orientation">vertical</property>
+                            <property name="adjustment">adjustment2</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="verticalspin2">
+                            <property name="visible">True</property>
+                            <property name="sensitive">False</property>
+                            <property name="orientation">vertical</property>
+                            <property name="adjustment">adjustment1</property>
+                          </object>
+                        </child>
                       </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="filler1">
+                        <property name="visible">True</property>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="filler2">
+                        <property name="visible">True</property>
+                      </object>
+                      <packing>
+                        <property name="left-attach">2</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkStackSwitcher" id="switcher">
+                        <property name="visible">True</property>
+                        <property name="stack">stack</property>
+                        <property name="halign">center</property>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="frame">
+                        <property name="visible">True</property>
+                        <property name="hexpand">False</property>
+                        <child>
+                          <object class="GtkStack" id="stack">
+                            <property name="visible">True</property>
+                            <property name="transition-type">crossfade</property>
+                            <property name="transition-duration">1000</property>
+                            <child>
+                              <object class="GtkScrolledWindow" id="swo">
+                                <property name="visible">True</property>
+                                <property name="shadow-type">none</property>
+                                <child>
+                                  <object class="GtkTextView" id="tvo">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="buffer">textbuffer2</property>
+                                  </object>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="name">page1</property>
+                                <property name="icon-name">document-open-recent-symbolic</property>
+                                <property name="title">News</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkImage" id="imageo">
+                                <property name="visible">True</property>
+                                <property name="resource">/logos/gtk-logo-256.png</property>
+                              </object>
+                              <packing>
+                                <property name="name">page2</property>
+                                <property name="icon-name">system-shutdown-symbolic</property>
+                                <property name="title">Logo</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left-attach">0</property>
+                        <property name="top-attach">2</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
@@ -2190,8 +2320,5 @@ Suspendisse feugiat quam quis dolor accumsan cursus. </property>
         </child>
       </object>
     </child>
-    <accel-groups>
-      <group name="accelgroup1"/>
-    </accel-groups>
   </object>
 </interface>

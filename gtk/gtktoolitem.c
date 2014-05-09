@@ -28,7 +28,7 @@
 #include "gtktoolshell.h"
 #include "gtkseparatormenuitem.h"
 #include "gtksizerequest.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkintl.h"
 #include "gtkprivate.h"
 
@@ -153,9 +153,12 @@ static void gtk_tool_item_set_use_action_appearance  (GtkToolItem          *item
 
 static guint toolitem_signals[LAST_SIGNAL] = { 0 };
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkToolItem, gtk_tool_item, GTK_TYPE_BIN,
+                         G_ADD_PRIVATE (GtkToolItem)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
 						gtk_tool_item_activatable_interface_init))
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_tool_item_class_init (GtkToolItemClass *klass)
@@ -273,8 +276,6 @@ gtk_tool_item_class_init (GtkToolItemClass *klass)
 		  NULL, NULL,
 		  _gtk_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
-
-  g_type_class_add_private (object_class, sizeof (GtkToolItemPrivate));
 }
 
 static void
@@ -282,15 +283,11 @@ gtk_tool_item_init (GtkToolItem *toolitem)
 {
   gtk_widget_set_can_focus (GTK_WIDGET (toolitem), FALSE);
 
-  toolitem->priv = G_TYPE_INSTANCE_GET_PRIVATE (toolitem,
-                                                GTK_TYPE_TOOL_ITEM,
-                                                GtkToolItemPrivate);
-
+  toolitem->priv = gtk_tool_item_get_instance_private (toolitem);
   toolitem->priv->visible_horizontal = TRUE;
   toolitem->priv->visible_vertical = TRUE;
   toolitem->priv->homogeneous = FALSE;
   toolitem->priv->expand = FALSE;
-
   toolitem->priv->use_action_appearance = TRUE;
 }
 
@@ -314,7 +311,9 @@ gtk_tool_item_dispose (GObject *object)
 
   if (item->priv->action)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (item), NULL);      
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       item->priv->action = NULL;
     }
   G_OBJECT_CLASS (gtk_tool_item_parent_class)->dispose (object);
@@ -559,6 +558,9 @@ _gtk_tool_item_create_menu_proxy (GtkToolItem *item)
 {
   GtkWidget *menu_item;
   gboolean visible_overflown;
+  gboolean ret = FALSE;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 
   if (item->priv->action)
     {
@@ -575,10 +577,12 @@ _gtk_tool_item_create_menu_proxy (GtkToolItem *item)
       else
 	gtk_tool_item_set_proxy_menu_item (item, "gtk-action-menu-item", NULL);
 
-      return TRUE;
+      ret = TRUE;
     }
 
-  return FALSE;
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  return ret;
 }
 
 static void
@@ -593,6 +597,8 @@ gtk_tool_item_update (GtkActivatable *activatable,
 		      GtkAction      *action,
 	     	      const gchar    *property_name)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   if (strcmp (property_name, "visible") == 0)
     {
       if (gtk_action_is_visible (action))
@@ -614,6 +620,8 @@ gtk_tool_item_update (GtkActivatable *activatable,
   else if (strcmp (property_name, "is-important") == 0)
     gtk_tool_item_set_is_important (GTK_TOOL_ITEM (activatable),
 				    gtk_action_get_is_important (action));
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 static void
@@ -622,6 +630,8 @@ gtk_tool_item_sync_action_properties (GtkActivatable *activatable,
 {
   if (!action)
     return;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 
   if (gtk_action_is_visible (action))
     gtk_widget_show (GTK_WIDGET (activatable));
@@ -638,6 +648,8 @@ gtk_tool_item_sync_action_properties (GtkActivatable *activatable,
 				      gtk_action_get_visible_vertical (action));
   gtk_tool_item_set_is_important (GTK_TOOL_ITEM (activatable),
 				  gtk_action_get_is_important (action));
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 static void
@@ -647,7 +659,9 @@ gtk_tool_item_set_related_action (GtkToolItem *item,
   if (item->priv->action == action)
     return;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (item), action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   item->priv->action = action;
 
@@ -665,7 +679,9 @@ gtk_tool_item_set_use_action_appearance (GtkToolItem *item,
     {
       item->priv->use_action_appearance = use_appearance;
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_activatable_sync_action_properties (GTK_ACTIVATABLE (item), item->priv->action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 }
 

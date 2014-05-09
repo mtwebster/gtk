@@ -28,26 +28,11 @@
 typedef struct _GdkWindowQueueItem GdkWindowQueueItem;
 typedef struct _GdkWindowParentPos GdkWindowParentPos;
 
-typedef enum {
-  GDK_WINDOW_QUEUE_TRANSLATE,
-  GDK_WINDOW_QUEUE_ANTIEXPOSE
-} GdkWindowQueueType;
-
 struct _GdkWindowQueueItem
 {
   GdkWindow *window;
   gulong serial;
-  GdkWindowQueueType type;
-  union {
-    struct {
-      cairo_region_t *area;
-      gint dx;
-      gint dy;
-    } translate;
-    struct {
-      cairo_region_t *area;
-    } antiexpose;
-  } u;
+  cairo_region_t *antiexpose_area;
 };
 
 void
@@ -57,18 +42,22 @@ _gdk_x11_window_move_resize_child (GdkWindow *window,
                                    gint       width,
                                    gint       height)
 {
+  GdkWindowImplX11 *impl;
+
   g_return_if_fail (window != NULL);
   g_return_if_fail (GDK_IS_WINDOW (window));
 
-  if (width > 65535 ||
-      height > 65535)
+  impl = GDK_WINDOW_IMPL_X11 (window->impl);
+
+  if (width * impl->window_scale > 65535 ||
+      height * impl->window_scale > 65535)
     {
       g_warning ("Native children wider or taller than 65535 pixels are not supported");
 
-      if (width > 65535)
-        width = 65535;
-      if (height > 65535)
-        height = 65535;
+      if (width * impl->window_scale > 65535)
+        width = 65535 / impl->window_scale;
+      if (height * impl->window_scale > 65535)
+        height = 65535 / impl->window_scale;
     }
 
   window->x = x;
@@ -84,9 +73,10 @@ _gdk_x11_window_move_resize_child (GdkWindow *window,
   _gdk_x11_window_tmp_unset_bg (window, TRUE);
   XMoveResizeWindow (GDK_WINDOW_XDISPLAY (window),
                      GDK_WINDOW_XID (window),
-                     window->x + window->parent->abs_x,
-                     window->y + window->parent->abs_y,
-                     width, height);
+                     (window->x + window->parent->abs_x) * impl->window_scale,
+                     (window->y + window->parent->abs_y) * impl->window_scale,
+                     width * impl->window_scale,
+                     height * impl->window_scale);
   _gdk_x11_window_tmp_reset_parent_bg (window);
   _gdk_x11_window_tmp_reset_bg (window, TRUE);
 }
@@ -140,14 +130,7 @@ queue_item_free (GdkWindowQueueItem *item)
 				    (gpointer *)&(item->window));
     }
   
-  if (item->type == GDK_WINDOW_QUEUE_ANTIEXPOSE)
-    cairo_region_destroy (item->u.antiexpose.area);
-  else
-    {
-      if (item->u.translate.area)
-	cairo_region_destroy (item->u.translate.area);
-    }
-  
+  cairo_region_destroy (item->antiexpose_area);
   g_free (item);
 }
 
@@ -213,11 +196,8 @@ gdk_window_queue (GdkWindow          *window,
 	  GdkWindowQueueItem *item = tmp_list->data;
 	  GList *next = tmp_list->next;
 	  
-	  if (item->type == GDK_WINDOW_QUEUE_ANTIEXPOSE)
-	    {
-	      queue_delete_link (display_x11->translate_queue, tmp_list);
-	      queue_item_free (item);
-	    }
+	  queue_delete_link (display_x11->translate_queue, tmp_list);
+	  queue_item_free (item);
 
 	  tmp_list = next;
 	}
@@ -232,86 +212,12 @@ gdk_window_queue (GdkWindow          *window,
   g_queue_push_tail (display_x11->translate_queue, item);
 }
 
-static GC
-_get_scratch_gc (GdkWindow *window, cairo_region_t *clip_region)
-{
-  GdkX11Screen *screen;
-  XRectangle *rectangles;
-  gint n_rects;
-  gint depth;
-
-  screen = GDK_X11_SCREEN (gdk_window_get_screen (window));
-  depth = gdk_visual_get_depth (gdk_window_get_visual (window)) - 1;
-
-  if (!screen->subwindow_gcs[depth])
-    {
-      XGCValues values;
-      
-      values.graphics_exposures = True;
-      values.subwindow_mode = IncludeInferiors;
-      
-      screen->subwindow_gcs[depth] = XCreateGC (screen->xdisplay,
-                                                GDK_WINDOW_XID (window),
-                                                GCSubwindowMode | GCGraphicsExposures,
-                                                &values);
-    }
-  
-  _gdk_x11_region_get_xrectangles (clip_region,
-                                   0, 0,
-                                   &rectangles,
-                                   &n_rects);
-  
-  XSetClipRectangles (screen->xdisplay,
-                      screen->subwindow_gcs[depth],
-                      0, 0,
-                      rectangles, n_rects,
-                      YXBanded);
-  
-  g_free (rectangles);
-  return screen->subwindow_gcs[depth];
-}
-
-
-
-void
-_gdk_x11_window_translate (GdkWindow      *window,
-                           cairo_region_t *area,
-                           gint            dx,
-                           gint            dy)
-{
-  GdkWindowQueueItem *item;
-  GC xgc;
-  GdkRectangle extents;
-
-  cairo_region_get_extents (area, &extents);
-
-  xgc = _get_scratch_gc (window, area);
-
-  cairo_region_translate (area, -dx, -dy); /* Move to source region */
-
-  item = g_new (GdkWindowQueueItem, 1);
-  item->type = GDK_WINDOW_QUEUE_TRANSLATE;
-  item->u.translate.area = cairo_region_copy (area);
-  item->u.translate.dx = dx;
-  item->u.translate.dy = dy;
-  gdk_window_queue (window, item);
-
-  XCopyArea (GDK_WINDOW_XDISPLAY (window),
-             GDK_WINDOW_XID (window),
-             GDK_WINDOW_XID (window),
-             xgc,
-             extents.x - dx, extents.y - dy,
-             extents.width, extents.height,
-             extents.x, extents.y);
-}
-
 gboolean
 _gdk_x11_window_queue_antiexpose (GdkWindow *window,
 				  cairo_region_t *area)
 {
   GdkWindowQueueItem *item = g_new (GdkWindowQueueItem, 1);
-  item->type = GDK_WINDOW_QUEUE_ANTIEXPOSE;
-  item->u.antiexpose.area = area;
+  item->antiexpose_area = area;
 
   gdk_window_queue (window, item);
 
@@ -339,28 +245,7 @@ _gdk_x11_window_process_expose (GdkWindow    *window,
           if (serial - item->serial > (gulong) G_MAXLONG)
             {
               if (item->window == window)
-                {
-                  if (item->type == GDK_WINDOW_QUEUE_TRANSLATE)
-                    {
-                      if (item->u.translate.area)
-                        {
-                          cairo_region_t *intersection;
-
-                          intersection = cairo_region_copy (invalidate_region);
-                          cairo_region_intersect (intersection, item->u.translate.area);
-                          cairo_region_subtract (invalidate_region, intersection);
-                          cairo_region_translate (intersection, item->u.translate.dx, item->u.translate.dy);
-                          cairo_region_union (invalidate_region, intersection);
-                          cairo_region_destroy (intersection);
-                        }
-                      else
-                        cairo_region_translate (invalidate_region, item->u.translate.dx, item->u.translate.dy);
-                    }
-                  else /* anti-expose */
-                    {
-                      cairo_region_subtract (invalidate_region, item->u.antiexpose.area);
-                    }
-                }
+		cairo_region_subtract (invalidate_region, item->antiexpose_area);
             }
           else
             {

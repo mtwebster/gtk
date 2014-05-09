@@ -2,22 +2,22 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Using GTK+ on the X Window System</title>
+<title>GTK+ 3 Reference Manual: Using GTK+ on the X Window System</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GTK+ 3 Reference Manual">
-<link rel="up" href="gtk.html" title="Part I. GTK+ Overview">
+<link rel="up" href="platform-support.html" title="Part VII. GTK+ Platform Support">
 <link rel="prev" href="gtk-running.html" title="Running GTK+ Applications">
 <link rel="next" href="gtk-windows.html" title="Using GTK+ on Windows">
-<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.20.1 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle">
-<td><a accesskey="p" href="gtk-running.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
-<td><a accesskey="u" href="gtk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
-<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
-<th width="100%" align="center">GTK+ 3 Reference Manual</th>
-<td><a accesskey="n" href="gtk-windows.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
+<td width="100%" align="left" class="shortcuts"></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
+<td><a accesskey="u" href="platform-support.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
+<td><a accesskey="p" href="gtk-running.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gtk-windows.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gtk-x11"></a><div class="titlepage"></div>
@@ -28,10 +28,10 @@
 X11-specific aspects of using GTK+
 </p>
 </td>
-<td valign="top" align="right"></td>
+<td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
 <div class="refsect1">
-<a name="id-1.2.7.3"></a><h2>GTK+ for the X Window System</h2>
+<a name="id-1.8.5.3"></a><h2>GTK+ for the X Window System</h2>
 <p>
 On UNIX, the X backend is the default build for GTK+.
 So you don't need to do anything special when compiling it,
@@ -72,6 +72,21 @@ The X11 GDK backend can be influenced with some additional environment variables
     If set, GDK makes does not use the XInput extension, and only reacts
     to core X input events.
   </p>
+<p><b><code class="envar">GDK_SCALE</code>. </b>
+    Must be set to an integer, typically 2. If set, GDK will scale all
+    windows by the specified factor. Scaled output is meant to be used on
+    high-dpi displays. Normally, GDK will pick up a suitable scale factor
+    for each monitor from the display system. This environment variable
+    allows to override that.
+  </p>
+<p><b><code class="envar">GDK_DPI_SCALE</code>. </b>
+    This can be useful when using scale-aware GTK+ applications together
+    with scale-unaware applications on a high-dpi display. In that case,
+    the font resolution can be doubled to make scale-unaware applications
+    readable, and <code class="envar">GDK_DPI_SCALE=0.5</code> can be set to compensate
+    for that in GTK+ applications which are already scaled by setting
+    <code class="envar">GDK_SCALE=2</code>.
+  </p>
 </div>
 </div>
 <div class="refsect1">
@@ -95,7 +110,7 @@ The GDK manual covers <GTKDOCLINK HREF="gdk-X-Window-System-Interaction">using X
 program</GTKDOCLINK>.
 </p>
 <div class="refsect2">
-<a name="id-1.2.7.4.5"></a><h3>Server, client, window manager</h3>
+<a name="id-1.8.5.4.5"></a><h3>Server, client, window manager</h3>
 <p>
 Other window systems typically put all their functionality in the
 application itself. With X, each application involves three different
@@ -121,8 +136,8 @@ behalf, using an established  <a class="ulink" href="http://www.freedesktop.org/
 </p>
 <p>
 GTK+ has functions for asking the window manager to do various things;
-see for example <a class="link" href="GtkWindow.html#gtk-window-iconify" title="gtk_window_iconify ()">gtk_window_iconify()</a> or <a class="link" href="GtkWindow.html#gtk-window-maximize" title="gtk_window_maximize ()">gtk_window_maximize()</a> or <a class="link" href="GtkWindow.html#gtk-window-set-decorated" title="gtk_window_set_decorated ()">gtk_window_set_decorated()</a>.
-Keep in mind that <a class="link" href="GtkWindow.html#gtk-window-move" title="gtk_window_move ()">gtk_window_move()</a> and window sizing
+see for example <a class="link" href="GtkWindow.html#gtk-window-iconify" title="gtk_window_iconify ()">gtk_window_iconify()</a> or <a class="link" href="GtkWindow.html#gtk-window-maximize" title="gtk_window_maximize ()">gtk_window_maximize()</a> or <a class="link" href="GtkWindow.html#gtk-window-set-decorated" title="gtk_window_set_decorated ()">gtk_window_set_decorated()</a>.
+Keep in mind that <a class="link" href="GtkWindow.html#gtk-window-move" title="gtk_window_move ()">gtk_window_move()</a> and window sizing
 are ultimately controlled by the window manager as well and most
 window managers <span class="emphasis"><em>will</em></span> ignore certain requests from
 time to time, in the interests of good user interface.
@@ -132,6 +147,6 @@ time to time, in the interests of good user interface.
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.19</div>
+          Generated by GTK-Doc V1.20.1</div>
 </body>
 </html>

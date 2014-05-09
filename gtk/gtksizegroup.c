@@ -151,6 +151,11 @@ G_STATIC_ASSERT (GTK_SIZE_GROUP_HORIZONTAL == (1 << GTK_ORIENTATION_HORIZONTAL))
 G_STATIC_ASSERT (GTK_SIZE_GROUP_VERTICAL == (1 << GTK_ORIENTATION_VERTICAL));
 G_STATIC_ASSERT (GTK_SIZE_GROUP_BOTH == (GTK_SIZE_GROUP_HORIZONTAL | GTK_SIZE_GROUP_VERTICAL));
 
+G_DEFINE_TYPE_WITH_CODE (GtkSizeGroup, gtk_size_group, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE (GtkSizeGroup)
+			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
+						gtk_size_group_buildable_init))
+
 static void
 add_widget_to_closure (GHashTable     *widgets,
                        GHashTable     *groups,
@@ -343,8 +348,6 @@ gtk_size_group_class_init (GtkSizeGroupClass *klass)
 							    "when determining the size of the group"),
 							 FALSE,
 							 GTK_PARAM_READWRITE));
-
-  g_type_class_add_private (klass, sizeof (GtkSizeGroupPrivate));
 }
 
 static void
@@ -352,9 +355,7 @@ gtk_size_group_init (GtkSizeGroup *size_group)
 {
   GtkSizeGroupPrivate *priv;
 
-  size_group->priv = G_TYPE_INSTANCE_GET_PRIVATE (size_group,
-                                                  GTK_TYPE_SIZE_GROUP,
-                                                  GtkSizeGroupPrivate);
+  size_group->priv = gtk_size_group_get_instance_private (size_group);
   priv = size_group->priv;
 
   priv->widgets = NULL;
@@ -368,10 +369,6 @@ gtk_size_group_buildable_init (GtkBuildableIface *iface)
   iface->custom_tag_start = gtk_size_group_buildable_custom_tag_start;
   iface->custom_finished = gtk_size_group_buildable_custom_finished;
 }
-
-G_DEFINE_TYPE_WITH_CODE (GtkSizeGroup, gtk_size_group, G_TYPE_OBJECT,
-			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
-						gtk_size_group_buildable_init))
 
 static void
 gtk_size_group_set_property (GObject      *object,
@@ -667,15 +664,22 @@ size_group_start_element (GMarkupParseContext *context,
   GSListSubParserData *data = (GSListSubParserData*)user_data;
 
   if (strcmp (element_name, "widget") == 0)
-    for (i = 0; names[i]; i++)
-      if (strcmp (names[i], "name") == 0)
-	data->items = g_slist_prepend (data->items, g_strdup (values[i]));
+    {
+      for (i = 0; names[i]; i++)
+        {
+          if (strcmp (names[i], "name") == 0)
+            data->items = g_slist_prepend (data->items, g_strdup (values[i]));
+        }
+    }
   else if (strcmp (element_name, "widgets") == 0)
-    return;
+    {
+      return;
+    }
   else
-    g_warning ("Unsupported type tag for GtkSizeGroup: %s\n",
-	       element_name);
-
+    {
+      g_warning ("Unsupported type tag for GtkSizeGroup: %s\n",
+                 element_name);
+    }
 }
 
 static const GMarkupParser size_group_parser =

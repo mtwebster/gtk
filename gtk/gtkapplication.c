@@ -135,18 +135,18 @@ enum {
   PROP_ACTIVE_WINDOW
 };
 
-G_DEFINE_TYPE (GtkApplication, gtk_application, G_TYPE_APPLICATION)
-
 struct _GtkApplicationPrivate
 {
   GList *windows;
 
-  gboolean register_session;
-
   GMenuModel      *app_menu;
   GMenuModel      *menubar;
 
+  gboolean register_session;
+
 #ifdef GDK_WINDOWING_X11
+  guint next_id;
+
   GDBusConnection *session_bus;
   const gchar     *application_id;
   const gchar     *object_path;
@@ -154,10 +154,8 @@ struct _GtkApplicationPrivate
   gchar           *app_menu_path;
   guint            app_menu_id;
 
-  gchar           *menubar_path;
   guint            menubar_id;
-
-  guint next_id;
+  gchar           *menubar_path;
 
   GDBusProxy *sm_proxy;
   GDBusProxy *client_proxy;
@@ -173,6 +171,8 @@ struct _GtkApplicationPrivate
   guint next_cookie;
 #endif
 };
+
+G_DEFINE_TYPE_WITH_PRIVATE (GtkApplication, gtk_application, G_TYPE_APPLICATION)
 
 #ifdef GDK_WINDOWING_X11
 static void
@@ -423,6 +423,8 @@ gtk_application_shutdown (GApplication *application)
   gtk_application_shutdown_quartz (GTK_APPLICATION (application));
 #endif
 
+  /* Keep this section in sync with gtk_main() */
+
   /* Try storing all clipboard data we have */
   _gtk_clipboard_store_all ();
 
@@ -486,9 +488,7 @@ gtk_application_after_emit (GApplication *application,
 static void
 gtk_application_init (GtkApplication *application)
 {
-  application->priv = G_TYPE_INSTANCE_GET_PRIVATE (application,
-                                                   GTK_TYPE_APPLICATION,
-                                                   GtkApplicationPrivate);
+  application->priv = gtk_application_get_instance_private (application);
 
 #ifdef GDK_WINDOWING_X11
   application->priv->next_id = 1;
@@ -682,8 +682,6 @@ gtk_application_class_init (GtkApplicationClass *class)
 
   class->window_added = gtk_application_window_added;
   class->window_removed = gtk_application_window_removed;
-
-  g_type_class_add_private (class, sizeof (GtkApplicationPrivate));
 
   /**
    * GtkApplication::window-added:

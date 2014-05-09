@@ -190,7 +190,7 @@ adjust_clock_for_phase (gint64 frame_clock_time,
 
 /* Drawing */
 
-static void
+static gboolean
 on_window_draw (GtkWidget *widget,
                 cairo_t   *cr)
 {
@@ -224,6 +224,8 @@ on_window_draw (GtkWidget *widget,
           displayed_frame->frame_counter = gdk_frame_clock_get_frame_counter (frame_clock);
         }
     }
+
+  return FALSE;
 }
 
 static void
@@ -291,8 +293,8 @@ print_statistics (void)
         g_print ("playback rate adjustment: %g +/- %g %%\n",
                  (variable_mean (&time_factor_stats) - 1) * 100,
                  variable_standard_deviation (&time_factor_stats) * 100);
-      variable_reset (&latency_error);
-      variable_reset (&time_factor_stats);
+      variable_init (&latency_error);
+      variable_init (&time_factor_stats);
       dropped_frames = 0;
       n_frames = 0;
       last_print_time = now;

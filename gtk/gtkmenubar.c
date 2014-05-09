@@ -50,6 +50,9 @@
 #include "gtkintl.h"
 #include "gtkprivate.h"
 #include "gtktypebuiltins.h"
+#include "gtkwidgetprivate.h"
+
+#define MENU_BAR_POPUP_DELAY 0
 
 /* Properties */
 enum {
@@ -99,7 +102,7 @@ static void gtk_menu_bar_move_current      (GtkMenuShell     *menu_shell,
 
 static GtkShadowType get_shadow_type   (GtkMenuBar      *menubar);
 
-G_DEFINE_TYPE (GtkMenuBar, gtk_menu_bar, GTK_TYPE_MENU_SHELL)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkMenuBar, gtk_menu_bar, GTK_TYPE_MENU_SHELL)
 
 static void
 gtk_menu_bar_class_init (GtkMenuBarClass *class)
@@ -234,8 +237,6 @@ gtk_menu_bar_class_init (GtkMenuBarClass *class)
                                                              0,
                                                              GTK_PARAM_READABLE |
                                                              G_PARAM_DEPRECATED));
-
-  g_type_class_add_private (gobject_class, sizeof (GtkMenuBarPrivate));
 }
 
 static void
@@ -243,9 +244,7 @@ gtk_menu_bar_init (GtkMenuBar *menu_bar)
 {
   GtkStyleContext *context;
 
-  menu_bar->priv = G_TYPE_INSTANCE_GET_PRIVATE (menu_bar,
-                                                GTK_TYPE_MENU_BAR,
-                                                GtkMenuBarPrivate);
+  menu_bar->priv = gtk_menu_bar_get_instance_private (menu_bar);
 
   context = gtk_widget_get_style_context (GTK_WIDGET (menu_bar));
   gtk_style_context_add_class (context, GTK_STYLE_CLASS_MENUBAR);
@@ -309,25 +308,6 @@ gtk_menu_bar_get_property (GObject    *object,
 }
 
 static void
-get_preferred_size_for_size (GtkWidget      *widget,
-                             GtkOrientation  orientation,
-                             gint            size,
-                             gint           *minimum,
-                             gint           *natural)
-{
-  if (orientation == GTK_ORIENTATION_HORIZONTAL)
-    if (size < 0)
-      gtk_widget_get_preferred_width (widget, minimum, natural);
-    else
-      gtk_widget_get_preferred_width_for_height (widget, size, minimum, natural);
-  else
-    if (size < 0)
-      gtk_widget_get_preferred_height (widget, minimum, natural);
-    else
-      gtk_widget_get_preferred_height_for_width (widget, size, minimum, natural);
-}
-
-static void
 gtk_menu_bar_size_request (GtkWidget      *widget,
                            GtkOrientation  orientation,
                            gint            size,
@@ -374,7 +354,7 @@ gtk_menu_bar_size_request (GtkWidget      *widget,
 
       if (gtk_widget_get_visible (child))
         {
-          get_preferred_size_for_size (child, orientation, size, &child_minimum, &child_natural);
+          _gtk_widget_get_preferred_size_for_size (child, orientation, size, &child_minimum, &child_natural, NULL, NULL);
 
           if (use_toggle_size)
             {
@@ -718,7 +698,7 @@ window_key_press_handler (GtkWidget   *widget,
 {
   gchar *accel = NULL;
   gboolean retval = FALSE;
-  
+
   g_object_get (gtk_widget_get_settings (widget),
                 "gtk-menu-bar-accel", &accel,
                 NULL);
@@ -739,26 +719,26 @@ window_key_press_handler (GtkWidget   *widget,
        */
       if (event->keyval == keyval &&
           ((event->state & gtk_accelerator_get_default_mod_mask ()) ==
-	   (mods & gtk_accelerator_get_default_mod_mask ())))
+          (mods & gtk_accelerator_get_default_mod_mask ())))
         {
-	  GList *tmp_menubars = get_viewable_menu_bars (GTK_WINDOW (widget));
-	  GList *menubars;
+          GList *tmp_menubars = get_viewable_menu_bars (GTK_WINDOW (widget));
+          GList *menubars;
 
-	  menubars = _gtk_container_focus_sort (GTK_CONTAINER (widget), tmp_menubars,
-						GTK_DIR_TAB_FORWARD, NULL);
-	  g_list_free (tmp_menubars);
-	  
-	  if (menubars)
-	    {
-	      GtkMenuShell *menu_shell = GTK_MENU_SHELL (menubars->data);
+          menubars = _gtk_container_focus_sort (GTK_CONTAINER (widget), tmp_menubars,
+                                                GTK_DIR_TAB_FORWARD, NULL);
+          g_list_free (tmp_menubars);
+
+          if (menubars)
+            {
+              GtkMenuShell *menu_shell = GTK_MENU_SHELL (menubars->data);
 
               _gtk_menu_shell_set_keyboard_mode (menu_shell, TRUE);
-	      gtk_menu_shell_select_first (menu_shell, FALSE);
-	      
-	      g_list_free (menubars);
-	      
-	      retval = TRUE;	      
-	    }
+              gtk_menu_shell_select_first (menu_shell, FALSE);
+
+              g_list_free (menubars);
+
+              retval = TRUE;
+            }
         }
     }
 
@@ -880,13 +860,7 @@ get_shadow_type (GtkMenuBar *menubar)
 static gint
 gtk_menu_bar_get_popup_delay (GtkMenuShell *menu_shell)
 {
-  gint popup_delay;
-  
-  g_object_get (gtk_widget_get_settings (GTK_WIDGET (menu_shell)),
-		"gtk-menu-bar-popup-delay", &popup_delay,
-		NULL);
-
-  return popup_delay;
+  return MENU_BAR_POPUP_DELAY;
 }
 
 static void

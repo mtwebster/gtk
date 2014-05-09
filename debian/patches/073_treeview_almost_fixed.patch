@@ -35,7 +35,7 @@ Index: gtk+3.0-3.7.10/gtk/gtktreeview.c
 +                                                           "Private Ubuntu extension",
 +							   "Private Ubuntu extension",
 +                                                           FALSE,
-+                                                           GTK_PARAM_READWRITE));
++                                                           G_PARAM_WRITABLE));
      
      /**
       * GtkTreeView:hover-selection:

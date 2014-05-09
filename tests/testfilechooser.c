@@ -397,6 +397,47 @@ set_filename_existing_nonexistent_cb (GtkButton      *button,
 }
 
 static void
+get_selection_cb (GtkButton      *button,
+		  GtkFileChooser *chooser)
+{
+  GSList *selection;
+
+  selection = gtk_file_chooser_get_uris (chooser);
+
+  g_print ("Selection: ");
+
+  if (selection == NULL)
+    g_print ("empty\n");
+  else
+    {
+      GSList *l;
+      
+      for (l = selection; l; l = l->next)
+	{
+	  char *uri = l->data;
+
+	  g_print ("%s\n", uri);
+
+	  if (l->next)
+	    g_print ("           ");
+	}
+    }
+
+  g_slist_free_full (selection, g_free);
+}
+
+static void
+get_current_name_cb (GtkButton      *button,
+		     GtkFileChooser *chooser)
+{
+  char *name;
+
+  name = gtk_file_chooser_get_current_name (chooser);
+  g_print ("Current name: %s\n", name ? name : "NULL");
+  g_free (name);
+}
+
+static void
 unmap_and_remap_cb (GtkButton *button,
 		    GtkFileChooser *chooser)
 {
@@ -525,6 +566,11 @@ main (int argc, char **argv)
 	action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
       else if (! strcmp ("create_folder", action_arg))
 	action = GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER;
+      else
+	{
+	  g_print ("--action must be one of \"open\", \"save\", \"select_folder\", \"create_folder\"\n");
+	  return 1;
+	}
 
       g_free (action_arg);
     }
@@ -540,16 +586,16 @@ main (int argc, char **argv)
     case GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER:
       gtk_window_set_title (GTK_WINDOW (dialog), "Select a file");
       gtk_dialog_add_buttons (GTK_DIALOG (dialog),
-			      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			      GTK_STOCK_OPEN, GTK_RESPONSE_OK,
+			      _("_Cancel"), GTK_RESPONSE_CANCEL,
+			      _("_Open"), GTK_RESPONSE_OK,
 			      NULL);
       break;
     case GTK_FILE_CHOOSER_ACTION_SAVE:
     case GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER:
       gtk_window_set_title (GTK_WINDOW (dialog), "Save a file");
       gtk_dialog_add_buttons (GTK_DIALOG (dialog),
-			      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			      GTK_STOCK_SAVE, GTK_RESPONSE_OK,
+			      _("_Cancel"), GTK_RESPONSE_CANCEL,
+			      _("_Open"), GTK_RESPONSE_OK,
 			      NULL);
       break;
     }
@@ -681,6 +727,16 @@ main (int argc, char **argv)
   gtk_container_add (GTK_CONTAINER (vbbox), button);
   g_signal_connect (button, "clicked",
 		    G_CALLBACK (set_filename_existing_nonexistent_cb), dialog);
+
+  button = gtk_button_new_with_label ("Get selection");
+  gtk_container_add (GTK_CONTAINER (vbbox), button);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (get_selection_cb), dialog);
+
+  button = gtk_button_new_with_label ("Get current name");
+  gtk_container_add (GTK_CONTAINER (vbbox), button);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (get_current_name_cb), dialog);
 
   button = gtk_button_new_with_label ("Unmap and remap");
   gtk_container_add (GTK_CONTAINER (vbbox), button);

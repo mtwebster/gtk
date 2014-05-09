@@ -31,16 +31,12 @@
 #include "gtklabel.h"
 #include "gtkliststore.h"
 #include "gtkradiobutton.h"
-#include "gtkstock.h"
 #include "gtkgrid.h"
 #include "gtktogglebutton.h"
 #include "gtkorientable.h"
 #include "gtkprivate.h"
 
 #include "gtkprinteroptionwidget.h"
-
-#define GTK_PRINTER_OPTION_WIDGET_GET_PRIVATE(o)  \
-   (G_TYPE_INSTANCE_GET_PRIVATE ((o), GTK_TYPE_PRINTER_OPTION_WIDGET, GtkPrinterOptionWidgetPrivate))
 
 /* This defines the max file length that the file chooser
  * button should display. The total length will be
@@ -87,7 +83,7 @@ enum {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (GtkPrinterOptionWidget, gtk_printer_option_widget, GTK_TYPE_BOX)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkPrinterOptionWidget, gtk_printer_option_widget, GTK_TYPE_BOX)
 
 static void gtk_printer_option_widget_set_property (GObject      *object,
 						    guint         prop_id,
@@ -115,8 +111,6 @@ gtk_printer_option_widget_class_init (GtkPrinterOptionWidgetClass *class)
 
   widget_class->mnemonic_activate = gtk_printer_option_widget_mnemonic_activate;
 
-  g_type_class_add_private (class, sizeof (GtkPrinterOptionWidgetPrivate));
-
   signals[CHANGED] =
     g_signal_new ("changed",
 		  G_TYPE_FROM_CLASS (class),
@@ -139,7 +133,7 @@ gtk_printer_option_widget_class_init (GtkPrinterOptionWidgetClass *class)
 static void
 gtk_printer_option_widget_init (GtkPrinterOptionWidget *widget)
 {
-  widget->priv = GTK_PRINTER_OPTION_WIDGET_GET_PRIVATE (widget); 
+  widget->priv = gtk_printer_option_widget_get_instance_private (widget);
 
   gtk_box_set_spacing (GTK_BOX (widget), 12);
 }
@@ -548,7 +542,7 @@ filesave_choose_cb (GtkWidget              *button,
   dialog = gtk_file_chooser_dialog_new (_("Select a filename"),
                                         toplevel,
                                         GTK_FILE_CHOOSER_ACTION_SAVE,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                        _("_Cancel"), GTK_RESPONSE_CANCEL,
                                         _("_Select"), GTK_RESPONSE_ACCEPT,
                                         NULL);
 
@@ -893,7 +887,7 @@ construct_widgets (GtkPrinterOptionWidget *widget)
       break;
     }
 
-  priv->image = gtk_image_new_from_stock (GTK_STOCK_DIALOG_WARNING, GTK_ICON_SIZE_MENU);
+  priv->image = gtk_image_new_from_icon_name ("dialog-warning", GTK_ICON_SIZE_MENU);
   gtk_box_pack_start (GTK_BOX (widget), priv->image, FALSE, FALSE, 0);
 }
 

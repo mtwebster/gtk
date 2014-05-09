@@ -20,7 +20,7 @@
 #define __GTK_BUTTON_PRIVATE_H__
 
 #include "gtkactionhelper.h"
-#include "gtkaction.h"
+#include "deprecated/gtkaction.h"
 
 G_BEGIN_DECLS
 
@@ -38,6 +38,9 @@ struct _GtkButtonPrivate
 
   gfloat                 xalign;
   gfloat                 yalign;
+
+  /* This is only used by checkbox and subclasses */
+  gfloat                 baseline_align;
 
   guint                  activate_timeout;
   guint32                grab_time;

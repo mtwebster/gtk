@@ -28,6 +28,7 @@
 #include "gtk/gtkcssimagegradientprivate.h"
 #include "gtk/gtkcssimagelinearprivate.h"
 #include "gtk/gtkcssimageurlprivate.h"
+#include "gtk/gtkcssimagescaledprivate.h"
 #include "gtk/gtkcssimagewin32private.h"
 
 G_DEFINE_ABSTRACT_TYPE (GtkCssImage, _gtk_css_image, G_TYPE_OBJECT)
@@ -62,6 +63,7 @@ static GtkCssImage *
 gtk_css_image_real_compute (GtkCssImage             *image,
                             guint                    property_id,
                             GtkStyleProviderPrivate *provider,
+			    int                      scale,
                             GtkCssComputedValues    *values,
                             GtkCssComputedValues    *parent_values,
                             GtkCssDependencies      *dependencies)
@@ -146,6 +148,7 @@ GtkCssImage *
 _gtk_css_image_compute (GtkCssImage             *image,
                         guint                    property_id,
                         GtkStyleProviderPrivate *provider,
+			int                      scale,
                         GtkCssComputedValues    *values,
                         GtkCssComputedValues    *parent_values,
                         GtkCssDependencies      *dependencies)
@@ -163,7 +166,7 @@ _gtk_css_image_compute (GtkCssImage             *image,
 
   klass = GTK_CSS_IMAGE_GET_CLASS (image);
 
-  return klass->compute (image, property_id, provider, values, parent_values, dependencies);
+  return klass->compute (image, property_id, provider, scale, values, parent_values, dependencies);
 }
 
 GtkCssImage *
@@ -391,11 +394,14 @@ _gtk_css_image_get_surface (GtkCssImage     *image,
   g_return_val_if_fail (surface_width > 0, NULL);
   g_return_val_if_fail (surface_height > 0, NULL);
 
+
   if (target)
-    result = cairo_surface_create_similar (target,
-                                           CAIRO_CONTENT_COLOR_ALPHA,
-                                           surface_width,
-                                           surface_height);
+    {
+      result = cairo_surface_create_similar (target,
+					     CAIRO_CONTENT_COLOR_ALPHA,
+					     surface_width,
+					     surface_height);
+    }
   else
     result = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
                                          surface_width,
@@ -417,6 +423,7 @@ gtk_css_image_get_parser_type (GtkCssParser *parser)
   } image_types[] = {
     { "url", _gtk_css_image_url_get_type },
     { "-gtk-gradient", _gtk_css_image_gradient_get_type },
+    { "-gtk-scaled", _gtk_css_image_scaled_get_type },
     { "-gtk-win32-theme-part", _gtk_css_image_win32_get_type },
     { "linear-gradient", _gtk_css_image_linear_get_type },
     { "repeating-linear-gradient", _gtk_css_image_linear_get_type },

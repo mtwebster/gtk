@@ -1,7 +1,7 @@
 ## Makefile.am for gtk+/tests
 include $(top_srcdir)/Makefile.decl
 
-SUBDIRS = css reftests a11y visuals
+SUBDIRS = visuals
 
 AM_CPPFLAGS =				\
 	-I$(top_srcdir)			\
@@ -27,6 +27,7 @@ endif
 noinst_PROGRAMS =  $(TEST_PROGS)	\
 	animated-resizing		\
 	motion-compression		\
+	scrolling-performance		\
 	simple				\
 	flicker				\
 	print-editor			\
@@ -36,6 +37,7 @@ noinst_PROGRAMS =  $(TEST_PROGS)	\
 	testappchooser			\
 	testappchooserbutton		\
 	testassistant			\
+	testbaseline			\
 	testbbox			\
 	testboxcss                      \
 	testbuttons			\
@@ -62,6 +64,7 @@ noinst_PROGRAMS =  $(TEST_PROGS)	\
 	testgiconpixbuf			\
 	testgrid			\
 	testgtk				\
+	testheaderbar			\
 	testheightforwidth		\
 	testiconview			\
 	testiconview-keynav		\
@@ -69,12 +72,13 @@ noinst_PROGRAMS =  $(TEST_PROGS)	\
 	testimage			\
 	testinput			\
 	testkineticscrolling		\
+	testlist			\
+	testlist2			\
+	testlevelbar			\
 	testlockbutton			\
-	testmenubars			\
 	testmenubutton			\
 	testmountoperation		\
 	testmultidisplay		\
-	testmultiscreen			\
 	testnotebookdnd			\
 	testnumerableicon		\
 	testnouiprint			\
@@ -92,6 +96,7 @@ noinst_PROGRAMS =  $(TEST_PROGS)	\
 	$(testsocket_programs)		\
 	testspinbutton			\
 	teststatusicon			\
+	teststockbuttonmenu		\
 	testtoolbar			\
 	stresstest-toolbar		\
 	testtreechanging                \
@@ -130,7 +135,11 @@ noinst_PROGRAMS =  $(TEST_PROGS)	\
 	testpixbuf-color		\
 	testpixbuf-scale		\
 	testgmenu			\
-	testlogout
+	testlogout			\
+	teststack			\
+	testrevealer			\
+	testtitlebar			\
+	testwindowsize
 
 if USE_X11
 noinst_PROGRAMS += testerrors
@@ -155,6 +164,7 @@ endif
 animated_resizing_DEPENDENCIES = $(TEST_DEPS)
 flicker_DEPENDENCIES = $(TEST_DEPS)
 motion_compression_DEPENDENCIES = $(TEST_DEPS)
+scrolling_performance_DEPENDENCIES = $(TEST_DEPS)
 simple_DEPENDENCIES = $(TEST_DEPS)
 print_editor_DEPENDENCIES = $(TEST_DEPS)
 video_timer_DEPENDENCIES = $(TEST_DEPS)
@@ -164,6 +174,7 @@ testiconview_DEPENDENCIES = $(TEST_DEPS)
 testaccel_DEPENDENCIES = $(TEST_DEPS)
 testadjustsize_DEPENDENCIES = $(TEST_DEPS)
 testassistant_DEPENDENCIES = $(TEST_DEPS)
+testbaseline_DEPENDENCIES = $(TEST_DEPS)
 testbbox_DEPENDENCIES = $(TEST_DEPS)
 testbuttons_DEPENDENCIES = $(TEST_DEPS)
 testcairo_DEPENDENCIES = $(TEST_DEPS)
@@ -189,15 +200,17 @@ testgeometry_DEPENDENCIES = $(TEST_DEPS)
 testgiconpixbuf = $(TEST_DEPS)
 testgrid_DEPENDENCIES = $(TEST_DEPS)
 testgtk_DEPENDENCIES = $(TEST_DEPS)
+testheaderbar_DEPENDENCIES = $(TEST_DEPS)
 testinput_DEPENDENCIES = $(TEST_DEPS)
 testimage_DEPENDENCIES = $(TEST_DEPS)
 testkineticscrolling_DEPENDENCIES = $(TEST_DEPS)
+testlist_DEPENDENCIES = $(TEST_DEPS)
+testlist2_DEPENDENCIES = $(TEST_DEPS)
+testlevelbar_DEPENDENCIES = $(TEST_DEPS)
 testlockbutton_DEPENDENCIES = $(TEST_DEPS)
-testmenubars_DEPENDENCIES = $(TEST_DEPS)
 testmenubutton_DEPENDENCIES = $(TEST_DEPS)
 testmountoperation_DEPENDENCIES = $(TEST_DEPS)
 testmultidisplay_DEPENDENCIES = $(TEST_DEPS)
-testmultiscreen_DEPENDENCIES = $(TEST_DEPS)
 testnotebookdnd_DEPENDENCIES = $(TEST_DEPS)
 testnouiprint_DEPENDENCIES = $(TEST_DEPS)
 testnumerableicon_DEPENDENCIES = $(TEST_DEPS)
@@ -218,6 +231,7 @@ testsocket_DEPENDENCIES = $(DEPS)
 testsocket_child_DEPENDENCIES = $(DEPS)
 testspinbutton_DEPENDENCIES = $(TEST_DEPS)
 teststatusicon_DEPENDENCIES = $(TEST_DEPS)
+teststockbuttonmenu_DEPENDENCIES = $(TEST_DEPS)
 testtreechanging_DEPENDENCIES =	$(DEPS)
 testtreeedit_DEPENDENCIES = $(DEPS)
 testtreemodel_DEPENDENCIES = $(DEPS)
@@ -254,9 +268,22 @@ testpixbuf_color_DEPENDENCIES = $(TEST_DEPS)
 testpixbuf_scale_DEPENDENCIES = $(TEST_DEPS)
 testgmenu_DEPENDENCIES = $(TEST_DEPS)
 testlogout_DEPENDENCIES = $(TEST_DEPS)
+teststack_DEPENDENCIES = $(TEST_DEPS)
+testrevealer_DEPENDENCIES = $(TEST_DEPS)
+testtitlebar_DEPENDENCIES = $(TEST_DEPS)
+testwindowsize_DEPENDENCIES = $(TEST_DEPS)
 
 animated_resizing_SOURCES = 	\
 	animated-resizing.c	\
+	frame-stats.c		\
+	frame-stats.h		\
+	variable.c		\
+	variable.h
+
+scrolling_performance_SOURCES = \
+	scrolling-performance.c	\
+	frame-stats.c		\
+	frame-stats.h		\
 	variable.c		\
 	variable.h
 
@@ -353,6 +380,9 @@ testmerge_SOURCES = 		\
 
 testactions_SOURCES = 		\
 	testactions.c
+
+testbaseline_SOURCES = 		\
+	testbaseline.c
 
 testbbox_SOURCES = 		\
 	testbbox.c
@@ -451,6 +481,14 @@ testpixbuf_save_SOURCES = testpixbuf-save.c
 testcolorchooser_SOURCES = testcolorchooser.c
 
 testkineticscrolling_SOURCES = testkineticscrolling.c
+
+teststack_SOURCES = teststack.c
+
+testrevealer_SOURCES = testrevealer.c
+
+testtitlebar_SOURCES = testtitlebar.c
+
+testwindowsize_SOURCES = testwindowsize.c
 
 EXTRA_DIST += 			\
 	gradient1.png		\

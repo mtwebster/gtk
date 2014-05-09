@@ -2,22 +2,22 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Compiling the GTK+ libraries</title>
+<title>GTK+ 3 Reference Manual: Compiling the GTK+ libraries</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GTK+ 3 Reference Manual">
-<link rel="up" href="gtk.html" title="Part I. GTK+ Overview">
-<link rel="prev" href="gtk-getting-started.html" title="Getting Started with GTK+">
+<link rel="up" href="platform-support.html" title="Part VII. GTK+ Platform Support">
+<link rel="prev" href="platform-support.html" title="Part VII. GTK+ Platform Support">
 <link rel="next" href="gtk-compiling.html" title="Compiling GTK+ Applications">
-<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.20.1 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle">
-<td><a accesskey="p" href="gtk-getting-started.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
-<td><a accesskey="u" href="gtk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
-<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
-<th width="100%" align="center">GTK+ 3 Reference Manual</th>
-<td><a accesskey="n" href="gtk-compiling.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
+<td width="100%" align="left" class="shortcuts"></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
+<td><a accesskey="u" href="platform-support.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
+<td><a accesskey="p" href="platform-support.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gtk-compiling.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gtk-building"></a><div class="titlepage"></div>
@@ -28,7 +28,7 @@
 How to compile GTK+ itself
 </p>
 </td>
-<td valign="top" align="right"></td>
+<td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
 <div class="refsect1">
 <a name="overview"></a><h2>Building GTK+ on UNIX-like systems</h2>
@@ -302,7 +302,7 @@ How to compile GTK+ itself
         the documentation distributed with the those libraries.)
 
         </p>
-<div class="cmdsynopsis"><p><code class="command">configure</code> <br> [ --disable-modules  |   --enable-modules ]<br> [[--with-included-immodules=MODULE1,MODULE2,...]]<br> [ --enable-debug=[no/minimum/yes] ]<br> [ --disable-Bsymbolic  |   --enable-Bsymbolic ]<br> [ --disable-xkb  |   --enable-xkb ]<br> [ --disable-xinerama  |   --enable-xinerama ]<br> [ --disable-gtk-doc  |   --enable-gtk-doc ]<br> [ --disable-cups  |   --enable-cups ]<br> [ --disable-papi  |   --enable-papi ]<br> [ --enable-xinput  |   --disable-xinput ]<br> [ --enable-packagekit  |   --disable-packagekit ]<br> [ --enable-x11-backend  |   --disable-x11-backend ]<br> [ --enable-win32-backend  |   --disable-win32-backend ]<br> [ --enable-quartz-backend  |   --disable-quartz-backend ]<br> [ --enable-broadway-backend  |   --disable-broadway-backend ]<br> [ --enable-wayland-backend  |   --disable-wayland-backend ]<br> [ --enable-introspection=[no/auto/yes] ]<br> [ --enable-gtk2-dependency  |   --disable-gtk2-dependency ]</p></div>
+<div class="cmdsynopsis"><p><code class="command">configure</code> <br> [ --disable-modules  |   --enable-modules ]<br> [[--with-included-immodules=MODULE1,MODULE2,...]]<br> [ --enable-debug=[no/minimum/yes] ]<br> [ --disable-Bsymbolic  |   --enable-Bsymbolic ]<br> [ --disable-xkb  |   --enable-xkb ]<br> [ --disable-xinerama  |   --enable-xinerama ]<br> [ --disable-gtk-doc  |   --enable-gtk-doc ]<br> [ --disable-cups  |   --enable-cups ]<br> [ --disable-papi  |   --enable-papi ]<br> [ --enable-xinput  |   --disable-xinput ]<br> [ --enable-packagekit  |   --disable-packagekit ]<br> [ --enable-x11-backend  |   --disable-x11-backend ]<br> [ --enable-win32-backend  |   --disable-win32-backend ]<br> [ --enable-quartz-backend  |   --disable-quartz-backend ]<br> [ --enable-broadway-backend  |   --disable-broadway-backend ]<br> [ --enable-wayland-backend  |   --disable-wayland-backend ]<br> [ --enable-introspection=[no/auto/yes] ]<br> [ --enable-gtk2-dependency  |   --disable-gtk2-dependency ]<br> [ --enable-installed-tests  |   --disable-installed-tests ]</p></div>
 <p>
       </p>
 <p><b><code class="systemitem">--disable-modules</code> and
@@ -454,10 +454,18 @@ How to compile GTK+ itself
           avoid file conflicts between these packages.
           The default is to build gtk-update-icon-cache.
         </p>
+<p><b><code class="systemitem">--enable-installed-tests</code> or
+           <code class="systemitem">--disable-installed-tests</code>. </b>
+          Whether to install tests on the system. If enabled, tests
+          and their data are installed in <code class="filename">${libexecdir}/gtk+/installed-tests</code>.
+          Metadata for the tests is installed in <code class="filename">${prefix}/share/installed-tests/gtk+</code>.
+          To run the installed tests, gnome-desktop-testing-runner
+          can be used.
+        </p>
 </div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.19</div>
+          Generated by GTK-Doc V1.20.1</div>
 </body>
 </html>

@@ -37,13 +37,15 @@
 #include "gtkseparatormenuitem.h"
 #include "gtkprivate.h"
 #include "gtkbuildable.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkwidgetprivate.h"
 #include "gtkintl.h"
 #include "gtksettings.h"
 #include "gtktypebuiltins.h"
 #include "a11y/gtkmenuitemaccessible.h"
 #include "deprecated/gtktearoffmenuitem.h"
+
+#define MENU_POPUP_DELAY     225
 
 /**
  * SECTION:gtkmenuitem
@@ -52,15 +54,28 @@
  * @See_also: #GtkBin, #GtkMenuShell
  *
  * The #GtkMenuItem widget and the derived widgets are the only valid
- * childs for menus. Their function is to correctly handle highlighting,
+ * children for menus. Their function is to correctly handle highlighting,
  * alignment, events and submenus.
  *
- * As it derives from #GtkBin it can hold any valid child widget, altough
- * only a few are really useful.
+ * As a GtkMenuItem derives from #GtkBin it can hold any valid child widget,
+ * although only a few are really useful.
+ *
+ * By default, a GtkMenuItem sets a #GtkAccelLabel as its child.
+ * GtkMenuItem has direct functions to set the label and its mnemonic.
+ * For more advanced label settings, you can fetch the child widget from the GtkBin.
+ *
+ * <example>
+ * <title>Setting markup and accelerator on a MenuItem</title>
+ * <programlisting><![CDATA[
+ * GtkWidget *child = gtk_bin_get_child (GTK_BIN (menu_item));
+ * gtk_label_set_markup (GTK_LABEL (child), "<i>new label</i> with <b>markup</b>");
+ * gtk_accel_label_set_accel (GTK_ACCEL_LABEL (child), GDK_KEY_1, 0);
+ * ]]></programlisting>
+ * </example>
  *
  * <refsect2 id="GtkMenuItem-BUILDER-UI">
  * <title>GtkMenuItem as GtkBuildable</title>
- * The GtkMenuItem implementation of the GtkBuildable interface
+ * The GtkMenuItem implementation of the #GtkBuildable interface
  * supports adding a submenu by specifying "submenu" as the "type"
  * attribute of a &lt;child&gt; element.
  * <example>
@@ -198,13 +213,16 @@ static guint menu_item_signals[LAST_SIGNAL] = { 0 };
 
 static GtkBuildableIface *parent_buildable_iface;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkMenuItem, gtk_menu_item, GTK_TYPE_BIN,
+                         G_ADD_PRIVATE (GtkMenuItem)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_menu_item_buildable_interface_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
                                                 gtk_menu_item_activatable_interface_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIONABLE,
                                                 gtk_menu_item_actionable_interface_init))
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_menu_item_set_action_name (GtkActionable *actionable,
@@ -521,8 +539,6 @@ gtk_menu_item_class_init (GtkMenuItemClass *klass)
                                                              P_("The minimum desired width of the menu item in characters"),
                                                              0, G_MAXINT, 12,
                                                              GTK_PARAM_READABLE));
-
-  g_type_class_add_private (klass, sizeof (GtkMenuItemPrivate));
 }
 
 static void
@@ -531,9 +547,7 @@ gtk_menu_item_init (GtkMenuItem *menu_item)
   GtkStyleContext *context;
   GtkMenuItemPrivate *priv;
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (menu_item,
-                                      GTK_TYPE_MENU_ITEM,
-                                      GtkMenuItemPrivate);
+  priv = gtk_menu_item_get_instance_private (menu_item);
   menu_item->priv = priv;
 
   gtk_widget_set_has_window (GTK_WIDGET (menu_item), FALSE);
@@ -619,8 +633,10 @@ gtk_menu_item_dispose (GObject *object)
 
   if (priv->action)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_action_disconnect_accelerator (priv->action);
       gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (menu_item), NULL);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       priv->action = NULL;
     }
   G_OBJECT_CLASS (gtk_menu_item_parent_class)->dispose (object);
@@ -847,7 +863,6 @@ gtk_menu_item_get_preferred_width (GtkWidget *widget,
   GtkStateFlags state;
   GtkBorder padding;
 
-  min_width = nat_width = 0;
   bin = GTK_BIN (widget);
   parent = gtk_widget_get_parent (widget);
 
@@ -1104,7 +1119,9 @@ activatable_update_label (GtkMenuItem *menu_item, GtkAction *action)
     {
       const gchar *label;
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       label = gtk_action_get_label (action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       gtk_menu_item_set_label (menu_item, label);
     }
 }
@@ -1139,12 +1156,18 @@ gtk_menu_is_empty (GtkWidget *menu)
     {
       if (gtk_widget_get_visible (cur->data))
 	{
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+
 	  if (!GTK_IS_TEAROFF_MENU_ITEM (cur->data) &&
 	      !g_object_get_data (cur->data, "gtk-empty-menu-item"))
             {
 	      result = FALSE;
               break;
             }
+
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 	}
       cur = cur->next;
     }
@@ -1163,10 +1186,18 @@ gtk_menu_item_update (GtkActivatable *activatable,
   GtkMenuItemPrivate *priv = menu_item->priv;
 
   if (strcmp (property_name, "visible") == 0)
-    _gtk_action_sync_menu_visible (action, GTK_WIDGET (menu_item),
-                                   gtk_menu_is_empty (gtk_menu_item_get_submenu (menu_item)));
+    {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      _gtk_action_sync_menu_visible (action, GTK_WIDGET (menu_item),
+                                     gtk_menu_is_empty (gtk_menu_item_get_submenu (menu_item)));
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+    }
   else if (strcmp (property_name, "sensitive") == 0)
-    gtk_widget_set_sensitive (GTK_WIDGET (menu_item), gtk_action_is_sensitive (action));
+    {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      gtk_widget_set_sensitive (GTK_WIDGET (menu_item), gtk_action_is_sensitive (action));
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+    }
   else if (priv->use_action_appearance)
     {
       if (strcmp (property_name, "label") == 0)
@@ -1196,7 +1227,9 @@ gtk_menu_item_sync_action_properties (GtkActivatable *activatable,
   _gtk_action_sync_menu_visible (action, GTK_WIDGET (menu_item),
                                  gtk_menu_is_empty (gtk_menu_item_get_submenu (menu_item)));
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_widget_set_sensitive (GTK_WIDGET (menu_item), gtk_action_is_sensitive (action));
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   if (priv->use_action_appearance)
     {
@@ -1215,12 +1248,14 @@ gtk_menu_item_sync_action_properties (GtkActivatable *activatable,
       /* Make label point to the menu_item's label */
       label = gtk_bin_get_child (GTK_BIN (menu_item));
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       if (GTK_IS_ACCEL_LABEL (label) && gtk_action_get_accel_path (action))
         {
           gtk_accel_label_set_accel_widget (GTK_ACCEL_LABEL (label), NULL);
           gtk_accel_label_set_accel_closure (GTK_ACCEL_LABEL (label),
                                              gtk_action_get_accel_closure (action));
         }
+      G_GNUC_END_IGNORE_DEPRECATIONS;
 
       activatable_update_label (menu_item, action);
     }
@@ -1234,6 +1269,8 @@ gtk_menu_item_set_related_action (GtkMenuItem *menu_item,
 
     if (priv->action == action)
       return;
+
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 
     if (priv->action)
       {
@@ -1254,6 +1291,8 @@ gtk_menu_item_set_related_action (GtkMenuItem *menu_item,
 
     gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (menu_item), action);
 
+    G_GNUC_END_IGNORE_DEPRECATIONS;
+
     priv->action = action;
 }
 
@@ -1267,7 +1306,9 @@ gtk_menu_item_set_use_action_appearance (GtkMenuItem *menu_item,
       {
         priv->use_action_appearance = use_appearance;
 
+        G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
         gtk_activatable_sync_action_properties (GTK_ACTIVATABLE (menu_item), priv->action);
+        G_GNUC_END_IGNORE_DEPRECATIONS;
       }
 }
 
@@ -1341,23 +1382,9 @@ _gtk_menu_item_set_placement (GtkMenuItem         *menu_item,
 void
 gtk_menu_item_select (GtkMenuItem *menu_item)
 {
-  GtkWidget *parent;
-
   g_return_if_fail (GTK_IS_MENU_ITEM (menu_item));
 
   g_signal_emit (menu_item, menu_item_signals[SELECT], 0);
-
-  /* Enable themeing of the parent menu item depending on whether
-   * something is selected in its submenu
-   */
-  parent = gtk_widget_get_parent (GTK_WIDGET (menu_item));
-  if (GTK_IS_MENU (parent))
-    {
-      GtkMenu *menu = GTK_MENU (parent);
-
-      if (menu->priv->parent_menu_item)
-        gtk_widget_queue_draw (GTK_WIDGET (menu->priv->parent_menu_item));
-    }
 }
 
 /**
@@ -1370,23 +1397,9 @@ gtk_menu_item_select (GtkMenuItem *menu_item)
 void
 gtk_menu_item_deselect (GtkMenuItem *menu_item)
 {
-  GtkWidget *parent;
-
   g_return_if_fail (GTK_IS_MENU_ITEM (menu_item));
 
   g_signal_emit (menu_item, menu_item_signals[DESELECT], 0);
-
-  /* Enable themeing of the parent menu item depending on whether
-   * something is selected in its submenu
-   */
-  parent = gtk_widget_get_parent (GTK_WIDGET (menu_item));
-  if (GTK_IS_MENU (parent))
-    {
-      GtkMenu *menu = GTK_MENU (parent);
-
-      if (menu->priv->parent_menu_item)
-        gtk_widget_queue_draw (GTK_WIDGET (menu->priv->parent_menu_item));
-    }
 }
 
 /**
@@ -1406,7 +1419,7 @@ gtk_menu_item_activate (GtkMenuItem *menu_item)
 /**
  * gtk_menu_item_toggle_size_request:
  * @menu_item: the menu item
- * @requisition: the requisition to use as signal data.
+ * @requisition: (inout): the requisition to use as signal data.
  *
  * Emits the #GtkMenuItem::toggle-size-request signal on the given item.
  */
@@ -1784,11 +1797,15 @@ gtk_real_menu_item_activate (GtkMenuItem *menu_item)
 {
   GtkMenuItemPrivate *priv = menu_item->priv;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   if (priv->action_helper)
     gtk_action_helper_activate (priv->action_helper);
 
   if (priv->action)
     gtk_action_activate (priv->action);
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 
@@ -1962,19 +1979,9 @@ get_popup_delay (GtkWidget *widget)
 
   parent = gtk_widget_get_parent (widget);
   if (GTK_IS_MENU_SHELL (parent))
-    {
-      return _gtk_menu_shell_get_popup_delay (GTK_MENU_SHELL (parent));
-    }
+    return _gtk_menu_shell_get_popup_delay (GTK_MENU_SHELL (parent));
   else
-    {
-      gint popup_delay;
-
-      g_object_get (gtk_widget_get_settings (widget),
-                    "gtk-menu-popup-delay", &popup_delay,
-                    NULL);
-
-      return popup_delay;
-    }
+    return MENU_POPUP_DELAY;
 }
 
 void

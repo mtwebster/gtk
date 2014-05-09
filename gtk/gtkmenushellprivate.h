@@ -22,15 +22,28 @@
 #include <gtk/gtkmenushell.h>
 #include <gtk/gtkmnemonichash.h>
 #include <gtk/gtkkeyhash.h>
-
+#include <gtk/gtkmenutracker.h>
 
 G_BEGIN_DECLS
+
+/* Placement of submenus */
+typedef enum
+{
+  GTK_TOP_BOTTOM,
+  GTK_LEFT_RIGHT
+} GtkSubmenuPlacement;
 
 struct _GtkMenuShellPrivate
 {
   GList *children;
-  GtkWidget *active_menu_item;
+
+  GtkWidget *active_menu_item; /* This is not an "active" menu item
+                                * (there is no such thing) but rather,
+                                * the selected menu item in that MenuShell,
+                                * if there is one.
+                                */
   GtkWidget *parent_menu_shell;
+  GtkMenuTracker *tracker;    // if bound to a GMenuModel
 
   guint button;
   guint32 activate_time;

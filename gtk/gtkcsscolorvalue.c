@@ -101,6 +101,7 @@ gtk_css_value_color_free (GtkCssValue *color)
 static GtkCssValue *
 gtk_css_value_color_get_fallback (guint                    property_id,
                                   GtkStyleProviderPrivate *provider,
+				  int                      scale,
                                   GtkCssComputedValues    *values,
                                   GtkCssComputedValues    *parent_values)
 {
@@ -124,6 +125,7 @@ gtk_css_value_color_get_fallback (guint                    property_id,
         return _gtk_css_value_compute (_gtk_css_style_property_get_initial_value (_gtk_css_style_property_lookup_by_id (property_id)),
                                        property_id,
                                        provider,
+				       scale,
                                        values,
                                        parent_values,
                                        NULL);
@@ -148,7 +150,6 @@ _gtk_css_color_value_resolve (GtkCssValue             *color,
 
   g_return_val_if_fail (color != NULL, NULL);
   g_return_val_if_fail (provider == NULL || GTK_IS_STYLE_PROVIDER_PRIVATE (provider), NULL);
-  g_return_val_if_fail (current != NULL, NULL);
 
   if (dependencies == NULL)
     dependencies = &unused;
@@ -269,7 +270,12 @@ _gtk_css_color_value_resolve (GtkCssValue             *color,
         }
       else
         {
-          return NULL;
+          return _gtk_css_color_value_resolve (_gtk_css_style_property_get_initial_value (_gtk_css_style_property_lookup_by_id (GTK_CSS_PROPERTY_COLOR)),
+                                               provider,
+                                               NULL,
+                                               0,
+                                               dependencies,
+                                               cycle_list);
         }
       break;
     default:
@@ -297,6 +303,7 @@ static GtkCssValue *
 gtk_css_value_color_compute (GtkCssValue             *value,
                              guint                    property_id,
                              GtkStyleProviderPrivate *provider,
+			     int                      scale,
                              GtkCssComputedValues    *values,
                              GtkCssComputedValues    *parent_values,
                              GtkCssDependencies      *dependencies)
@@ -317,7 +324,7 @@ gtk_css_value_color_compute (GtkCssValue             *value,
         }
       else
         {
-          current = _gtk_css_style_property_get_initial_value (_gtk_css_style_property_lookup_by_id (GTK_CSS_PROPERTY_COLOR));
+          current = NULL;
           current_deps = 0;
         }
     }
@@ -335,7 +342,7 @@ gtk_css_value_color_compute (GtkCssValue             *value,
                                            NULL);
 
   if (resolved == NULL)
-    return gtk_css_value_color_get_fallback (property_id, provider, values, parent_values);
+    return gtk_css_value_color_get_fallback (property_id, provider, scale, values, parent_values);
 
   return resolved;
 }

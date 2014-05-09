@@ -37,11 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
 
 static void   gdk_broadway_display_dispose            (GObject            *object);
 static void   gdk_broadway_display_finalize           (GObject            *object);
@@ -55,8 +54,6 @@ G_DEFINE_TYPE (GdkBroadwayDisplay, gdk_broadway_display, GDK_TYPE_DISPLAY)
 static void
 gdk_broadway_display_init (GdkBroadwayDisplay *display)
 {
-  _gdk_broadway_display_manager_add_display (gdk_display_manager_get (),
-					     GDK_DISPLAY_OBJECT (display));
   display->id_ht = g_hash_table_new (NULL, NULL);
 }
 
@@ -126,7 +123,7 @@ _gdk_broadway_display_open (const gchar *display_name)
 {
   GdkDisplay *display;
   GdkBroadwayDisplay *broadway_display;
-  int port;
+  GError *error = NULL;
 
   display = g_object_new (GDK_TYPE_BROADWAY_DISPLAY, NULL);
   broadway_display = GDK_BROADWAY_DISPLAY (display);
@@ -155,25 +152,15 @@ _gdk_broadway_display_open (const gchar *display_name)
   if (display_name == NULL)
     display_name = g_getenv ("BROADWAY_DISPLAY");
 
-  port = 0;
-  if (display_name != NULL)
-    {
-      if (*display_name == ':')
-	display_name++;
-      port = strtol(display_name, NULL, 10);
-    }
-  if (port == 0)
-    port = 1;
-
-  broadway_display->server = _gdk_broadway_server_new (port, NULL);
+  broadway_display->server = _gdk_broadway_server_new (display_name, &error);
   if (broadway_display->server == NULL)
     {
-      g_printerr ("Unable to init server\n");
+      g_printerr ("Unable to init server: %s\n", error->message);
+      g_error_free (error);
       return NULL;
     }
 
   g_signal_emit_by_name (display, "opened");
-  g_signal_emit_by_name (gdk_display_manager_get (), "display-opened", display);
 
   return display;
 }
@@ -184,24 +171,6 @@ gdk_broadway_display_get_name (GdkDisplay *display)
   g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
 
   return (gchar *) "Broadway";
-}
-
-static gint
-gdk_broadway_display_get_n_screens (GdkDisplay *display)
-{
-  g_return_val_if_fail (GDK_IS_DISPLAY (display), 0);
-
-  return 1;
-}
-
-static GdkScreen *
-gdk_broadway_display_get_screen (GdkDisplay *display,
-				 gint        screen_num)
-{
-  g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
-  g_return_val_if_fail (screen_num == 0, NULL);
-
-  return GDK_BROADWAY_DISPLAY (display)->screens[screen_num];
 }
 
 static GdkScreen *
@@ -256,9 +225,6 @@ static void
 gdk_broadway_display_dispose (GObject *object)
 {
   GdkBroadwayDisplay *broadway_display = GDK_BROADWAY_DISPLAY (object);
-
-  _gdk_broadway_display_manager_remove_display (gdk_display_manager_get (),
-						GDK_DISPLAY_OBJECT (object));
 
   g_list_foreach (broadway_display->input_devices, (GFunc) g_object_run_dispose, NULL);
 
@@ -394,8 +360,6 @@ gdk_broadway_display_class_init (GdkBroadwayDisplayClass * class)
   display_class->window_type = GDK_TYPE_BROADWAY_WINDOW;
 
   display_class->get_name = gdk_broadway_display_get_name;
-  display_class->get_n_screens = gdk_broadway_display_get_n_screens;
-  display_class->get_screen = gdk_broadway_display_get_screen;
   display_class->get_default_screen = gdk_broadway_display_get_default_screen;
   display_class->beep = gdk_broadway_display_beep;
   display_class->sync = gdk_broadway_display_sync;
@@ -413,7 +377,7 @@ gdk_broadway_display_class_init (GdkBroadwayDisplayClass * class)
   display_class->list_devices = gdk_broadway_display_list_devices;
   display_class->get_cursor_for_type = _gdk_broadway_display_get_cursor_for_type;
   display_class->get_cursor_for_name = _gdk_broadway_display_get_cursor_for_name;
-  display_class->get_cursor_for_pixbuf = _gdk_broadway_display_get_cursor_for_pixbuf;
+  display_class->get_cursor_for_surface = _gdk_broadway_display_get_cursor_for_surface;
   display_class->get_default_cursor_size = _gdk_broadway_display_get_default_cursor_size;
   display_class->get_maximal_cursor_size = _gdk_broadway_display_get_maximal_cursor_size;
   display_class->supports_cursor_alpha = _gdk_broadway_display_supports_cursor_alpha;

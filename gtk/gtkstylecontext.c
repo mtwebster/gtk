@@ -37,7 +37,6 @@
 #include "gtkwidget.h"
 #include "gtkwindow.h"
 #include "gtkprivate.h"
-#include "gtkiconfactory.h"
 #include "gtkwidgetpath.h"
 #include "gtkwidgetprivate.h"
 #include "gtkstylecascadeprivate.h"
@@ -356,17 +355,18 @@ struct _GtkStyleContextPrivate
 {
   GdkScreen *screen;
 
+  guint cascade_changed_id;
   GtkStyleCascade *cascade;
-
   GtkStyleContext *parent;
   GSList *children;
   GtkWidget *widget;
   GtkWidgetPath *widget_path;
   GHashTable *style_data;
   GtkStyleInfo *info;
+  gint scale;
 
-  GdkFrameClock *frame_clock;
   guint frame_clock_update_id;
+  GdkFrameClock *frame_clock;
 
   GtkCssChange relevant_changes;
   GtkCssChange pending_changes;
@@ -407,7 +407,7 @@ static StyleData *style_data_lookup             (GtkStyleContext *context);
 static void gtk_style_context_disconnect_update (GtkStyleContext *context);
 static void gtk_style_context_connect_update    (GtkStyleContext *context);
 
-G_DEFINE_TYPE (GtkStyleContext, gtk_style_context, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkStyleContext, gtk_style_context, G_TYPE_OBJECT)
 
 static void
 gtk_style_context_real_changed (GtkStyleContext *context)
@@ -475,8 +475,6 @@ gtk_style_context_class_init (GtkStyleContextClass *klass)
                                                         P_("The parent style context"),
                                                         GTK_TYPE_STYLE_CONTEXT,
                                                         GTK_PARAM_READWRITE));
-
-  g_type_class_add_private (object_class, sizeof (GtkStyleContextPrivate));
 }
 
 static StyleData *
@@ -686,21 +684,20 @@ gtk_style_context_set_cascade (GtkStyleContext *context,
   if (priv->cascade == cascade)
     return;
 
+  if (priv->cascade)
+    {
+      g_signal_handler_disconnect (priv->cascade, priv->cascade_changed_id);
+      priv->cascade_changed_id = 0;
+      g_object_unref (priv->cascade);
+    }
+
   if (cascade)
     {
       g_object_ref (cascade);
-      g_signal_connect (cascade,
-                        "-gtk-private-changed",
-                        G_CALLBACK (gtk_style_context_cascade_changed),
-                        context);
-    }
-
-  if (priv->cascade)
-    {
-      g_signal_handlers_disconnect_by_func (priv->cascade, 
-                                            gtk_style_context_cascade_changed,
-                                            context);
-      g_object_unref (priv->cascade);
+      priv->cascade_changed_id = g_signal_connect (cascade,
+                                                   "-gtk-private-changed",
+                                                   G_CALLBACK (gtk_style_context_cascade_changed),
+                                                   context);
     }
 
   priv->cascade = cascade;
@@ -714,9 +711,8 @@ gtk_style_context_init (GtkStyleContext *style_context)
 {
   GtkStyleContextPrivate *priv;
 
-  priv = style_context->priv = G_TYPE_INSTANCE_GET_PRIVATE (style_context,
-                                                            GTK_TYPE_STYLE_CONTEXT,
-                                                            GtkStyleContextPrivate);
+  priv = style_context->priv =
+    gtk_style_context_get_instance_private (style_context);
 
   priv->style_data = g_hash_table_new_full (style_info_hash,
                                             style_info_equal,
@@ -997,6 +993,7 @@ build_properties (GtkStyleContext      *context,
 
   _gtk_css_lookup_resolve (lookup, 
                            GTK_STYLE_PROVIDER_PRIVATE (priv->cascade),
+			   priv->scale,
                            values,
                            priv->parent ? style_data_lookup (priv->parent)->store : NULL);
 
@@ -1525,6 +1522,47 @@ gtk_style_context_get_state (GtkStyleContext *context)
   g_return_val_if_fail (GTK_IS_STYLE_CONTEXT (context), 0);
 
   return context->priv->info->state_flags;
+}
+
+/**
+ * gtk_style_context_set_scale:
+ * @context: a #GtkStyleContext
+ * @scale: scale
+ *
+ * Sets the scale to use when getting image assets for the style .
+ *
+ * Since: 3.10
+ **/
+void
+gtk_style_context_set_scale (GtkStyleContext *context,
+                             gint             scale)
+{
+  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
+
+  if (context->priv->scale == scale)
+    return;
+
+  context->priv->scale = scale;
+
+  gtk_style_context_queue_invalidate_internal (context, GTK_CSS_CHANGE_SOURCE);
+}
+
+/**
+ * gtk_style_context_get_scale:
+ * @context: a #GtkStyleContext
+ *
+ * Returns the scale used for assets.
+ *
+ * Returns: the scale
+ *
+ * Since: 3.10
+ **/
+gint
+gtk_style_context_get_scale (GtkStyleContext *context)
+{
+  g_return_val_if_fail (GTK_IS_STYLE_CONTEXT (context), 0);
+
+  return context->priv->scale;
 }
 
 /**
@@ -2547,12 +2585,15 @@ gtk_style_context_get_style (GtkStyleContext *context,
  * %NULL.
  *
  * Returns: (transfer none): The looked  up %GtkIconSet, or %NULL
+ *
+ * Deprecated: 3.10: Use gtk_icon_theme_lookup_icon() instead.
  **/
 GtkIconSet *
 gtk_style_context_lookup_icon_set (GtkStyleContext *context,
                                    const gchar     *stock_id)
 {
   GtkStyleContextPrivate *priv;
+  GtkIconSet *icon_set;
 
   g_return_val_if_fail (GTK_IS_STYLE_CONTEXT (context), NULL);
   g_return_val_if_fail (stock_id != NULL, NULL);
@@ -2560,7 +2601,13 @@ gtk_style_context_lookup_icon_set (GtkStyleContext *context,
   priv = context->priv;
   g_return_val_if_fail (priv->widget != NULL || priv->widget_path != NULL, NULL);
 
-  return gtk_icon_factory_lookup_default (stock_id);
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
+  icon_set = gtk_icon_factory_lookup_default (stock_id);
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  return icon_set;
 }
 
 /**
@@ -3243,6 +3290,7 @@ _gtk_style_context_validate (GtkStyleContext  *context,
                                                   priv->parent ? style_data_lookup (priv->parent)->store : NULL,
                                                   timestamp,
                                                   GTK_STYLE_PROVIDER_PRIVATE (priv->cascade),
+						  priv->scale,
                                                   current && gtk_style_context_should_create_transitions (context) ? current->store : NULL);
       if (_gtk_css_computed_values_is_static (data->store))
         change &= ~GTK_CSS_CHANGE_ANIMATE;
@@ -3322,7 +3370,7 @@ _gtk_style_context_queue_invalidate (GtkStyleContext *context,
       priv->pending_changes |= change;
       gtk_style_context_set_invalid (context, TRUE);
     }
-  else if (priv->widget_path == NULL)
+  else if (priv->widget_path != NULL)
     {
       gtk_style_context_invalidate (context);
     }
@@ -3752,6 +3800,7 @@ gtk_render_check (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
 
   _gtk_theming_engine_set_context (engine, context);
@@ -3802,6 +3851,7 @@ gtk_render_option (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_option (engine, cr,
@@ -3849,6 +3899,7 @@ gtk_render_arrow (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   gtk_style_context_save (context);
   gtk_style_context_add_class (context, GTK_STYLE_CLASS_ARROW);
@@ -3903,6 +3954,7 @@ gtk_render_background (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_background (engine, cr, x, y, width, height);
@@ -3954,6 +4006,7 @@ gtk_render_frame (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_frame (engine, cr, x, y, width, height);
@@ -4002,6 +4055,7 @@ gtk_render_expander (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_expander (engine, cr, x, y, width, height);
@@ -4047,6 +4101,7 @@ gtk_render_focus (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_focus (engine, cr, x, y, width, height);
@@ -4075,7 +4130,6 @@ gtk_render_layout (GtkStyleContext *context,
 {
   GtkThemingEngineClass *engine_class;
   GtkThemingEngine *engine;
-  PangoRectangle extents;
 
   g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
   g_return_if_fail (PANGO_IS_LAYOUT (layout));
@@ -4085,8 +4139,7 @@ gtk_render_layout (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
-
-  pango_layout_get_extents (layout, &extents, NULL);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_layout (engine, cr, x, y, layout);
@@ -4125,6 +4178,7 @@ gtk_render_line (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_line (engine, cr, x0, y0, x1, y1);
@@ -4175,6 +4229,7 @@ gtk_render_slider (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_slider (engine, cr, x, y, width, height, orientation);
@@ -4238,6 +4293,7 @@ gtk_render_frame_gap (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_frame_gap (engine, cr,
@@ -4290,6 +4346,7 @@ gtk_render_extension (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_extension (engine, cr, x, y, width, height, gap_side);
@@ -4338,6 +4395,7 @@ gtk_render_handle (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_handle (engine, cr, x, y, width, height);
@@ -4381,6 +4439,7 @@ gtk_render_activity (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_activity (engine, cr, x, y, width, height);
@@ -4401,6 +4460,8 @@ gtk_render_activity (GtkStyleContext *context,
  * Returns: (transfer full): a newly-created #GdkPixbuf containing the rendered icon
  *
  * Since: 3.0
+ *
+ * Deprecated: 3.10: Use gtk_icon_theme_load_icon() instead.
  **/
 GdkPixbuf *
 gtk_render_icon_pixbuf (GtkStyleContext     *context,
@@ -4450,9 +4511,47 @@ gtk_render_icon (GtkStyleContext *context,
   engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_theming_engine_set_context (engine, context);
   engine_class->render_icon (engine, cr, pixbuf, x, y);
+
+  cairo_restore (cr);
+}
+
+/**
+ * gtk_render_icon_surface:
+ * @context: a #GtkStyleContext
+ * @cr: a #cairo_t
+ * @surface: a #cairo_surface_t containing the icon to draw
+ * @x: X position for the @icon
+ * @y: Y position for the @incon
+ *
+ * Renders the icon in @surface at the specified @x and @y coordinates.
+ *
+ * Since: 3.10
+ **/
+void
+gtk_render_icon_surface (GtkStyleContext *context,
+			 cairo_t         *cr,
+			 cairo_surface_t *surface,
+			 gdouble          x,
+			 gdouble          y)
+{
+  GtkThemingEngineClass *engine_class;
+  GtkThemingEngine *engine;
+
+  g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
+  g_return_if_fail (cr != NULL);
+
+  engine = _gtk_css_engine_value_get_engine (_gtk_style_context_peek_property (context, GTK_CSS_PROPERTY_ENGINE));
+  engine_class = GTK_THEMING_ENGINE_GET_CLASS (engine);
+
+  cairo_save (cr);
+  cairo_new_path (cr);
+
+  _gtk_theming_engine_set_context (engine, context);
+  engine_class->render_icon_surface (engine, cr, surface, x, y);
 
   cairo_restore (cr);
 }
@@ -4475,6 +4574,7 @@ draw_insertion_cursor (GtkStyleContext *context,
   gint offset;
 
   cairo_save (cr);
+  cairo_new_path (cr);
 
   _gtk_style_context_get_cursor_color (context, &primary_color, &secondary_color);
   gdk_cairo_set_source_rgba (cr, is_primary ? &primary_color : &secondary_color);

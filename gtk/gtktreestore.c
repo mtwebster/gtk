@@ -65,12 +65,12 @@
 struct _GtkTreeStorePrivate
 {
   gint stamp;
+  GtkSortType order;
   gpointer root;
   gpointer last;
   gint n_columns;
   gint sort_column_id;
   GList *sort_list;
-  GtkSortType order;
   GType *column_headers;
   GtkTreeIterCompareFunc default_sort_func;
   gpointer default_sort_data;
@@ -205,6 +205,7 @@ validate_tree (GtkTreeStore *tree_store)
 }
 
 G_DEFINE_TYPE_WITH_CODE (GtkTreeStore, gtk_tree_store, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE (GtkTreeStore)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_TREE_MODEL,
 						gtk_tree_store_tree_model_init)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_TREE_DRAG_SOURCE,
@@ -224,8 +225,6 @@ gtk_tree_store_class_init (GtkTreeStoreClass *class)
   object_class = (GObjectClass *) class;
 
   object_class->finalize = gtk_tree_store_finalize;
-
-  g_type_class_add_private (class, sizeof (GtkTreeStorePrivate));
 }
 
 static void
@@ -283,9 +282,7 @@ gtk_tree_store_init (GtkTreeStore *tree_store)
 {
   GtkTreeStorePrivate *priv;
 
-  priv = G_TYPE_INSTANCE_GET_PRIVATE (tree_store,
-                                      GTK_TYPE_TREE_STORE,
-                                      GtkTreeStorePrivate);
+  priv = gtk_tree_store_get_instance_private (tree_store);
   tree_store->priv = priv;
   priv->root = g_node_new (NULL);
   /* While the odds are against us getting 0...  */

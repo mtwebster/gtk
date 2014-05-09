@@ -37,7 +37,6 @@ typedef struct GtkFileSystemClass     GtkFileSystemClass;
 
 
 typedef struct GtkFileSystemVolume GtkFileSystemVolume; /* opaque struct */
-typedef struct GtkFileSystemBookmark GtkFileSystemBookmark; /* opaque struct */
 
 
 struct GtkFileSystem
@@ -51,7 +50,6 @@ struct GtkFileSystemClass
 {
   GObjectClass parent_class;
 
-  void (*bookmarks_changed) (GtkFileSystem *file_system);
   void (*volumes_changed)   (GtkFileSystem *file_system);
 };
 
@@ -71,7 +69,6 @@ GType           _gtk_file_system_get_type     (void) G_GNUC_CONST;
 GtkFileSystem * _gtk_file_system_new          (void);
 
 GSList *        _gtk_file_system_list_volumes   (GtkFileSystem *file_system);
-GSList *        _gtk_file_system_list_bookmarks (GtkFileSystem *file_system);
 
 GCancellable *  _gtk_file_system_get_info               (GtkFileSystem                     *file_system,
 							 GFile                             *file,
@@ -89,20 +86,6 @@ GCancellable *  _gtk_file_system_mount_enclosing_volume (GtkFileSystem          
 							 GtkFileSystemVolumeMountCallback   callback,
 							 gpointer                           data);
 
-gboolean        _gtk_file_system_insert_bookmark    (GtkFileSystem      *file_system,
-						     GFile              *file,
-						     gint                position,
-						     GError            **error);
-gboolean        _gtk_file_system_remove_bookmark    (GtkFileSystem      *file_system,
-						     GFile              *file,
-						     GError            **error);
-
-gchar *         _gtk_file_system_get_bookmark_label (GtkFileSystem *file_system,
-						     GFile         *file);
-void            _gtk_file_system_set_bookmark_label (GtkFileSystem *file_system,
-						     GFile         *file,
-						     const gchar   *label);
-
 GtkFileSystemVolume * _gtk_file_system_get_volume_for_file (GtkFileSystem       *file_system,
 							    GFile               *file);
 
@@ -110,7 +93,7 @@ GtkFileSystemVolume * _gtk_file_system_get_volume_for_file (GtkFileSystem       
 gchar *               _gtk_file_system_volume_get_display_name (GtkFileSystemVolume *volume);
 gboolean              _gtk_file_system_volume_is_mounted       (GtkFileSystemVolume *volume);
 GFile *               _gtk_file_system_volume_get_root         (GtkFileSystemVolume *volume);
-GdkPixbuf *           _gtk_file_system_volume_render_icon      (GtkFileSystemVolume  *volume,
+cairo_surface_t *     _gtk_file_system_volume_render_icon      (GtkFileSystemVolume  *volume,
 							        GtkWidget            *widget,
 							        gint                  icon_size,
 							        GError              **error);
@@ -118,13 +101,10 @@ GdkPixbuf *           _gtk_file_system_volume_render_icon      (GtkFileSystemVol
 GtkFileSystemVolume  *_gtk_file_system_volume_ref              (GtkFileSystemVolume *volume);
 void                  _gtk_file_system_volume_unref            (GtkFileSystemVolume *volume);
 
-/* GtkFileSystemBookmark methods */
-void                   _gtk_file_system_bookmark_free          (GtkFileSystemBookmark *bookmark);
-
 /* GFileInfo helper functions */
-GdkPixbuf *     _gtk_file_info_render_icon (GFileInfo *info,
-					    GtkWidget *widget,
-					    gint       icon_size);
+cairo_surface_t *     _gtk_file_info_render_icon (GFileInfo *info,
+						  GtkWidget *widget,
+						  gint       icon_size);
 
 gboolean	_gtk_file_info_consider_as_directory (GFileInfo *info);
 

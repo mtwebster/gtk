@@ -40,6 +40,7 @@
 #include "gtkprivate.h"
 #include "gtkbuildable.h"
 #include "gtksettings.h"
+#include "deprecated/gtkstock.h"
 
 /**
  * SECTION:gtkdialog
@@ -106,7 +107,7 @@
  *    dialog = gtk_dialog_new_with_buttons ("Message",
  *                                          main_application_window,
  *                                          GTK_DIALOG_DESTROY_WITH_PARENT,
- *                                          GTK_STOCK_OK,
+ *                                          _("_OK"),
  *                                          GTK_RESPONSE_NONE,
  *                                          NULL);
  *    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
@@ -142,7 +143,7 @@
  * <title>A <structname>GtkDialog</structname> UI definition fragment.</title>
  * <programlisting><![CDATA[
  * <object class="GtkDialog" id="dialog1">
- *   <child internal-child="vbox">"
+ *   <child internal-child="vbox">
  *     <object class="GtkVBox" id="vbox">
  *       <child internal-child="action_area">
  *         <object class="GtkHButtonBox" id="button_box">
@@ -195,9 +196,6 @@ static ResponseData * get_response_data          (GtkWidget    *widget,
                                                   gboolean      create);
 
 static void      gtk_dialog_buildable_interface_init     (GtkBuildableIface *iface);
-static GObject * gtk_dialog_buildable_get_internal_child (GtkBuildable  *buildable,
-                                                          GtkBuilder    *builder,
-                                                          const gchar   *childname);
 static gboolean  gtk_dialog_buildable_custom_tag_start   (GtkBuildable  *buildable,
                                                           GtkBuilder    *builder,
                                                           GObject       *child,
@@ -225,17 +223,16 @@ enum {
 static guint dialog_signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE_WITH_CODE (GtkDialog, gtk_dialog, GTK_TYPE_WINDOW,
+                         G_ADD_PRIVATE (GtkDialog)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
 						gtk_dialog_buildable_interface_init))
 
 static void
 gtk_dialog_class_init (GtkDialogClass *class)
 {
-  GObjectClass *gobject_class;
   GtkWidgetClass *widget_class;
   GtkBindingSet *binding_set;
 
-  gobject_class = G_OBJECT_CLASS (class);
   widget_class = GTK_WIDGET_CLASS (class);
 
   widget_class->map = gtk_dialog_map;
@@ -244,8 +241,6 @@ gtk_dialog_class_init (GtkDialogClass *class)
   gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_DIALOG);
 
   class->close = gtk_dialog_close;
-
-  g_type_class_add_private (gobject_class, sizeof (GtkDialogPrivate));
 
   /**
    * GtkDialog::response:
@@ -331,8 +326,14 @@ gtk_dialog_class_init (GtkDialogClass *class)
                                                              GTK_PARAM_READABLE));
 
   binding_set = gtk_binding_set_by_class (class);
-
   gtk_binding_entry_add_signal (binding_set, GDK_KEY_Escape, 0, "close", 0);
+
+  /* Bind class to template
+   */
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/gtk/libgtk/gtkdialog.ui");
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkDialog, vbox);
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkDialog, action_area);
+  gtk_widget_class_bind_template_callback (widget_class, gtk_dialog_delete_event_handler);
 }
 
 static void
@@ -350,7 +351,6 @@ update_spacings (GtkDialog *dialog)
                         "button-spacing", &button_spacing,
                         "action-area-border", &action_area_border,
                         NULL);
-
   
   gtk_container_set_border_width (GTK_CONTAINER (priv->vbox),
                                   content_area_border);
@@ -368,38 +368,9 @@ update_spacings (GtkDialog *dialog)
 static void
 gtk_dialog_init (GtkDialog *dialog)
 {
-  GtkDialogPrivate *priv;
+  dialog->priv = gtk_dialog_get_instance_private (dialog);
 
-  dialog->priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog,
-                                              GTK_TYPE_DIALOG,
-                                              GtkDialogPrivate);
-  priv = dialog->priv;
-
-  /* To avoid breaking old code that prevents destroy on delete event
-   * by connecting a handler, we have to have the FIRST signal
-   * connection on the dialog.
-   */
-  g_signal_connect (dialog,
-                    "delete-event",
-                    G_CALLBACK (gtk_dialog_delete_event_handler),
-                    NULL);
-
-  priv->vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-  gtk_container_add (GTK_CONTAINER (dialog), priv->vbox);
-  gtk_widget_show (priv->vbox);
-
-  priv->action_area = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
-
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (priv->action_area),
-                             GTK_BUTTONBOX_END);
-
-  gtk_box_pack_end (GTK_BOX (priv->vbox), priv->action_area,
-                    FALSE, TRUE, 0);
-  gtk_widget_show (priv->action_area);
-
-  gtk_window_set_type_hint (GTK_WINDOW (dialog),
-			    GDK_WINDOW_TYPE_HINT_DIALOG);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ON_PARENT);
+  gtk_widget_init_template (GTK_WIDGET (dialog));
 
   update_spacings (dialog);
 }
@@ -410,26 +381,8 @@ static void
 gtk_dialog_buildable_interface_init (GtkBuildableIface *iface)
 {
   parent_buildable_iface = g_type_interface_peek_parent (iface);
-  iface->get_internal_child = gtk_dialog_buildable_get_internal_child;
   iface->custom_tag_start = gtk_dialog_buildable_custom_tag_start;
   iface->custom_finished = gtk_dialog_buildable_custom_finished;
-}
-
-static GObject *
-gtk_dialog_buildable_get_internal_child (GtkBuildable *buildable,
-					 GtkBuilder   *builder,
-					 const gchar  *childname)
-{
-  GtkDialogPrivate *priv = GTK_DIALOG (buildable)->priv;
-
-  if (strcmp (childname, "vbox") == 0)
-    return G_OBJECT (priv->vbox);
-  else if (strcmp (childname, "action_area") == 0)
-    return G_OBJECT (priv->action_area);
-
-  return parent_buildable_iface->get_internal_child (buildable,
-                                                     builder,
-                                                     childname);
 }
 
 static gboolean
@@ -606,7 +559,7 @@ gtk_dialog_new_empty (const gchar     *title,
  * @title: (allow-none): Title of the dialog, or %NULL
  * @parent: (allow-none): Transient parent of the dialog, or %NULL
  * @flags: from #GtkDialogFlags
- * @first_button_text: (allow-none): stock ID or text to go in first button, or %NULL
+ * @first_button_text: (allow-none): text to go in first button, or %NULL
  * @...: response ID for first button, then additional buttons, ending with %NULL
  *
  * Creates a new #GtkDialog with title @title (or %NULL for the default
@@ -616,8 +569,7 @@ gtk_dialog_new_empty (const gchar     *title,
  * and/or to have it destroyed along with its transient parent
  * (#GTK_DIALOG_DESTROY_WITH_PARENT). After @flags, button
  * text/response ID pairs should be listed, with a %NULL pointer ending
- * the list. Button text can be either a stock ID such as
- * #GTK_STOCK_OK, or some arbitrary text. A response ID can be
+ * the list. Button text can be arbitrary text. A response ID can be
  * any positive number, or one of the values in the #GtkResponseType
  * enumeration. If the user clicks one of these dialog buttons,
  * #GtkDialog will emit the #GtkDialog::response signal with the corresponding
@@ -633,9 +585,9 @@ gtk_dialog_new_empty (const gchar     *title,
  *  GtkWidget *dialog = gtk_dialog_new_with_buttons ("My dialog",
  *                                                   main_app_window,
  *                                                   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
- *                                                   GTK_STOCK_OK,
+ *                                                   _("_OK"),
  *                                                   GTK_RESPONSE_ACCEPT,
- *                                                   GTK_STOCK_CANCEL,
+ *                                                   _("_Cancel"),
  *                                                   GTK_RESPONSE_REJECT,
  *                                                   NULL);
  * ]|
@@ -763,14 +715,14 @@ gtk_dialog_add_action_widget (GtkDialog *dialog,
 /**
  * gtk_dialog_add_button:
  * @dialog: a #GtkDialog
- * @button_text: text of button, or stock ID
+ * @button_text: text of button
  * @response_id: response ID for the button
  *
- * Adds a button with the given text (or a stock button, if @button_text is a
- * stock ID) and sets things up so that clicking the button will emit the
- * #GtkDialog::response signal with the given @response_id. The button is
- * appended to the end of the dialog's action area. The button widget is
- * returned, but usually you don't need it.
+ * Adds a button with the given text and sets things up so that
+ * clicking the button will emit the #GtkDialog::response signal with
+ * the given @response_id. The button is appended to the end of the
+ * dialog's action area. The button widget is returned, but usually
+ * you don't need it.
  *
  * Return value: (transfer none): the #GtkButton widget that was added
  **/
@@ -784,9 +736,22 @@ gtk_dialog_add_button (GtkDialog   *dialog,
   g_return_val_if_fail (GTK_IS_DIALOG (dialog), NULL);
   g_return_val_if_fail (button_text != NULL, NULL);
 
-  button = gtk_button_new_from_stock (button_text);
+  button = gtk_button_new_with_label (button_text);
+  gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
+  if (button_text)
+    {
+      GtkStockItem item;
+      if (gtk_stock_lookup (button_text, &item))
+        g_object_set (button, "use-stock", TRUE, NULL);
+    }
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   gtk_widget_set_can_default (button, TRUE);
+  gtk_widget_set_valign (button, GTK_ALIGN_BASELINE);
 
   gtk_widget_show (button);
 
@@ -827,7 +792,7 @@ gtk_dialog_add_buttons_valist (GtkDialog      *dialog,
 /**
  * gtk_dialog_add_buttons:
  * @dialog: a #GtkDialog
- * @first_button_text: button text or stock ID
+ * @first_button_text: button text
  * @...: response ID for first button, then more text-response_id pairs
  *
  * Adds more buttons, same as calling gtk_dialog_add_button()
@@ -1287,17 +1252,17 @@ gtk_dialog_set_alternative_button_order_valist (GtkDialog *dialog,
  * following example shows:
  * |[
  * cancel_button = gtk_dialog_add_button (GTK_DIALOG (dialog),
- *                                        GTK_STOCK_CANCEL,
+ *                                        _("_Cancel"),
  *                                        GTK_RESPONSE_CANCEL);
  *
  * ok_button = gtk_dialog_add_button (GTK_DIALOG (dialog),
- *                                    GTK_STOCK_OK,
+ *                                    _("_OK"),
  *                                    GTK_RESPONSE_OK);
  *
  * gtk_widget_grab_default (ok_button);
  *
  * help_button = gtk_dialog_add_button (GTK_DIALOG (dialog),
- *                                      GTK_STOCK_HELP,
+ *                                      _("_Help"),
  *                                      GTK_RESPONSE_HELP);
  *
  * gtk_dialog_set_alternative_button_order (GTK_DIALOG (dialog),

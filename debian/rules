@@ -13,6 +13,9 @@ include /usr/share/cdbs/1/class/gnome.mk
 include /usr/share/gnome-pkg-tools/1/rules/uploaders.mk
 include /usr/share/gnome-pkg-tools/1/rules/gnome-get-source.mk
 
+# Make a writable HOME for the testsuite
+export HOME=$(CURDIR)/debian/home
+
 GNOME_MODULE = gtk+
 
 # Ensure the build aborts when there are still references to undefined symbols
@@ -80,13 +83,6 @@ DEB_CONFIGURE_FLAGS_shared_udeb = \
 			--disable-xfixes \
 			--disable-xrandr
 
-# Avoid test failures on buildd environments
-export HOME=$(CURDIR)/debian/build
-
-ifeq ($(DEB_HOST_ARCH), armhf)
-# This is to work around LP: #1194123
-export CFLAGS := $(CFLAGS:-O2=-O0)
-endif
 DEB_MAKE_CHECK_TARGET = -k check
 DEB_INSTALL_DOCS_ALL = AUTHORS
 DEB_INSTALL_DOCS_$(COMMON_PKG) = README NEWS
@@ -97,6 +93,9 @@ DEB_DH_MAKESHLIBS_ARGS_libgail-3-0 += -V -- -c4
 DEB_DH_FIXPERMS_ARGS_ALL += -X$(LIBDIR)/$(SHARED_PKG)
 DEB_DH_STRIP_ARGS = --dbg-package=$(if $(findstring libgail,$(cdbs_curpkg)),libgail-3-0-dbg,$(DEBUG_PKG))
 DEB_DH_STRIP_ARGS_$(UDEB_PKG) =
+
+pre-build::
+	mkdir -p $(CURDIR)/debian/home
 
 # macro computing the list of 'debian/<pkg>.*" files which have a
 # corresponding ".in" file; pass the list of packages in $(1)
@@ -131,6 +130,10 @@ clean:: debian/control
 	# gross kludge to force control generation with the %.in target
 	touch debian/control.in
 	rm -f $(call dh_subst_files,$(DEB_ALL_PACKAGES))
+	# work around tarball generated with too new Wayland
+	rm -f gdk/wayland/gtk-shell-client-protocol.h
+	rm -f gdk/wayland/gtk-shell-protocol.c
+	rm -rf $(CURDIR)/debian/home
 
 # Add dependencies to generate files from the debian/*.in ones
 build-indep: $(call dh_subst_files,$(DEB_INDEP_PACKAGES))

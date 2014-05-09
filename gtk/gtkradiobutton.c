@@ -132,7 +132,7 @@ static void     gtk_radio_button_get_property   (GObject             *object,
 						 GValue              *value,
 						 GParamSpec          *pspec);
 
-G_DEFINE_TYPE (GtkRadioButton, gtk_radio_button, GTK_TYPE_CHECK_BUTTON)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkRadioButton, gtk_radio_button, GTK_TYPE_CHECK_BUTTON)
 
 static guint group_changed_signal = 0;
 
@@ -194,8 +194,6 @@ gtk_radio_button_class_init (GtkRadioButtonClass *class)
 				       _gtk_marshal_VOID__VOID,
 				       G_TYPE_NONE, 0);
 
-  g_type_class_add_private (class, sizeof (GtkRadioButtonPrivate));
-
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_RADIO_BUTTON_ACCESSIBLE);
 }
 
@@ -204,9 +202,7 @@ gtk_radio_button_init (GtkRadioButton *radio_button)
 {
   GtkRadioButtonPrivate *priv;
 
-  radio_button->priv = G_TYPE_INSTANCE_GET_PRIVATE (radio_button,
-                                                    GTK_TYPE_RADIO_BUTTON,
-                                                    GtkRadioButtonPrivate);
+  radio_button->priv = gtk_radio_button_get_instance_private (radio_button);
   priv = radio_button->priv;
 
   gtk_widget_set_receives_default (GTK_WIDGET (radio_button), FALSE);
@@ -663,12 +659,9 @@ gtk_radio_button_focus (GtkWidget         *widget,
   
   if (gtk_widget_is_focus (widget))
     {
-      GtkSettings *settings = gtk_widget_get_settings (widget);
       GSList *focus_list, *tmp_list;
       GtkWidget *toplevel = gtk_widget_get_toplevel (widget);
       GtkWidget *new_focus = NULL;
-      gboolean cursor_only;
-      gboolean wrap_around;
 
       switch (direction)
 	{
@@ -712,26 +705,8 @@ gtk_radio_button_focus (GtkWidget         *widget,
 	    }
 	}
 
-      g_object_get (settings,
-                    "gtk-keynav-cursor-only", &cursor_only,
-                    "gtk-keynav-wrap-around", &wrap_around,
-                    NULL);
-
       if (!new_focus)
 	{
-          if (cursor_only)
-            {
-              g_slist_free (focus_list);
-              return FALSE;
-            }
-
-          if (!wrap_around)
-            {
-              g_slist_free (focus_list);
-              gtk_widget_error_bell (widget);
-              return TRUE;
-            }
-
 	  tmp_list = focus_list;
 
 	  while (tmp_list)
@@ -754,8 +729,7 @@ gtk_radio_button_focus (GtkWidget         *widget,
 	{
 	  gtk_widget_grab_focus (new_focus);
 
-          if (!cursor_only)
-            gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (new_focus), TRUE);
+          gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (new_focus), TRUE);
 	}
 
       return TRUE;
@@ -903,6 +877,7 @@ gtk_radio_button_draw_indicator (GtkCheckButton *check_button,
   gint indicator_size, indicator_spacing;
   gint focus_width;
   gint focus_pad;
+  gint baseline;
   guint border_width;
   gboolean interior_focus;
 
@@ -923,9 +898,14 @@ gtk_radio_button_draw_indicator (GtkCheckButton *check_button,
   _gtk_check_button_get_props (check_button, &indicator_size, &indicator_spacing);
 
   gtk_widget_get_allocation (widget, &allocation);
+  baseline = gtk_widget_get_allocated_baseline (widget);
 
   x = indicator_spacing + border_width;
-  y = (allocation.height - indicator_size) / 2;
+  if (baseline == -1)
+    y = (allocation.height - indicator_size) / 2;
+  else
+    y = CLAMP (baseline - indicator_size * button->priv->baseline_align,
+	       0, allocation.height - indicator_size);
 
   child = gtk_bin_get_child (GTK_BIN (check_button));
   if (!interior_focus || !(child && gtk_widget_get_visible (child)))

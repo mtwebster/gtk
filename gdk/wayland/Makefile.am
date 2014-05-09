@@ -10,6 +10,7 @@ AM_CPPFLAGS =					\
 	-I$(top_srcdir)				\
 	-I$(top_srcdir)/gdk			\
 	-I$(top_builddir)/gdk			\
+	$(GDK_HIDDEN_VISIBILITY_CFLAGS)		\
 	$(GTK_DEBUG_FLAGS)			\
 	$(GDK_DEP_CFLAGS)
 
@@ -18,13 +19,23 @@ LDADDS = $(GDK_DEP_LIBS)
 noinst_LTLIBRARIES =				\
 	libgdk-wayland.la
 
+BUILT_SOURCES = 				\
+	gtk-shell-client-protocol.h		\
+	gtk-shell-protocol.c
+
+DISTCLEANFILES =				\
+	gtk-shell-client-protocol.h		\
+	gtk-shell-protocol.c
+
+nodist_libgdk_wayland_la_SOURCES =		\
+	$(BUILT_SOURCES)
+
 libgdk_wayland_la_SOURCES =			\
 	gdkapplaunchcontext-wayland.c		\
 	gdkcursor-wayland.c			\
 	gdkdevice-wayland.c			\
 	gdkdisplay-wayland.c			\
 	gdkdisplay-wayland.h			\
-	gdkdisplaymanager-wayland.c		\
 	gdkdnd-wayland.c			\
 	gdkeventsource.c			\
 	gdkkeys-wayland.c			\
@@ -40,6 +51,18 @@ libgdkinclude_HEADERS =				\
 libgdkwaylandinclude_HEADERS = 			\
 	gdkwaylanddevice.h			\
 	gdkwaylanddisplay.h			\
+	gdkwaylandselection.h			\
 	gdkwaylandwindow.h
+
+%-protocol.c : $(srcdir)/protocol/%.xml
+	$(AM_V_GEN)$(WAYLAND_SCANNER) code < $< > $@
+	$(AM_V_GEN)$(SED) -i -e 's/WL_EXPORT //' $@
+
+%-server-protocol.h : $(srcdir)/protocol/%.xml
+	$(AM_V_GEN)$(WAYLAND_SCANNER) server-header < $< > $@
+%-client-protocol.h : $(srcdir)/protocol/%.xml
+	$(AM_V_GEN)$(WAYLAND_SCANNER) client-header < $< > $@
+
+EXTRA_DIST += protocol/gtk-shell.xml
 
 -include $(top_srcdir)/git.mk

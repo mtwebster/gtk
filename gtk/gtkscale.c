@@ -34,7 +34,6 @@
 #include "gtkbindings.h"
 #include "gtkbuildable.h"
 #include "gtkbuilderprivate.h"
-#include "gtkiconfactory.h"
 #include "gtkicontheme.h"
 #include "gtkintl.h"
 #include "gtkmarshalers.h"
@@ -163,6 +162,7 @@ static void     gtk_scale_buildable_custom_finished  (GtkBuildable  *buildable,
 
 
 G_DEFINE_TYPE_WITH_CODE (GtkScale, gtk_scale, GTK_TYPE_RANGE,
+                         G_ADD_PRIVATE (GtkScale)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_scale_buildable_interface_init))
 
@@ -474,8 +474,6 @@ gtk_scale_class_init (GtkScaleClass *class)
   add_slider_binding (binding_set, GDK_KEY_KP_End, 0,
                       GTK_SCROLL_END);
 
-  g_type_class_add_private (gobject_class, sizeof (GtkScalePrivate));
-
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_SCALE_ACCESSIBLE);
 }
 
@@ -486,9 +484,7 @@ gtk_scale_init (GtkScale *scale)
   GtkRange *range = GTK_RANGE (scale);
   GtkStyleContext *context;
 
-  scale->priv = G_TYPE_INSTANCE_GET_PRIVATE (scale,
-                                             GTK_TYPE_SCALE,
-                                             GtkScalePrivate);
+  scale->priv = gtk_scale_get_instance_private (scale);
   priv = scale->priv;
 
   gtk_widget_set_can_focus (GTK_WIDGET (scale), TRUE);
@@ -503,7 +499,7 @@ gtk_scale_init (GtkScale *scale)
   gtk_range_set_round_digits (range, priv->digits);
 
   gtk_range_set_flippable (range,
-                           gtk_orientable_get_orientation (GTK_ORIENTABLE (range))== GTK_ORIENTATION_HORIZONTAL);
+                           gtk_orientable_get_orientation (GTK_ORIENTABLE (range)) == GTK_ORIENTATION_HORIZONTAL);
 
   context = gtk_widget_get_style_context (GTK_WIDGET (scale));
   gtk_style_context_add_class (context, GTK_STYLE_CLASS_SCALE);
@@ -1880,7 +1876,7 @@ gtk_scale_buildable_custom_finished (GtkBuildable *buildable,
   if (strcmp (tagname, "marks") == 0)
     {
       GSList *m;
-      gchar *markup;
+      const gchar *markup;
 
       marks_data = (MarksSubparserData *)user_data;
 
@@ -1903,4 +1899,10 @@ gtk_scale_buildable_custom_finished (GtkBuildable *buildable,
       g_slist_free (marks_data->marks);
       g_slice_free (MarksSubparserData, marks_data);
     }
+  else
+    {
+      parent_buildable_iface->custom_finished (buildable, builder, child,
+					       tagname, user_data);
+    }
+
 }

@@ -765,6 +765,7 @@ handle_device_changed (GdkX11DeviceManagerXI2 *device_manager,
   if (device)
     {
       _gdk_device_reset_axes (device);
+      _gdk_device_xi2_unset_scroll_valuators ((GdkX11DeviceXI2 *) device);
       translate_device_classes (display, device, ev->classes, ev->num_classes);
 
       g_signal_emit_by_name (G_OBJECT (device), "changed");
@@ -779,12 +780,16 @@ translate_crossing_mode (gint mode)
 {
   switch (mode)
     {
-    case NotifyNormal:
+    case XINotifyNormal:
       return GDK_CROSSING_NORMAL;
-    case NotifyGrab:
+    case XINotifyGrab:
+    case XINotifyPassiveGrab:
       return GDK_CROSSING_GRAB;
-    case NotifyUngrab:
+    case XINotifyUngrab:
+    case XINotifyPassiveUngrab:
       return GDK_CROSSING_UNGRAB;
+    case XINotifyWhileGrabbed:
+      /* Fall through, unexpected in pointer crossing events */
     default:
       g_assert_not_reached ();
     }
@@ -1115,6 +1120,8 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
   XGenericEventCookie *cookie;
   gboolean return_val = TRUE;
   GdkWindow *window;
+  GdkWindowImplX11 *impl;
+  int scale;
   XIEvent *ev;
 
   device_manager = (GdkX11DeviceManagerXI2 *) translator;
@@ -1135,6 +1142,13 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
   if (window && GDK_WINDOW_DESTROYED (window))
     return FALSE;
+
+  scale = 1;
+  if (window)
+    {
+      impl = GDK_WINDOW_IMPL_X11 (window->impl);
+      scale = impl->window_scale;
+    }
 
   if (ev->evtype == XI_Motion ||
       ev->evtype == XI_ButtonRelease)
@@ -1232,10 +1246,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
             event->scroll.window = window;
             event->scroll.time = xev->time;
-            event->scroll.x = (gdouble) xev->event_x;
-            event->scroll.y = (gdouble) xev->event_y;
-            event->scroll.x_root = (gdouble) xev->root_x;
-            event->scroll.y_root = (gdouble) xev->root_y;
+            event->scroll.x = (gdouble) xev->event_x / scale;
+            event->scroll.y = (gdouble) xev->event_y / scale;
+            event->scroll.x_root = (gdouble) xev->root_x / scale;
+            event->scroll.y_root = (gdouble) xev->root_y / scale;
             event->scroll.delta_x = 0;
             event->scroll.delta_y = 0;
 
@@ -1259,10 +1273,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
             event->button.window = window;
             event->button.time = xev->time;
-            event->button.x = (gdouble) xev->event_x;
-            event->button.y = (gdouble) xev->event_y;
-            event->button.x_root = (gdouble) xev->root_x;
-            event->button.y_root = (gdouble) xev->root_y;
+            event->button.x = (gdouble) xev->event_x / scale;
+            event->button.y = (gdouble) xev->event_y / scale;
+            event->button.x_root = (gdouble) xev->root_x / scale;
+            event->button.y_root = (gdouble) xev->root_y / scale;
 
             event->button.device = g_hash_table_lookup (device_manager->id_table,
                                                         GUINT_TO_POINTER (xev->deviceid));
@@ -1350,10 +1364,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
             event->scroll.window = window;
             event->scroll.time = xev->time;
-            event->scroll.x = (gdouble) xev->event_x;
-            event->scroll.y = (gdouble) xev->event_y;
-            event->scroll.x_root = (gdouble) xev->root_x;
-            event->scroll.y_root = (gdouble) xev->root_y;
+            event->scroll.x = (gdouble) xev->event_x / scale;
+            event->scroll.y = (gdouble) xev->event_y / scale;
+            event->scroll.x_root = (gdouble) xev->root_x / scale;
+            event->scroll.y_root = (gdouble) xev->root_y / scale;
             event->scroll.delta_x = delta_x;
             event->scroll.delta_y = delta_y;
 
@@ -1367,10 +1381,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
         event->motion.type = GDK_MOTION_NOTIFY;
         event->motion.window = window;
         event->motion.time = xev->time;
-        event->motion.x = (gdouble) xev->event_x;
-        event->motion.y = (gdouble) xev->event_y;
-        event->motion.x_root = (gdouble) xev->root_x;
-        event->motion.y_root = (gdouble) xev->root_y;
+        event->motion.x = (gdouble) xev->event_x / scale;
+        event->motion.y = (gdouble) xev->event_y / scale;
+        event->motion.x_root = (gdouble) xev->root_x / scale;
+        event->motion.y_root = (gdouble) xev->root_y / scale;
 
         event->motion.device = device;
         gdk_event_set_source_device (event, source_device);
@@ -1410,11 +1424,11 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
         GdkDevice *source_device;
 
         GDK_NOTE(EVENTS,
-                 g_message ("touch %s:\twindow %ld\n\ttouch id: %u\n\tpointer emulating: %d",
+                 g_message ("touch %s:\twindow %ld\n\ttouch id: %u\n\tpointer emulating: %s",
                             ev->evtype == XI_TouchBegin ? "begin" : "end",
                             xev->event,
                             xev->detail,
-                            xev->flags & XITouchEmulatingPointer));
+                            xev->flags & XITouchEmulatingPointer ? "true" : "false"));
 
         if (ev->evtype == XI_TouchBegin)
           event->touch.type = GDK_TOUCH_BEGIN;
@@ -1423,10 +1437,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
         event->touch.window = window;
         event->touch.time = xev->time;
-        event->touch.x = (gdouble) xev->event_x;
-        event->touch.y = (gdouble) xev->event_y;
-        event->touch.x_root = (gdouble) xev->root_x;
-        event->touch.y_root = (gdouble) xev->root_y;
+        event->touch.x = (gdouble) xev->event_x / scale;
+        event->touch.y = (gdouble) xev->event_y / scale;
+        event->touch.x_root = (gdouble) xev->root_x / scale;
+        event->touch.y_root = (gdouble) xev->root_y / scale;
 
         event->touch.device = g_hash_table_lookup (device_manager->id_table,
                                                    GUINT_TO_POINTER (xev->deviceid));
@@ -1483,19 +1497,19 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
         GdkDevice *source_device;
 
         GDK_NOTE(EVENTS,
-                 g_message ("touch update:\twindow %ld\n\ttouch id: %u\n\tpointer emulating: %d",
+                 g_message ("touch update:\twindow %ld\n\ttouch id: %u\n\tpointer emulating: %s",
                             xev->event,
                             xev->detail,
-                            xev->flags & XITouchEmulatingPointer));
+                            xev->flags & XITouchEmulatingPointer ? "true" : "false"));
 
         event->touch.window = window;
         event->touch.sequence = GUINT_TO_POINTER (xev->detail);
         event->touch.type = GDK_TOUCH_UPDATE;
         event->touch.time = xev->time;
-        event->touch.x = (gdouble) xev->event_x;
-        event->touch.y = (gdouble) xev->event_y;
-        event->touch.x_root = (gdouble) xev->root_x;
-        event->touch.y_root = (gdouble) xev->root_y;
+        event->touch.x = (gdouble) xev->event_x / scale;
+        event->touch.y = (gdouble) xev->event_y / scale;
+        event->touch.x_root = (gdouble) xev->root_x / scale;
+        event->touch.y_root = (gdouble) xev->root_y / scale;
 
         event->touch.device = g_hash_table_lookup (device_manager->id_table,
                                                    GINT_TO_POINTER (xev->deviceid));
@@ -1540,10 +1554,10 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
 
         event->crossing.type = (ev->evtype == XI_Enter) ? GDK_ENTER_NOTIFY : GDK_LEAVE_NOTIFY;
 
-        event->crossing.x = (gdouble) xev->event_x;
-        event->crossing.y = (gdouble) xev->event_y;
-        event->crossing.x_root = (gdouble) xev->root_x;
-        event->crossing.y_root = (gdouble) xev->root_y;
+        event->crossing.x = (gdouble) xev->event_x / scale;
+        event->crossing.y = (gdouble) xev->event_y / scale;
+        event->crossing.x_root = (gdouble) xev->root_x / scale;
+        event->crossing.y_root = (gdouble) xev->root_y / scale;
         event->crossing.time = xev->time;
         event->crossing.focus = xev->focus;
 
@@ -1558,18 +1572,23 @@ gdk_x11_device_manager_xi2_translate_event (GdkEventTranslator *translator,
                                              GUINT_TO_POINTER (xev->sourceid));
         gdk_event_set_source_device (event, source_device);
 
-	if (gdk_device_get_device_type (source_device) != GDK_DEVICE_TYPE_MASTER)
-          _gdk_device_xi2_reset_scroll_valuators (GDK_X11_DEVICE_XI2 (source_device));
-        else
+        if (ev->evtype == XI_Enter &&
+            xev->detail != XINotifyInferior && xev->mode != XINotifyPassiveUngrab &&
+	    gdk_window_get_window_type (window) == GDK_WINDOW_TOPLEVEL)
           {
-            GList *slaves, *l;
+            if (gdk_device_get_device_type (source_device) != GDK_DEVICE_TYPE_MASTER)
+              _gdk_device_xi2_reset_scroll_valuators (GDK_X11_DEVICE_XI2 (source_device));
+            else
+              {
+                GList *slaves, *l;
 
-            slaves = gdk_device_list_slave_devices (source_device);
+                slaves = gdk_device_list_slave_devices (source_device);
 
-            for (l = slaves; l; l = l->next)
-              _gdk_device_xi2_reset_scroll_valuators (GDK_X11_DEVICE_XI2 (l->data));
+                for (l = slaves; l; l = l->next)
+                  _gdk_device_xi2_reset_scroll_valuators (GDK_X11_DEVICE_XI2 (l->data));
 
-            g_list_free (slaves);
+                g_list_free (slaves);
+              }
           }
 
         event->crossing.mode = translate_crossing_mode (xev->mode);
@@ -1684,6 +1703,8 @@ gdk_x11_device_manager_xi2_get_window (GdkEventTranslator *translator,
     return NULL;
 
   ev = (XIEvent *) xevent->xcookie.data;
+  if (!ev)
+    return NULL;
 
   get_event_window (translator, ev, &window);
   return window;

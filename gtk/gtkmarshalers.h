@@ -859,7 +859,37 @@ extern void _gtk_marshal_VOID__OBJECT_BOXED_BOOLEAN_BOOLEANv (GClosure     *clos
                                                               int           n_params,
                                                               GType        *param_types);
 
-/* VOID:OBJECT,INT (./gtkmarshalers.list:86) */
+/* VOID:OBJECT,ENUM (./gtkmarshalers.list:86) */
+extern void _gtk_marshal_VOID__OBJECT_ENUM (GClosure     *closure,
+                                            GValue       *return_value,
+                                            guint         n_param_values,
+                                            const GValue *param_values,
+                                            gpointer      invocation_hint,
+                                            gpointer      marshal_data);
+extern void _gtk_marshal_VOID__OBJECT_ENUMv (GClosure     *closure,
+                                             GValue       *return_value,
+                                             gpointer      instance,
+                                             va_list       args,
+                                             gpointer      marshal_data,
+                                             int           n_params,
+                                             GType        *param_types);
+
+/* VOID:OBJECT,FLAGS (./gtkmarshalers.list:87) */
+extern void _gtk_marshal_VOID__OBJECT_FLAGS (GClosure     *closure,
+                                             GValue       *return_value,
+                                             guint         n_param_values,
+                                             const GValue *param_values,
+                                             gpointer      invocation_hint,
+                                             gpointer      marshal_data);
+extern void _gtk_marshal_VOID__OBJECT_FLAGSv (GClosure     *closure,
+                                              GValue       *return_value,
+                                              gpointer      instance,
+                                              va_list       args,
+                                              gpointer      marshal_data,
+                                              int           n_params,
+                                              GType        *param_types);
+
+/* VOID:OBJECT,INT (./gtkmarshalers.list:88) */
 extern void _gtk_marshal_VOID__OBJECT_INT (GClosure     *closure,
                                            GValue       *return_value,
                                            guint         n_param_values,
@@ -874,7 +904,7 @@ extern void _gtk_marshal_VOID__OBJECT_INTv (GClosure     *closure,
                                             int           n_params,
                                             GType        *param_types);
 
-/* VOID:OBJECT,INT,OBJECT (./gtkmarshalers.list:87) */
+/* VOID:OBJECT,INT,OBJECT (./gtkmarshalers.list:89) */
 extern void _gtk_marshal_VOID__OBJECT_INT_OBJECT (GClosure     *closure,
                                                   GValue       *return_value,
                                                   guint         n_param_values,
@@ -889,7 +919,7 @@ extern void _gtk_marshal_VOID__OBJECT_INT_OBJECTv (GClosure     *closure,
                                                    int           n_params,
                                                    GType        *param_types);
 
-/* VOID:OBJECT,INT,INT (./gtkmarshalers.list:88) */
+/* VOID:OBJECT,INT,INT (./gtkmarshalers.list:90) */
 extern void _gtk_marshal_VOID__OBJECT_INT_INT (GClosure     *closure,
                                                GValue       *return_value,
                                                guint         n_param_values,
@@ -904,7 +934,7 @@ extern void _gtk_marshal_VOID__OBJECT_INT_INTv (GClosure     *closure,
                                                 int           n_params,
                                                 GType        *param_types);
 
-/* VOID:OBJECT,INT,INT,BOXED,UINT,UINT (./gtkmarshalers.list:89) */
+/* VOID:OBJECT,INT,INT,BOXED,UINT,UINT (./gtkmarshalers.list:91) */
 extern void _gtk_marshal_VOID__OBJECT_INT_INT_BOXED_UINT_UINT (GClosure     *closure,
                                                                GValue       *return_value,
                                                                guint         n_param_values,
@@ -919,7 +949,7 @@ extern void _gtk_marshal_VOID__OBJECT_INT_INT_BOXED_UINT_UINTv (GClosure     *cl
                                                                 int           n_params,
                                                                 GType        *param_types);
 
-/* VOID:OBJECT,OBJECT (./gtkmarshalers.list:90) */
+/* VOID:OBJECT,OBJECT (./gtkmarshalers.list:92) */
 extern void _gtk_marshal_VOID__OBJECT_OBJECT (GClosure     *closure,
                                               GValue       *return_value,
                                               guint         n_param_values,
@@ -934,7 +964,7 @@ extern void _gtk_marshal_VOID__OBJECT_OBJECTv (GClosure     *closure,
                                                int           n_params,
                                                GType        *param_types);
 
-/* VOID:OBJECT,POINTER (./gtkmarshalers.list:91) */
+/* VOID:OBJECT,POINTER (./gtkmarshalers.list:93) */
 extern void _gtk_marshal_VOID__OBJECT_POINTER (GClosure     *closure,
                                                GValue       *return_value,
                                                guint         n_param_values,
@@ -949,7 +979,22 @@ extern void _gtk_marshal_VOID__OBJECT_POINTERv (GClosure     *closure,
                                                 int           n_params,
                                                 GType        *param_types);
 
-/* VOID:OBJECT,STRING (./gtkmarshalers.list:92) */
+/* VOID:OBJECT,POINTER,INT (./gtkmarshalers.list:94) */
+extern void _gtk_marshal_VOID__OBJECT_POINTER_INT (GClosure     *closure,
+                                                   GValue       *return_value,
+                                                   guint         n_param_values,
+                                                   const GValue *param_values,
+                                                   gpointer      invocation_hint,
+                                                   gpointer      marshal_data);
+extern void _gtk_marshal_VOID__OBJECT_POINTER_INTv (GClosure     *closure,
+                                                    GValue       *return_value,
+                                                    gpointer      instance,
+                                                    va_list       args,
+                                                    gpointer      marshal_data,
+                                                    int           n_params,
+                                                    GType        *param_types);
+
+/* VOID:OBJECT,STRING (./gtkmarshalers.list:95) */
 extern void _gtk_marshal_VOID__OBJECT_STRING (GClosure     *closure,
                                               GValue       *return_value,
                                               guint         n_param_values,
@@ -964,7 +1009,7 @@ extern void _gtk_marshal_VOID__OBJECT_STRINGv (GClosure     *closure,
                                                int           n_params,
                                                GType        *param_types);
 
-/* VOID:OBJECT,STRING,STRING (./gtkmarshalers.list:93) */
+/* VOID:OBJECT,STRING,STRING (./gtkmarshalers.list:96) */
 extern void _gtk_marshal_VOID__OBJECT_STRING_STRING (GClosure     *closure,
                                                      GValue       *return_value,
                                                      guint         n_param_values,
@@ -979,7 +1024,7 @@ extern void _gtk_marshal_VOID__OBJECT_STRING_STRINGv (GClosure     *closure,
                                                       int           n_params,
                                                       GType        *param_types);
 
-/* VOID:OBJECT,UINT (./gtkmarshalers.list:94) */
+/* VOID:OBJECT,UINT (./gtkmarshalers.list:97) */
 extern void _gtk_marshal_VOID__OBJECT_UINT (GClosure     *closure,
                                             GValue       *return_value,
                                             guint         n_param_values,
@@ -994,7 +1039,7 @@ extern void _gtk_marshal_VOID__OBJECT_UINTv (GClosure     *closure,
                                              int           n_params,
                                              GType        *param_types);
 
-/* VOID:OBJECT,UINT,FLAGS (./gtkmarshalers.list:95) */
+/* VOID:OBJECT,UINT,FLAGS (./gtkmarshalers.list:98) */
 extern void _gtk_marshal_VOID__OBJECT_UINT_FLAGS (GClosure     *closure,
                                                   GValue       *return_value,
                                                   guint         n_param_values,
@@ -1009,9 +1054,9 @@ extern void _gtk_marshal_VOID__OBJECT_UINT_FLAGSv (GClosure     *closure,
                                                    int           n_params,
                                                    GType        *param_types);
 
-/* VOID:OBJECT,STRING (./gtkmarshalers.list:96) */
+/* VOID:OBJECT,STRING (./gtkmarshalers.list:99) */
 
-/* VOID:OBJECT,OBJECT,STRING (./gtkmarshalers.list:97) */
+/* VOID:OBJECT,OBJECT,STRING (./gtkmarshalers.list:100) */
 extern void _gtk_marshal_VOID__OBJECT_OBJECT_STRING (GClosure     *closure,
                                                      GValue       *return_value,
                                                      guint         n_param_values,
@@ -1026,7 +1071,7 @@ extern void _gtk_marshal_VOID__OBJECT_OBJECT_STRINGv (GClosure     *closure,
                                                       int           n_params,
                                                       GType        *param_types);
 
-/* VOID:OBJECT,OBJECT,OBJECT (./gtkmarshalers.list:98) */
+/* VOID:OBJECT,OBJECT,OBJECT (./gtkmarshalers.list:101) */
 extern void _gtk_marshal_VOID__OBJECT_OBJECT_OBJECT (GClosure     *closure,
                                                      GValue       *return_value,
                                                      guint         n_param_values,
@@ -1041,7 +1086,7 @@ extern void _gtk_marshal_VOID__OBJECT_OBJECT_OBJECTv (GClosure     *closure,
                                                       int           n_params,
                                                       GType        *param_types);
 
-/* VOID:OBJECT,OBJECT,BOXED,STRING (./gtkmarshalers.list:99) */
+/* VOID:OBJECT,OBJECT,BOXED,STRING (./gtkmarshalers.list:102) */
 extern void _gtk_marshal_VOID__OBJECT_OBJECT_BOXED_STRING (GClosure     *closure,
                                                            GValue       *return_value,
                                                            guint         n_param_values,
@@ -1056,11 +1101,26 @@ extern void _gtk_marshal_VOID__OBJECT_OBJECT_BOXED_STRINGv (GClosure     *closur
                                                             int           n_params,
                                                             GType        *param_types);
 
-/* VOID:POINTER (./gtkmarshalers.list:100) */
+/* VOID:OBJECT,OBJECT,POINTER,POINTER (./gtkmarshalers.list:103) */
+extern void _gtk_marshal_VOID__OBJECT_OBJECT_POINTER_POINTER (GClosure     *closure,
+                                                              GValue       *return_value,
+                                                              guint         n_param_values,
+                                                              const GValue *param_values,
+                                                              gpointer      invocation_hint,
+                                                              gpointer      marshal_data);
+extern void _gtk_marshal_VOID__OBJECT_OBJECT_POINTER_POINTERv (GClosure     *closure,
+                                                               GValue       *return_value,
+                                                               gpointer      instance,
+                                                               va_list       args,
+                                                               gpointer      marshal_data,
+                                                               int           n_params,
+                                                               GType        *param_types);
+
+/* VOID:POINTER (./gtkmarshalers.list:104) */
 #define _gtk_marshal_VOID__POINTER	g_cclosure_marshal_VOID__POINTER
 #define _gtk_marshal_VOID__POINTERv	g_cclosure_marshal_VOID__POINTERv
 
-/* VOID:POINTER,INT (./gtkmarshalers.list:101) */
+/* VOID:POINTER,INT (./gtkmarshalers.list:105) */
 extern void _gtk_marshal_VOID__POINTER_INT (GClosure     *closure,
                                             GValue       *return_value,
                                             guint         n_param_values,
@@ -1075,7 +1135,7 @@ extern void _gtk_marshal_VOID__POINTER_INTv (GClosure     *closure,
                                              int           n_params,
                                              GType        *param_types);
 
-/* VOID:POINTER,BOOLEAN (./gtkmarshalers.list:102) */
+/* VOID:POINTER,BOOLEAN (./gtkmarshalers.list:106) */
 extern void _gtk_marshal_VOID__POINTER_BOOLEAN (GClosure     *closure,
                                                 GValue       *return_value,
                                                 guint         n_param_values,
@@ -1090,7 +1150,7 @@ extern void _gtk_marshal_VOID__POINTER_BOOLEANv (GClosure     *closure,
                                                  int           n_params,
                                                  GType        *param_types);
 
-/* VOID:POINTER,POINTER,BOOLEAN (./gtkmarshalers.list:103) */
+/* VOID:POINTER,POINTER,BOOLEAN (./gtkmarshalers.list:107) */
 extern void _gtk_marshal_VOID__POINTER_POINTER_BOOLEAN (GClosure     *closure,
                                                         GValue       *return_value,
                                                         guint         n_param_values,
@@ -1105,7 +1165,7 @@ extern void _gtk_marshal_VOID__POINTER_POINTER_BOOLEANv (GClosure     *closure,
                                                          int           n_params,
                                                          GType        *param_types);
 
-/* VOID:POINTER,POINTER,POINTER (./gtkmarshalers.list:104) */
+/* VOID:POINTER,POINTER,POINTER (./gtkmarshalers.list:108) */
 extern void _gtk_marshal_VOID__POINTER_POINTER_POINTER (GClosure     *closure,
                                                         GValue       *return_value,
                                                         guint         n_param_values,
@@ -1120,7 +1180,7 @@ extern void _gtk_marshal_VOID__POINTER_POINTER_POINTERv (GClosure     *closure,
                                                          int           n_params,
                                                          GType        *param_types);
 
-/* VOID:POINTER,UINT (./gtkmarshalers.list:105) */
+/* VOID:POINTER,UINT (./gtkmarshalers.list:109) */
 extern void _gtk_marshal_VOID__POINTER_UINT (GClosure     *closure,
                                              GValue       *return_value,
                                              guint         n_param_values,
@@ -1135,11 +1195,11 @@ extern void _gtk_marshal_VOID__POINTER_UINTv (GClosure     *closure,
                                               int           n_params,
                                               GType        *param_types);
 
-/* VOID:STRING (./gtkmarshalers.list:106) */
+/* VOID:STRING (./gtkmarshalers.list:110) */
 #define _gtk_marshal_VOID__STRING	g_cclosure_marshal_VOID__STRING
 #define _gtk_marshal_VOID__STRINGv	g_cclosure_marshal_VOID__STRINGv
 
-/* VOID:STRING,BOXED (./gtkmarshalers.list:107) */
+/* VOID:STRING,BOXED (./gtkmarshalers.list:111) */
 extern void _gtk_marshal_VOID__STRING_BOXED (GClosure     *closure,
                                              GValue       *return_value,
                                              guint         n_param_values,
@@ -1154,7 +1214,7 @@ extern void _gtk_marshal_VOID__STRING_BOXEDv (GClosure     *closure,
                                               int           n_params,
                                               GType        *param_types);
 
-/* VOID:STRING,STRING (./gtkmarshalers.list:108) */
+/* VOID:STRING,STRING (./gtkmarshalers.list:112) */
 extern void _gtk_marshal_VOID__STRING_STRING (GClosure     *closure,
                                               GValue       *return_value,
                                               guint         n_param_values,
@@ -1169,7 +1229,7 @@ extern void _gtk_marshal_VOID__STRING_STRINGv (GClosure     *closure,
                                                int           n_params,
                                                GType        *param_types);
 
-/* VOID:STRING,STRING,STRING (./gtkmarshalers.list:109) */
+/* VOID:STRING,STRING,STRING (./gtkmarshalers.list:113) */
 extern void _gtk_marshal_VOID__STRING_STRING_STRING (GClosure     *closure,
                                                      GValue       *return_value,
                                                      guint         n_param_values,
@@ -1184,7 +1244,7 @@ extern void _gtk_marshal_VOID__STRING_STRING_STRINGv (GClosure     *closure,
                                                       int           n_params,
                                                       GType        *param_types);
 
-/* VOID:STRING,INT,POINTER (./gtkmarshalers.list:110) */
+/* VOID:STRING,INT,POINTER (./gtkmarshalers.list:114) */
 extern void _gtk_marshal_VOID__STRING_INT_POINTER (GClosure     *closure,
                                                    GValue       *return_value,
                                                    guint         n_param_values,
@@ -1199,7 +1259,7 @@ extern void _gtk_marshal_VOID__STRING_INT_POINTERv (GClosure     *closure,
                                                     int           n_params,
                                                     GType        *param_types);
 
-/* VOID:STRING,UINT,FLAGS (./gtkmarshalers.list:111) */
+/* VOID:STRING,UINT,FLAGS (./gtkmarshalers.list:115) */
 extern void _gtk_marshal_VOID__STRING_UINT_FLAGS (GClosure     *closure,
                                                   GValue       *return_value,
                                                   guint         n_param_values,
@@ -1214,7 +1274,7 @@ extern void _gtk_marshal_VOID__STRING_UINT_FLAGSv (GClosure     *closure,
                                                    int           n_params,
                                                    GType        *param_types);
 
-/* VOID:STRING,UINT,FLAGS,UINT (./gtkmarshalers.list:112) */
+/* VOID:STRING,UINT,FLAGS,UINT (./gtkmarshalers.list:116) */
 extern void _gtk_marshal_VOID__STRING_UINT_FLAGS_UINT (GClosure     *closure,
                                                        GValue       *return_value,
                                                        guint         n_param_values,
@@ -1229,7 +1289,7 @@ extern void _gtk_marshal_VOID__STRING_UINT_FLAGS_UINTv (GClosure     *closure,
                                                         int           n_params,
                                                         GType        *param_types);
 
-/* VOID:UINT,FLAGS,BOXED (./gtkmarshalers.list:113) */
+/* VOID:UINT,FLAGS,BOXED (./gtkmarshalers.list:117) */
 extern void _gtk_marshal_VOID__UINT_FLAGS_BOXED (GClosure     *closure,
                                                  GValue       *return_value,
                                                  guint         n_param_values,
@@ -1244,7 +1304,7 @@ extern void _gtk_marshal_VOID__UINT_FLAGS_BOXEDv (GClosure     *closure,
                                                   int           n_params,
                                                   GType        *param_types);
 
-/* VOID:UINT,UINT (./gtkmarshalers.list:114) */
+/* VOID:UINT,UINT (./gtkmarshalers.list:118) */
 extern void _gtk_marshal_VOID__UINT_UINT (GClosure     *closure,
                                           GValue       *return_value,
                                           guint         n_param_values,
@@ -1259,7 +1319,7 @@ extern void _gtk_marshal_VOID__UINT_UINTv (GClosure     *closure,
                                            int           n_params,
                                            GType        *param_types);
 
-/* VOID:UINT,STRING (./gtkmarshalers.list:115) */
+/* VOID:UINT,STRING (./gtkmarshalers.list:119) */
 extern void _gtk_marshal_VOID__UINT_STRING (GClosure     *closure,
                                             GValue       *return_value,
                                             guint         n_param_values,
@@ -1274,7 +1334,7 @@ extern void _gtk_marshal_VOID__UINT_STRINGv (GClosure     *closure,
                                              int           n_params,
                                              GType        *param_types);
 
-/* VOID:UINT,BOXED,UINT,FLAGS,FLAGS (./gtkmarshalers.list:116) */
+/* VOID:UINT,BOXED,UINT,FLAGS,FLAGS (./gtkmarshalers.list:120) */
 extern void _gtk_marshal_VOID__UINT_BOXED_UINT_FLAGS_FLAGS (GClosure     *closure,
                                                             GValue       *return_value,
                                                             guint         n_param_values,
@@ -1289,7 +1349,7 @@ extern void _gtk_marshal_VOID__UINT_BOXED_UINT_FLAGS_FLAGSv (GClosure     *closu
                                                              int           n_params,
                                                              GType        *param_types);
 
-/* VOID:UINT,OBJECT,UINT,FLAGS,FLAGS (./gtkmarshalers.list:117) */
+/* VOID:UINT,OBJECT,UINT,FLAGS,FLAGS (./gtkmarshalers.list:121) */
 extern void _gtk_marshal_VOID__UINT_OBJECT_UINT_FLAGS_FLAGS (GClosure     *closure,
                                                              GValue       *return_value,
                                                              guint         n_param_values,
@@ -1304,7 +1364,7 @@ extern void _gtk_marshal_VOID__UINT_OBJECT_UINT_FLAGS_FLAGSv (GClosure     *clos
                                                               int           n_params,
                                                               GType        *param_types);
 
-/* VOID:UINT,STRING,UINT (./gtkmarshalers.list:118) */
+/* VOID:UINT,STRING,UINT (./gtkmarshalers.list:122) */
 extern void _gtk_marshal_VOID__UINT_STRING_UINT (GClosure     *closure,
                                                  GValue       *return_value,
                                                  guint         n_param_values,
@@ -1319,13 +1379,13 @@ extern void _gtk_marshal_VOID__UINT_STRING_UINTv (GClosure     *closure,
                                                   int           n_params,
                                                   GType        *param_types);
 
-/* VOID:UINT,UINT (./gtkmarshalers.list:119) */
+/* VOID:UINT,UINT (./gtkmarshalers.list:123) */
 
-/* VOID:VOID (./gtkmarshalers.list:120) */
+/* VOID:VOID (./gtkmarshalers.list:124) */
 #define _gtk_marshal_VOID__VOID	g_cclosure_marshal_VOID__VOID
 #define _gtk_marshal_VOID__VOIDv	g_cclosure_marshal_VOID__VOIDv
 
-/* OBJECT:OBJECT,INT,INT (./gtkmarshalers.list:121) */
+/* OBJECT:OBJECT,INT,INT (./gtkmarshalers.list:125) */
 extern void _gtk_marshal_OBJECT__OBJECT_INT_INT (GClosure     *closure,
                                                  GValue       *return_value,
                                                  guint         n_param_values,
@@ -1340,7 +1400,7 @@ extern void _gtk_marshal_OBJECT__OBJECT_INT_INTv (GClosure     *closure,
                                                   int           n_params,
                                                   GType        *param_types);
 
-/* VOID:POINTER,POINTER,POINTER,POINTER,STRING (./gtkmarshalers.list:122) */
+/* VOID:POINTER,POINTER,POINTER,POINTER,STRING (./gtkmarshalers.list:126) */
 extern void _gtk_marshal_VOID__POINTER_POINTER_POINTER_POINTER_STRING (GClosure     *closure,
                                                                        GValue       *return_value,
                                                                        guint         n_param_values,
@@ -1354,6 +1414,66 @@ extern void _gtk_marshal_VOID__POINTER_POINTER_POINTER_POINTER_STRINGv (GClosure
                                                                         gpointer      marshal_data,
                                                                         int           n_params,
                                                                         GType        *param_types);
+
+/* VOID:OBJECT,STRING,POINTER,POINTER (./gtkmarshalers.list:127) */
+extern void _gtk_marshal_VOID__OBJECT_STRING_POINTER_POINTER (GClosure     *closure,
+                                                              GValue       *return_value,
+                                                              guint         n_param_values,
+                                                              const GValue *param_values,
+                                                              gpointer      invocation_hint,
+                                                              gpointer      marshal_data);
+extern void _gtk_marshal_VOID__OBJECT_STRING_POINTER_POINTERv (GClosure     *closure,
+                                                               GValue       *return_value,
+                                                               gpointer      instance,
+                                                               va_list       args,
+                                                               gpointer      marshal_data,
+                                                               int           n_params,
+                                                               GType        *param_types);
+
+/* INT:INT (./gtkmarshalers.list:128) */
+extern void _gtk_marshal_INT__INT (GClosure     *closure,
+                                   GValue       *return_value,
+                                   guint         n_param_values,
+                                   const GValue *param_values,
+                                   gpointer      invocation_hint,
+                                   gpointer      marshal_data);
+extern void _gtk_marshal_INT__INTv (GClosure     *closure,
+                                    GValue       *return_value,
+                                    gpointer      instance,
+                                    va_list       args,
+                                    gpointer      marshal_data,
+                                    int           n_params,
+                                    GType        *param_types);
+
+/* VOID:POINTER,STRING,INT (./gtkmarshalers.list:129) */
+extern void _gtk_marshal_VOID__POINTER_STRING_INT (GClosure     *closure,
+                                                   GValue       *return_value,
+                                                   guint         n_param_values,
+                                                   const GValue *param_values,
+                                                   gpointer      invocation_hint,
+                                                   gpointer      marshal_data);
+extern void _gtk_marshal_VOID__POINTER_STRING_INTv (GClosure     *closure,
+                                                    GValue       *return_value,
+                                                    gpointer      instance,
+                                                    va_list       args,
+                                                    gpointer      marshal_data,
+                                                    int           n_params,
+                                                    GType        *param_types);
+
+/* INT:OBJECT,OBJECT,POINTER (./gtkmarshalers.list:130) */
+extern void _gtk_marshal_INT__OBJECT_OBJECT_POINTER (GClosure     *closure,
+                                                     GValue       *return_value,
+                                                     guint         n_param_values,
+                                                     const GValue *param_values,
+                                                     gpointer      invocation_hint,
+                                                     gpointer      marshal_data);
+extern void _gtk_marshal_INT__OBJECT_OBJECT_POINTERv (GClosure     *closure,
+                                                      GValue       *return_value,
+                                                      gpointer      instance,
+                                                      va_list       args,
+                                                      gpointer      marshal_data,
+                                                      int           n_params,
+                                                      GType        *param_types);
 
 G_END_DECLS
 

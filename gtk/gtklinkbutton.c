@@ -52,14 +52,12 @@
 
 #include "gtkclipboard.h"
 #include "gtkdnd.h"
-#include "gtkimagemenuitem.h"
 #include "gtklabel.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
 #include "gtkmenu.h"
 #include "gtkmenuitem.h"
 #include "gtksizerequest.h"
-#include "gtkstock.h"
 #include "gtkshow.h"
 #include "gtktooltip.h"
 #include "gtkprivate.h"
@@ -137,7 +135,7 @@ static const GdkColor default_visited_link_color = { 0, 0x5555, 0x1a1a, 0x8b8b }
 
 static guint link_signals[LAST_SIGNAL] = { 0, };
 
-G_DEFINE_TYPE (GtkLinkButton, gtk_link_button, GTK_TYPE_BUTTON)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkLinkButton, gtk_link_button, GTK_TYPE_BUTTON)
 
 static void
 gtk_link_button_class_init (GtkLinkButtonClass *klass)
@@ -191,8 +189,6 @@ gtk_link_button_class_init (GtkLinkButtonClass *klass)
                                                          P_("Whether this link has been visited."),
                                                          FALSE,
                                                          G_PARAM_READWRITE));
-  
-  g_type_class_add_private (gobject_class, sizeof (GtkLinkButtonPrivate));
 
   /**
    * GtkLinkButton::activate-link:
@@ -223,9 +219,7 @@ gtk_link_button_class_init (GtkLinkButtonClass *klass)
 static void
 gtk_link_button_init (GtkLinkButton *link_button)
 {
-  link_button->priv = G_TYPE_INSTANCE_GET_PRIVATE (link_button,
-                                                   GTK_TYPE_LINK_BUTTON,
-                                                   GtkLinkButtonPrivate);
+  link_button->priv = gtk_link_button_get_instance_private (link_button);
 
   gtk_button_set_relief (GTK_BUTTON (link_button), GTK_RELIEF_NONE);
   
@@ -486,25 +480,24 @@ gtk_link_button_do_popup (GtkLinkButton  *link_button,
   if (gtk_widget_get_realized (GTK_WIDGET (link_button)))
     {
       GtkWidget *menu_item;
-      
+
       if (priv->popup_menu)
 	gtk_widget_destroy (priv->popup_menu);
 
       priv->popup_menu = gtk_menu_new ();
-      
+      gtk_style_context_add_class (gtk_widget_get_style_context (priv->popup_menu),
+                                   GTK_STYLE_CLASS_CONTEXT_MENU);
+
       gtk_menu_attach_to_widget (GTK_MENU (priv->popup_menu),
 		      		 GTK_WIDGET (link_button),
 				 popup_menu_detach);
 
-      menu_item = gtk_image_menu_item_new_with_mnemonic (_("Copy URL"));
-      gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menu_item),
-		      		     gtk_image_new_from_stock (GTK_STOCK_COPY,
-							       GTK_ICON_SIZE_MENU));
+      menu_item = gtk_menu_item_new_with_mnemonic (_("Copy URL"));
       g_signal_connect (menu_item, "activate",
 		        G_CALLBACK (copy_activate_cb), link_button);
       gtk_widget_show (menu_item);
       gtk_menu_shell_append (GTK_MENU_SHELL (priv->popup_menu), menu_item);
-      
+
       if (button)
         gtk_menu_popup (GTK_MENU (priv->popup_menu), NULL, NULL,
 		        NULL, NULL,

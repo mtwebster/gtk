@@ -15,8 +15,8 @@ msgstr ""
 "Project-Id-Version: gtk+-properties.master.ta\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug."
 "cgi?product=gtk%2b&keywords=I18N+L10N&component=general\n"
-"POT-Creation-Date: 2013-03-20 23:39+0000\n"
-"PO-Revision-Date: 2013-03-25 15:25+0530\n"
+"POT-Creation-Date: 2013-03-20 22:23+0000\n"
+"PO-Revision-Date: 2013-03-25 15:15+0530\n"
 "Last-Translator: Shantha kumar <shkumar@redhat.com>\n"
 "Language-Team: Tamil <>\n"
 "Language: ta\n"
@@ -346,19 +346,19 @@ msgstr "பத்திகள்"
 msgid "The number of columns in the table"
 msgstr "அட்டவணையிலுள்ள பத்திகளின் எண்"
 
-#: ../gtk/deprecated/gtktable.c:209 ../gtk/gtkgrid.c:1392
+#: ../gtk/deprecated/gtktable.c:209 ../gtk/gtkgrid.c:1405
 msgid "Row spacing"
 msgstr "வரிசை இடைவெளி"
 
-#: ../gtk/deprecated/gtktable.c:210 ../gtk/gtkgrid.c:1393
+#: ../gtk/deprecated/gtktable.c:210 ../gtk/gtkgrid.c:1406
 msgid "The amount of space between two consecutive rows"
 msgstr "பக்கத்து வரிசைகளுக்கு நடுவிலுள்ள இடைவெளி அளவு"
 
-#: ../gtk/deprecated/gtktable.c:218 ../gtk/gtkgrid.c:1399
+#: ../gtk/deprecated/gtktable.c:218 ../gtk/gtkgrid.c:1412
 msgid "Column spacing"
 msgstr "பத்தி இடைவெளி"
 
-#: ../gtk/deprecated/gtktable.c:219 ../gtk/gtkgrid.c:1400
+#: ../gtk/deprecated/gtktable.c:219 ../gtk/gtkgrid.c:1413
 msgid "The amount of space between two consecutive columns"
 msgstr "பக்கத்து பத்திகளுக்கு நடுவிலுள்ள இடைவெளி அளவு"
 
@@ -371,11 +371,11 @@ msgstr "ஒரே மாதியான"
 msgid "If TRUE, the table cells are all the same width/height"
 msgstr "இது மெய்யானால், அட்டவணையின் அறைகள் அனைத்தும் ஒரே அகலம்/உயரம் பெற்றிருக்கும்"
 
-#: ../gtk/deprecated/gtktable.c:235 ../gtk/gtkgrid.c:1420
+#: ../gtk/deprecated/gtktable.c:235 ../gtk/gtkgrid.c:1433
 msgid "Left attachment"
 msgstr "இடது இணைப்பு"
 
-#: ../gtk/deprecated/gtktable.c:236 ../gtk/gtkgrid.c:1421 ../gtk/gtkmenu.c:747
+#: ../gtk/deprecated/gtktable.c:236 ../gtk/gtkgrid.c:1434 ../gtk/gtkmenu.c:747
 msgid "The column number to attach the left side of the child to"
 msgstr "சேயின் இடது பக்கம் ஒட்ட வேண்டிய பத்தி எண் "
 
@@ -387,7 +387,7 @@ msgstr "வலது இணைப்பு"
 msgid "The column number to attach the right side of a child widget to"
 msgstr "சேய் விட்ஜிட்டில் வலப்பக்கம் இணைக்கப்பட்ட நெடுவரிசை எண்"
 
-#: ../gtk/deprecated/gtktable.c:249 ../gtk/gtkgrid.c:1427
+#: ../gtk/deprecated/gtktable.c:249 ../gtk/gtkgrid.c:1440
 msgid "Top attachment"
 msgstr "மேல் இணைப்பு"
 
@@ -419,7 +419,7 @@ msgstr "செங்குத்து விருப்பங்கள்"
 msgid "Options specifying the vertical behaviour of the child"
 msgstr "செங்குத்து சேய் பண்புகளில் குறிப்பிடப்படும் விருப்பங்கள்"
 
-#: ../gtk/deprecated/gtktable.c:277
+#: ../gtk/deprecated/gtktable.c:277 ../gtk/gtkheaderbar.c:1314
 msgid "Horizontal padding"
 msgstr "கிடைமட்ட திண்டாக்கம்"
 
@@ -429,7 +429,7 @@ msgid ""
 "pixels"
 msgstr "சேய் இடையே உள்ள கூடுதல் இடம் மற்றும் அதன் இடது மற்றும் வலது அருகிலுள்ளவை பிக்ஸலில்"
 
-#: ../gtk/deprecated/gtktable.c:284
+#: ../gtk/deprecated/gtktable.c:284 ../gtk/gtkheaderbar.c:1323
 msgid "Vertical padding"
 msgstr "செங்குத்து திண்டாக்கம்"
 
@@ -651,7 +651,7 @@ msgstr "இந்த GIcon காட்டப்படுகிறது"
 
 #: ../gtk/gtkaction.c:323 ../gtk/gtkcellrendererpixbuf.c:211
 #: ../gtk/gtkimage.c:293 ../gtk/gtkprinter.c:172 ../gtk/gtkstatusicon.c:247
-#: ../gtk/gtkwindow.c:771
+#: ../gtk/gtkwindow.c:844
 msgid "Icon Name"
 msgstr "சின்னத்தின் பெயர்"
 
@@ -1032,11 +1032,11 @@ msgstr "செயல்படும் சாளரம்"
 msgid "The window which most recently had focus"
 msgstr "சமீபத்தில் கவனத்தில் இருந்த சாளரம்"
 
-#: ../gtk/gtkapplicationwindow.c:993
+#: ../gtk/gtkapplicationwindow.c:996
 msgid "Show a menubar"
 msgstr "மெனுப்பட்டியைக் காண்பி"
 
-#: ../gtk/gtkapplicationwindow.c:994
+#: ../gtk/gtkapplicationwindow.c:997
 msgid "TRUE if the window should show a menubar at the top of the window"
 msgstr ""
 "சாளரமானது அதன் மேல்பகுதியில் ஒரு மெனுப்பட்டியைக் காண்பிக்க வேண்டுமானால் TRUE என "
@@ -1220,11 +1220,12 @@ msgid "If TRUE, the child will not be subject to homogeneous sizing"
 msgstr "உண்மையெனில், இந்த சேய்  ஓரின அளவிடுதலின் பொருளாக இருக்க முடியாது"
 
 #: ../gtk/gtkbox.c:243 ../gtk/gtkcellareabox.c:315 ../gtk/gtkexpander.c:312
-#: ../gtk/gtkiconview.c:516 ../gtk/gtktreeviewcolumn.c:280
+#: ../gtk/gtkheaderbar.c:1305 ../gtk/gtkiconview.c:516
+#: ../gtk/gtktreeviewcolumn.c:280
 msgid "Spacing"
 msgstr "இடைவெளி"
 
-#: ../gtk/gtkbox.c:244
+#: ../gtk/gtkbox.c:244 ../gtk/gtkheaderbar.c:1306
 msgid "The amount of space between children"
 msgstr "சேய்களுக்கிடையே உள்ள இடைவெளி"
 
@@ -1260,11 +1261,11 @@ msgstr "நிரப்பல்"
 msgid "Extra space to put between the child and its neighbors, in pixels"
 msgstr "சேய்க்கும் அண்டையில் உள்ளாருக்கும் தர வேண்டிய கூடுதல் இடைவெளி பிக்ஸல்களில்"
 
-#: ../gtk/gtkbox.c:306
+#: ../gtk/gtkbox.c:306 ../gtk/gtkheaderbar.c:1264
 msgid "Pack type"
 msgstr "அடுக்கும் வகை"
 
-#: ../gtk/gtkbox.c:307
+#: ../gtk/gtkbox.c:307 ../gtk/gtkheaderbar.c:1265
 msgid ""
 "A GtkPackType indicating whether the child is packed with reference to the "
 "start or end of the parent"
@@ -1272,12 +1273,13 @@ msgstr ""
 "சேய் பெற்றோரின் துவக்கம் அல்லது  முடிவு  எதில் அடங்கி உல்லது எனக்காட்டும் ஒரு "
 "ஜிடிகேபாக்டைப்"
 
-#: ../gtk/gtkbox.c:313 ../gtk/gtkbubblewindow.c:866 ../gtk/gtknotebook.c:768
-#: ../gtk/gtkpaned.c:348 ../gtk/gtktoolitemgroup.c:1678
+#: ../gtk/gtkbox.c:313 ../gtk/gtkbubblewindow.c:866 ../gtk/gtkheaderbar.c:1271
+#: ../gtk/gtknotebook.c:768 ../gtk/gtkpaned.c:348
+#: ../gtk/gtktoolitemgroup.c:1678
 msgid "Position"
 msgstr "இடம்"
 
-#: ../gtk/gtkbox.c:314 ../gtk/gtknotebook.c:769
+#: ../gtk/gtkbox.c:314 ../gtk/gtkheaderbar.c:1272 ../gtk/gtknotebook.c:769
 msgid "The index of the child in the parent"
 msgstr "பெற்றோரில் சேயின் அகரவரிசை"
 
@@ -1288,12 +1290,12 @@ msgstr "இதற்கு ஒப்பீடாக"
 
 #: ../gtk/gtkbubblewindow.c:853
 msgid "Window the bubble window points to"
-msgstr "குமிழ் சாளரம் சுட்டுகின்ற செவ்வகம்"
+msgstr "குமிழ் சாளரம் சுட்டுகின்ற சாளரம்"
 
 #: ../gtk/gtkbubblewindow.c:859
 #| msgid "Font scaling factor"
 msgid "Pointing to"
-msgstr "இதற்குச் சுட்டுகிறது"
+msgstr "இதற்குச் சுட்டுகிறதுஅளவுமாற்றம் காரணி"
 
 #: ../gtk/gtkbubblewindow.c:860
 msgid "Rectangle the bubble window points to"
@@ -1883,7 +1885,7 @@ msgid "Whether the rendered pixbuf should be colorized according to the state"
 msgstr "Whether the rendered pixbuf should be colorized according to the state"
 
 #: ../gtk/gtkcellrendererpixbuf.c:245 ../gtk/gtkimage.c:310
-#: ../gtk/gtkwindow.c:717
+#: ../gtk/gtkwindow.c:790
 msgid "Icon"
 msgstr "குறும்படம்"
 
@@ -2509,8 +2511,9 @@ msgid "Whether to give the color an alpha value"
 msgstr "ஒரு ஆல்பா மதிப்பை வண்ணத்திற்கு கொடுத்திருந்தால் "
 
 #: ../gtk/gtkcolorbutton.c:186 ../gtk/gtkfilechooserbutton.c:447
-#: ../gtk/gtkfontbutton.c:434 ../gtk/gtkprintjob.c:139
-#: ../gtk/gtkstatusicon.c:426 ../gtk/gtktreeviewcolumn.c:328
+#: ../gtk/gtkfontbutton.c:434 ../gtk/gtkheaderbar.c:1279
+#: ../gtk/gtkprintjob.c:139 ../gtk/gtkstatusicon.c:426
+#: ../gtk/gtktreeviewcolumn.c:328
 msgid "Title"
 msgstr "தலைப்பு"
 
@@ -3588,41 +3591,79 @@ msgstr "சட்ட எல்லையின் தோற்றம்"
 msgid "A widget to display in place of the usual frame label"
 msgstr "வழக்கமான சட்டம் அடையாளம் தவிர்த்து அதனிடத்தில் காட்ட ஒரு விட்செட்"
 
-#: ../gtk/gtkgrid.c:1406
+#: ../gtk/gtkgrid.c:1419
 msgid "Row Homogeneous"
 msgstr "ஒரே மாதியான வரிசை"
 
-#: ../gtk/gtkgrid.c:1407
+#: ../gtk/gtkgrid.c:1420
 msgid "If TRUE, the rows are all the same height"
 msgstr "இது மெய்யானால், நிரல்கள் அனைத்தும் ஒரே உயரத்தை பெற்றிருக்கும்"
 
-#: ../gtk/gtkgrid.c:1413
+#: ../gtk/gtkgrid.c:1426
 msgid "Column Homogeneous"
 msgstr "ஒரே மாதியான நிரல்"
 
-#: ../gtk/gtkgrid.c:1414
+#: ../gtk/gtkgrid.c:1427
 msgid "If TRUE, the columns are all the same width"
 msgstr "இது மெய்யானால், நிரல்கள் அனைத்தும் ஒரே அகலத்தை பெற்றிருக்கும்"
 
-#: ../gtk/gtkgrid.c:1428
+#: ../gtk/gtkgrid.c:1441
 msgid "The row number to attach the top side of a child widget to"
 msgstr "ஒருசேய் விட்ஜிட்டில் மேல் பக்கத்தில் இணைக்கப்பட்ட வரிசை எண்"
 
-#: ../gtk/gtkgrid.c:1434 ../gtk/gtklayout.c:672 ../gtk/gtktreeviewcolumn.c:271
+#: ../gtk/gtkgrid.c:1447 ../gtk/gtklayout.c:672 ../gtk/gtktreeviewcolumn.c:271
 msgid "Width"
 msgstr "அகலம்"
 
-#: ../gtk/gtkgrid.c:1435
+#: ../gtk/gtkgrid.c:1448
 msgid "The number of columns that a child spans"
 msgstr "ஒரு சேய் ஸ்பேன்பளில் உள்ள நிரல்களின் எண்ணிக்கை"
 
-#: ../gtk/gtkgrid.c:1441 ../gtk/gtklayout.c:681
+#: ../gtk/gtkgrid.c:1454 ../gtk/gtklayout.c:681
 msgid "Height"
 msgstr "உயரம்"
 
-#: ../gtk/gtkgrid.c:1442
+#: ../gtk/gtkgrid.c:1455
 msgid "The number of rows that a child spans"
 msgstr "ஒரு சேய் ஸ்பேன்களின் வரிசைகளின் எண்ணிக்கை"
+
+#: ../gtk/gtkheaderbar.c:1280
+#| msgid "The title of this tray icon"
+msgid "The title to display"
+msgstr "காண்பிக்கப்பட வேண்டிய தலைப்புைப்பு"
+
+#: ../gtk/gtkheaderbar.c:1287
+#| msgid "Title"
+msgid "Subitle"
+msgstr "துணைத்தலைப்பு"
+
+#: ../gtk/gtkheaderbar.c:1288
+#| msgid "Icon set to display"
+msgid "The subtitle to display"
+msgstr "காண்பிக்கப்பட வேண்டிய துணைத்தலைப்பு்னம்"
+
+#: ../gtk/gtkheaderbar.c:1295
+#| msgid "Custom tab label"
+msgid "Custom Title"
+msgstr "தனிப்பயன் தலைப்புறு  பெயர்"
+
+#: ../gtk/gtkheaderbar.c:1296
+#| msgid "Icon set to display"
+msgid "Custom title widget to display"
+msgstr "காண்பிக்கப்பட தனிப்பயன் தலைப்பு விட்ஜெட்"
+
+#: ../gtk/gtkheaderbar.c:1315
+#| msgid ""
+#| "The amount of space to add on the left and right of the widget, in pixels"
+msgid "The amount of space to the left and right of children"
+msgstr ""
+"சேய்களின் இடம் மற்றும் வலத்தில் விட வேண்டிய இடத்தின் அளவுபக்கத்திலும் இருக்கும் இடைவெளியின் "
+"அளவு"
+
+#: ../gtk/gtkheaderbar.c:1324
+#| msgid "The amount of space between children"
+msgid "The amount of space to the above and below children"
+msgstr "சேய்களுக்கு மேலும் கீழும் விட வேண்டிய இடத்தின் அளவு"
 
 #: ../gtk/gtkiconview.c:400 ../gtk/gtktreeselection.c:130
 msgid "Selection mode"
@@ -3881,11 +3922,11 @@ msgstr "செயல் பகுதியை சுற்றி எல்லை
 
 #: ../gtk/gtkinvisible.c:101 ../gtk/gtkmountoperation.c:179
 #: ../gtk/gtkstatusicon.c:290 ../gtk/gtkstylecontext.c:444
-#: ../gtk/gtkwindow.c:779
+#: ../gtk/gtkwindow.c:852
 msgid "Screen"
 msgstr "திரை"
 
-#: ../gtk/gtkinvisible.c:102 ../gtk/gtkwindow.c:780
+#: ../gtk/gtkinvisible.c:102 ../gtk/gtkwindow.c:853
 msgid "The screen where this window will be displayed"
 msgstr "இந்த திரையில் இந்த சாளரம் காட்டப்படும்"
 
@@ -7435,7 +7476,7 @@ msgstr "Dash pattern used to draw the tree view lines"
 msgid "Whether to display the column"
 msgstr "நிரலை காட்ட வேண்டுமா"
 
-#: ../gtk/gtktreeviewcolumn.c:253 ../gtk/gtkwindow.c:649
+#: ../gtk/gtktreeviewcolumn.c:253 ../gtk/gtkwindow.c:722
 msgid "Resizable"
 msgstr "அளவு மாற்றக்கூடியது"
 
@@ -7796,7 +7837,7 @@ msgstr "விட்ஜெட்டை இரண்டு திசைகளி�
 #: ../gtk/gtkwidget.c:1508
 #| msgid "Opacity for Window"
 msgid "Opacity for Widget"
-msgstr "விட்ஜெட்டின் ஒளிபுகு தன்மை"
+msgstr "விட்ஜெட்டின் ஒளிபுகு தன்மைதல்"
 
 #: ../gtk/gtkwidget.c:1509
 #| msgid "The opacity of the window, from 0 to 1"
@@ -7937,47 +7978,47 @@ msgstr "உரை ரதேர்ந்தெடுப்பு கைப்ப�
 msgid "Height of text selection handles"
 msgstr "எழுத்துரு தேர்ந்தெடுப்பின் கைப்பிடியின் உயரம்"
 
-#: ../gtk/gtkwindow.c:607
+#: ../gtk/gtkwindow.c:680
 msgid "Window Type"
 msgstr "சாளர வகை"
 
-#: ../gtk/gtkwindow.c:608
+#: ../gtk/gtkwindow.c:681
 msgid "The type of the window"
 msgstr "சாளரத்தின் வகை"
 
-#: ../gtk/gtkwindow.c:616
+#: ../gtk/gtkwindow.c:689
 msgid "Window Title"
 msgstr "சாளர தலைப்பு"
 
-#: ../gtk/gtkwindow.c:617
+#: ../gtk/gtkwindow.c:690
 msgid "The title of the window"
 msgstr "சாளரத்தின் தலைப்பு"
 
-#: ../gtk/gtkwindow.c:624
+#: ../gtk/gtkwindow.c:697
 msgid "Window Role"
 msgstr "சாளர பங்கு"
 
-#: ../gtk/gtkwindow.c:625
+#: ../gtk/gtkwindow.c:698
 msgid "Unique identifier for the window to be used when restoring a session"
 msgstr "சாளரத்திற்கான தனித்துவ அடையாளப்படுத்தி ஒரு அமர்வை மறுசேமிக்கும்போது"
 
-#: ../gtk/gtkwindow.c:641
+#: ../gtk/gtkwindow.c:714
 msgid "Startup ID"
 msgstr "துவக்க ID"
 
-#: ../gtk/gtkwindow.c:642
+#: ../gtk/gtkwindow.c:715
 msgid "Unique startup identifier for the window used by startup-notification"
 msgstr "சாளரத்திற்கான தனித்துவ அடையாளப்படுத்தி துவக்க அறிவிப்பில்"
 
-#: ../gtk/gtkwindow.c:650
+#: ../gtk/gtkwindow.c:723
 msgid "If TRUE, users can resize the window"
 msgstr "உண்மையெனில், பயனர்கள் சாளரத்தை மறுஅளவிடலாம்"
 
-#: ../gtk/gtkwindow.c:657
+#: ../gtk/gtkwindow.c:730
 msgid "Modal"
 msgstr "மோடல்"
 
-#: ../gtk/gtkwindow.c:658
+#: ../gtk/gtkwindow.c:731
 msgid ""
 "If TRUE, the window is modal (other windows are not usable while this one is "
 "up)"
@@ -7985,91 +8026,91 @@ msgstr ""
 "If TRUE, the window is modal (other windows are not usable while this one is "
 "up)"
 
-#: ../gtk/gtkwindow.c:665
+#: ../gtk/gtkwindow.c:738
 msgid "Window Position"
 msgstr "சாளரத்தின் இடம்"
 
-#: ../gtk/gtkwindow.c:666
+#: ../gtk/gtkwindow.c:739
 msgid "The initial position of the window"
 msgstr "சாளரத்தின் ஆரம்ப நிலை"
 
-#: ../gtk/gtkwindow.c:674
+#: ../gtk/gtkwindow.c:747
 msgid "Default Width"
 msgstr "கொடா நிலை அகளம்"
 
-#: ../gtk/gtkwindow.c:675
+#: ../gtk/gtkwindow.c:748
 msgid "The default width of the window, used when initially showing the window"
 msgstr "முன்னிருப்பு சாளரத்தின் அகலம், ஆரம்பத்தில் சாளரத்தை காட்டும் போது"
 
-#: ../gtk/gtkwindow.c:684
+#: ../gtk/gtkwindow.c:757
 msgid "Default Height"
 msgstr "முன்னிருப்பு உயரம்"
 
-#: ../gtk/gtkwindow.c:685
+#: ../gtk/gtkwindow.c:758
 msgid "The default height of the window, used when initially showing the window"
 msgstr "இதில் சாளரம் பயன்பட்டது சாளரம்"
 
-#: ../gtk/gtkwindow.c:694
+#: ../gtk/gtkwindow.c:767
 msgid "Destroy with Parent"
 msgstr "பெற்றோரை அழி"
 
-#: ../gtk/gtkwindow.c:695
+#: ../gtk/gtkwindow.c:768
 msgid "If this window should be destroyed when the parent is destroyed"
 msgstr "பெற்றோர் சேதப்படுத்தப்பட்டால் இந்த சாளரம் அழிக்கப்பட்டால்"
 
-#: ../gtk/gtkwindow.c:709
+#: ../gtk/gtkwindow.c:782
 msgid "Hide the titlebar during maximization"
 msgstr "பெரிதாக்கும் போது தலைப்புப்பட்டியை மறை"
 
-#: ../gtk/gtkwindow.c:710
+#: ../gtk/gtkwindow.c:783
 msgid "If this window's titlebar should be hidden when the window is maximized"
 msgstr "சாளரம் பெரிதாக்கப்படும் போது, இந்த சாளரத்தின் தலைப்புப் பட்டி மறைக்கப்படுமா"
 
-#: ../gtk/gtkwindow.c:718
+#: ../gtk/gtkwindow.c:791
 msgid "Icon for this window"
 msgstr "இந்த சாளரத்தின் குறும்படம்"
 
-#: ../gtk/gtkwindow.c:736
+#: ../gtk/gtkwindow.c:809
 msgid "Mnemonics Visible"
 msgstr "பார்க்கக்கூடிய நினைவுக்குறியீடுகள்"
 
-#: ../gtk/gtkwindow.c:737
+#: ../gtk/gtkwindow.c:810
 msgid "Whether mnemonics are currently visible in this window"
 msgstr "இந்த சாளரத்தில் தற்போது காணக்கூடிய நினைவுக்குறியீடுகள் உள்ளனவா"
 
-#: ../gtk/gtkwindow.c:755
+#: ../gtk/gtkwindow.c:828
 msgid "Focus Visible"
 msgstr "பாக்கக்கூடிய குவிப்பு"
 
-#: ../gtk/gtkwindow.c:756
+#: ../gtk/gtkwindow.c:829
 msgid "Whether focus rectangles are currently visible in this window"
 msgstr "இந்த சாளரத்தில் தற்போது காணக்கூடிய குவியும் செவ்வகம் உள்ளதா"
 
-#: ../gtk/gtkwindow.c:772
+#: ../gtk/gtkwindow.c:845
 msgid "Name of the themed icon for this window"
 msgstr "இந்த சாளரத்தின் தீம் செய்யப்பட்ட சின்னத்தின் பெயர்"
 
-#: ../gtk/gtkwindow.c:787
+#: ../gtk/gtkwindow.c:860
 msgid "Is Active"
 msgstr "செயல்படுகிறது"
 
-#: ../gtk/gtkwindow.c:788
+#: ../gtk/gtkwindow.c:861
 msgid "Whether the toplevel is the current active window"
 msgstr "நடப்பு செயலிலுள்ள சாளரம் மேல் நிலையா"
 
-#: ../gtk/gtkwindow.c:795
+#: ../gtk/gtkwindow.c:868
 msgid "Focus in Toplevel"
 msgstr "மேல்நிலையை ஃ போகஸ் செய்கிறது"
 
-#: ../gtk/gtkwindow.c:796
+#: ../gtk/gtkwindow.c:869
 msgid "Whether the input focus is within this GtkWindow"
 msgstr "இந்த GtkWindowக்குள் உள்ளீடு ஃபோகஸா"
 
-#: ../gtk/gtkwindow.c:803
+#: ../gtk/gtkwindow.c:876
 msgid "Type hint"
 msgstr "குறிப்பு வகை"
 
-#: ../gtk/gtkwindow.c:804
+#: ../gtk/gtkwindow.c:877
 msgid ""
 "Hint to help the desktop environment understand what kind of window this is "
 "and how to treat it."
@@ -8077,115 +8118,123 @@ msgstr ""
 "Hint to help the desktop environment understand what kind of window this is "
 "and how to treat it."
 
-#: ../gtk/gtkwindow.c:812
+#: ../gtk/gtkwindow.c:885
 msgid "Skip taskbar"
 msgstr "பணிப்பட்டையை தவிர்"
 
-#: ../gtk/gtkwindow.c:813
+#: ../gtk/gtkwindow.c:886
 msgid "TRUE if the window should not be in the task bar."
 msgstr "சாளரம் பணி பட்டையாக இருக்காது எனில் உண்மை."
 
-#: ../gtk/gtkwindow.c:820
+#: ../gtk/gtkwindow.c:893
 msgid "Skip pager"
 msgstr "பேஜரை தவிர்"
 
-#: ../gtk/gtkwindow.c:821
+#: ../gtk/gtkwindow.c:894
 msgid "TRUE if the window should not be in the pager."
 msgstr "பேஜரில் சாளரம் இல்லை எனில் உண்மை."
 
-#: ../gtk/gtkwindow.c:828
+#: ../gtk/gtkwindow.c:901
 msgid "Urgent"
 msgstr "அவசரம்"
 
-#: ../gtk/gtkwindow.c:829
+#: ../gtk/gtkwindow.c:902
 msgid "TRUE if the window should be brought to the user's attention."
 msgstr "சாளரம் பயனர் கவனத்தை கவர்ந்தால் உண்மை"
 
-#: ../gtk/gtkwindow.c:843
+#: ../gtk/gtkwindow.c:916
 msgid "Accept focus"
 msgstr "முன்னிலையை ஏற்கவும்"
 
-#: ../gtk/gtkwindow.c:844
+#: ../gtk/gtkwindow.c:917
 msgid "TRUE if the window should receive the input focus."
 msgstr "சாளரம் உள்ளீடு ஃபோகஸை பெற வேண்டுமானால் உண்மை"
 
-#: ../gtk/gtkwindow.c:858
+#: ../gtk/gtkwindow.c:931
 msgid "Focus on map"
 msgstr "குவிப்பு இயக்கு வரைபடம்"
 
-#: ../gtk/gtkwindow.c:859
+#: ../gtk/gtkwindow.c:932
 msgid "TRUE if the window should receive the input focus when mapped."
 msgstr "ஒப்பிடப்படும் போது சாளரம் உள்ளீடு ஃபோகஸை பெற வேண்டுமானால் உண்மை"
 
-#: ../gtk/gtkwindow.c:873
+#: ../gtk/gtkwindow.c:946
 msgid "Decorated"
 msgstr "அலங்கரிக்கப்பட்டது"
 
-#: ../gtk/gtkwindow.c:874
+#: ../gtk/gtkwindow.c:947
 msgid "Whether the window should be decorated by the window manager"
 msgstr "சாளரம் சாளர மேலாளரால் அலங்கரிக்கப்பட வேண்டுமா"
 
-#: ../gtk/gtkwindow.c:888
+#: ../gtk/gtkwindow.c:961
 msgid "Deletable"
 msgstr "நீக்கப்படக்கூடியது"
 
-#: ../gtk/gtkwindow.c:889
+#: ../gtk/gtkwindow.c:962
 msgid "Whether the window frame should have a close button"
 msgstr "சாளர சட்டம் ஒரு மூடு பொத்தானை கொண்டிருக்க வேண்டுமா"
 
-#: ../gtk/gtkwindow.c:908
+#: ../gtk/gtkwindow.c:981
 msgid "Resize grip"
 msgstr "கட்டத்தை மறுஅளவிடு"
 
-#: ../gtk/gtkwindow.c:909
+#: ../gtk/gtkwindow.c:982
 msgid "Specifies whether the window should have a resize grip"
 msgstr "ஒரு மறுஅளவு கட்டத்தின் சாளர சட்டத்தில் குறிப்பிடவா"
 
-#: ../gtk/gtkwindow.c:923
+#: ../gtk/gtkwindow.c:996
 msgid "Resize grip is visible"
 msgstr "காணக்கூடிய கட்டத்தை மறுஅளவிடவும்"
 
-#: ../gtk/gtkwindow.c:924
+#: ../gtk/gtkwindow.c:997
 msgid "Specifies whether the window's resize grip is visible."
 msgstr "சாளரத்தின் மறுஅளவு கட்டம் காணக்கூடியதா."
 
-#: ../gtk/gtkwindow.c:940
+#: ../gtk/gtkwindow.c:1013
 msgid "Gravity"
 msgstr "ஈர்ப்பு"
 
-#: ../gtk/gtkwindow.c:941
+#: ../gtk/gtkwindow.c:1014
 msgid "The window gravity of the window"
 msgstr "சாளரத்தின் சாளர ஈர்ப்பு"
 
-#: ../gtk/gtkwindow.c:958
+#: ../gtk/gtkwindow.c:1031
 msgid "Transient for Window"
 msgstr "சாளத்திற்கு பரிமாற்றம்"
 
-#: ../gtk/gtkwindow.c:959
+#: ../gtk/gtkwindow.c:1032
 msgid "The transient parent of the dialog"
 msgstr "உரையாடலின் பரிமாற்ற பெற்றோர்"
 
-#: ../gtk/gtkwindow.c:979
+#: ../gtk/gtkwindow.c:1052
 msgid "Attached to Widget"
 msgstr "விட்ஜெட்டில் இணைக்கப்பட்டது"
 
-#: ../gtk/gtkwindow.c:980
+#: ../gtk/gtkwindow.c:1053
 msgid "The widget where the window is attached"
 msgstr "சாளரம் இணைக்கப்பட்டுள்ள விட்ஜெட்"
 
-#: ../gtk/gtkwindow.c:988 ../gtk/gtkwindow.c:989
+#: ../gtk/gtkwindow.c:1061 ../gtk/gtkwindow.c:1062
+msgid "Decorated button layout"
+msgstr "அலங்கரிக்கப்பட்ட பொத்தான் தளவமைப்பு"
+
+#: ../gtk/gtkwindow.c:1068 ../gtk/gtkwindow.c:1069
+msgid "Decoration resize handle size"
+msgstr "அலங்கரிப்பு மறுஅளவு கைப்பிடியின் அளவு"
+
+#: ../gtk/gtkwindow.c:1075 ../gtk/gtkwindow.c:1076
 msgid "Width of resize grip"
 msgstr "மறுஅளவிடு கட்டத்தின் அகலம்"
 
-#: ../gtk/gtkwindow.c:994 ../gtk/gtkwindow.c:995
+#: ../gtk/gtkwindow.c:1081 ../gtk/gtkwindow.c:1082
 msgid "Height of resize grip"
 msgstr "மறுஅளவு கட்டத்தின் உயரம்"
 
-#: ../gtk/gtkwindow.c:1017
+#: ../gtk/gtkwindow.c:1104
 msgid "GtkApplication"
 msgstr "GtkApplication"
 
-#: ../gtk/gtkwindow.c:1018
+#: ../gtk/gtkwindow.c:1105
 msgid "The GtkApplication for the window"
 msgstr "சாளரத்திற்கான  GtkApplication"
 

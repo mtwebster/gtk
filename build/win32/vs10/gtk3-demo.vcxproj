@@ -20,14 +20,14 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FC5AADB5-95CD-4BF0-BA8B-0C16FE7073FC}</ProjectGuid>
-    <RootNamespace>gtkdemo</RootNamespace>
+    <RootNamespace>gtk3demo</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -38,7 +38,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -51,19 +51,19 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-build-defines.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-build-defines.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-build-defines.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-build-defines.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -79,7 +79,7 @@
       <PreprocessorDefinitions>_DEBUG;$(GtkPrefixDefine);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -136,7 +136,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <FunctionLevelLinking>false</FunctionLevelLinking>
-      <OptimizeReferences>true</OptimizeReferences>
+      <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -160,7 +160,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <FunctionLevelLinking>false</FunctionLevelLinking>
-      <OptimizeReferences>true</OptimizeReferences>
+      <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
@@ -170,7 +170,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\demos\gtk-demo\application.c" />
-    <ClCompile Include="..\..\..\demos\gtk-demo\appwindow.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\assistant.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\builder.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\button_box.c" />
@@ -196,6 +195,7 @@
     <ClCompile Include="..\..\..\demos\gtk-demo\images.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\infobar.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\links.c" />
+    <ClCompile Include="..\..\..\demos\gtk-demo\listbox.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\list_store.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\main.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\menus.c" />
@@ -206,18 +206,19 @@
     <ClCompile Include="..\..\..\demos\gtk-demo\pickers.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\pixbufs.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\printing.c" />
+    <ClCompile Include="..\..\..\demos\gtk-demo\revealer.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\rotated_text.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\search_entry.c" />
+    <ClCompile Include="..\..\..\demos\gtk-demo\search_entry2.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\sizegroup.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\spinner.c" />
-    <ClCompile Include="..\..\..\demos\gtk-demo\stock_browser.c" />
+    <ClCompile Include="..\..\..\demos\gtk-demo\stack.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\textscroll.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\textview.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\theming_style_classes.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\toolpalette.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\transparent.c" />
     <ClCompile Include="..\..\..\demos\gtk-demo\tree_store.c" />
-    <ClCompile Include="..\..\..\demos\gtk-demo\ui_manager.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="gdk.vcxproj">

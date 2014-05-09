@@ -38,10 +38,10 @@
 
 #include "gtkswitch.h"
 
-#include "gtkactivatable.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkintl.h"
 #include "gtkprivate.h"
-#include "gtktoggleaction.h"
+#include "deprecated/gtktoggleaction.h"
 #include "gtkwidget.h"
 #include "gtkmarshalers.h"
 #include "gtkapplicationprivate.h"
@@ -52,7 +52,6 @@
 #include <math.h>
 
 #define DEFAULT_SLIDER_WIDTH    (36)
-#define DEFAULT_SLIDER_HEIGHT   (22)
 
 struct _GtkSwitchPrivate
 {
@@ -96,11 +95,14 @@ static GParamSpec *switch_props[LAST_PROP] = { NULL, };
 static void gtk_switch_actionable_iface_init (GtkActionableInterface *iface);
 static void gtk_switch_activatable_interface_init (GtkActivatableIface *iface);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkSwitch, gtk_switch, GTK_TYPE_WIDGET,
+                         G_ADD_PRIVATE (GtkSwitch)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIONABLE,
                                                 gtk_switch_actionable_iface_init)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
                                                 gtk_switch_activatable_interface_init));
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static gboolean
 gtk_switch_button_press (GtkWidget      *widget,
@@ -336,7 +338,7 @@ gtk_switch_get_preferred_width (GtkWidget *widget,
                         "focus-padding", &focus_pad,
                         NULL);
 
-  width += 2 * (focus_width + focus_pad);
+  slider_width = MAX (slider_width, 3 * (focus_width + focus_pad));
 
   /* Translators: if the "on" state label requires more than three
    * glyphs then use MEDIUM VERTICAL BAR (U+2759) as the text for
@@ -372,7 +374,7 @@ gtk_switch_get_preferred_height (GtkWidget *widget,
   GtkStyleContext *context;
   GtkStateFlags state;
   GtkBorder padding;
-  gint height, focus_width, focus_pad;
+  gint height, focus_width, focus_pad, slider_width, min_height;
   PangoLayout *layout;
   PangoRectangle logical_rect;
   gchar *str;
@@ -390,11 +392,12 @@ gtk_switch_get_preferred_height (GtkWidget *widget,
   gtk_style_context_restore (context);
 
   gtk_widget_style_get (widget,
+                        "slider-width", &slider_width,
                         "focus-line-width", &focus_width,
                         "focus-padding", &focus_pad,
                         NULL);
 
-  height += 2 * (focus_width + focus_pad);
+  min_height = MAX (slider_width * 0.6, 3 * (focus_width + focus_pad));
 
   str = g_strdup_printf ("%s%s",
                          C_("switch", "ON"),
@@ -403,7 +406,7 @@ gtk_switch_get_preferred_height (GtkWidget *widget,
   layout = gtk_widget_create_pango_layout (widget, str);
   pango_layout_get_extents (layout, NULL, &logical_rect);
   pango_extents_to_pixels (&logical_rect, NULL);
-  height += MAX (DEFAULT_SLIDER_HEIGHT, logical_rect.height);
+  height += MAX (min_height, logical_rect.height);
 
   g_object_unref (layout);
   g_free (str);
@@ -536,13 +539,7 @@ gtk_switch_draw (GtkWidget *widget,
   gint label_x, label_y;
   GtkBorder padding;
   GtkStateFlags state;
-  gint focus_width, focus_pad;
   gint x, y, width, height;
-
-  gtk_widget_style_get (widget,
-                        "focus-line-width", &focus_width,
-                        "focus-padding", &focus_pad,
-                        NULL);
 
   context = gtk_widget_get_style_context (widget);
   state = gtk_widget_get_state_flags (widget);
@@ -559,14 +556,6 @@ gtk_switch_draw (GtkWidget *widget,
   y = 0;
   width = gtk_widget_get_allocated_width (widget);
   height = gtk_widget_get_allocated_height (widget);
-
-  if (gtk_widget_has_visible_focus (widget))
-    gtk_render_focus (context, cr, x, y, width, height);
-
-  x += focus_width + focus_pad;
-  y += focus_width + focus_pad;
-  width -= 2 * (focus_width + focus_pad);
-  height -= 2 * (focus_width + focus_pad);
 
   gtk_style_context_save (context);
   gtk_style_context_add_class (context, GTK_STYLE_CLASS_TROUGH);
@@ -626,6 +615,22 @@ gtk_switch_draw (GtkWidget *widget,
 
   gtk_switch_paint_handle (widget, cr, &handle);
 
+  if (gtk_widget_has_visible_focus (widget))
+    {
+      gint focus_width, focus_pad, pad;
+
+      gtk_widget_style_get (widget,
+                            "focus-line-width", &focus_width,
+                            "focus-padding", &focus_pad,
+                            NULL);
+
+      pad = focus_pad + focus_width;
+
+      gtk_render_focus (context, cr,
+                        handle.x + pad, handle.y + pad,
+                        handle.width - pad*2, handle.height - pad*2);
+    }
+
   return FALSE;
 }
 
@@ -638,7 +643,9 @@ gtk_switch_set_related_action (GtkSwitch *sw,
   if (priv->action == action)
     return;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (sw), action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   priv->action = action;
 }
@@ -653,7 +660,9 @@ gtk_switch_set_use_action_appearance (GtkSwitch *sw,
     {
       priv->use_action_appearance = use_appearance;
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_activatable_sync_action_properties (GTK_ACTIVATABLE (sw), priv->action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 }
 
@@ -785,7 +794,9 @@ gtk_switch_dispose (GObject *object)
 
   if (priv->action)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (object), NULL);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       priv->action = NULL;
     }
 
@@ -799,9 +810,10 @@ gtk_switch_class_init (GtkSwitchClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   gpointer activatable_iface;
 
-  g_type_class_add_private (klass, sizeof (GtkSwitchPrivate));
-
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   activatable_iface = g_type_default_interface_peek (GTK_TYPE_ACTIVATABLE);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
   switch_props[PROP_RELATED_ACTION] =
     g_param_spec_override ("related-action",
                            g_object_interface_find_property (activatable_iface,
@@ -882,12 +894,13 @@ gtk_switch_class_init (GtkSwitchClass *klass)
   g_object_class_override_property (gobject_class, PROP_ACTION_TARGET, "action-target");
 
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_SWITCH_ACCESSIBLE);
+  gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_TOGGLE_BUTTON);
 }
 
 static void
 gtk_switch_init (GtkSwitch *self)
 {
-  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, GTK_TYPE_SWITCH, GtkSwitchPrivate);
+  self->priv = gtk_switch_get_instance_private (self);
   self->priv->use_action_appearance = TRUE;
   gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
   gtk_widget_set_can_focus (GTK_WIDGET (self), TRUE);
@@ -940,8 +953,10 @@ gtk_switch_set_active (GtkSwitch *sw,
       if (priv->action_helper)
         gtk_action_helper_activate (priv->action_helper);
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       if (priv->action)
         gtk_action_activate (priv->action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
 
       accessible = gtk_widget_get_accessible (GTK_WIDGET (sw));
       atk_object_notify_state_change (accessible, ATK_STATE_CHECKED, priv->is_active);
@@ -978,6 +993,8 @@ gtk_switch_update (GtkActivatable *activatable,
                    GtkAction      *action,
                    const gchar    *property_name)
 {
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   if (strcmp (property_name, "visible") == 0)
     {
       if (gtk_action_is_visible (action))
@@ -995,6 +1012,8 @@ gtk_switch_update (GtkActivatable *activatable,
       gtk_switch_set_active (GTK_SWITCH (activatable), gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
       gtk_action_unblock_activate (action);
     }
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 static void
@@ -1003,6 +1022,8 @@ gtk_switch_sync_action_properties (GtkActivatable *activatable,
 {
   if (!action)
     return;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 
   if (gtk_action_is_visible (action))
     gtk_widget_show (GTK_WIDGET (activatable));
@@ -1014,6 +1035,8 @@ gtk_switch_sync_action_properties (GtkActivatable *activatable,
   gtk_action_block_activate (action);
   gtk_switch_set_active (GTK_SWITCH (activatable), gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
   gtk_action_unblock_activate (action);
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 static void

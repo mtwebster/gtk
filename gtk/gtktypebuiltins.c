@@ -1,6 +1,7 @@
 
 /* Generated data (by glib-mkenums) */
 
+#include "config.h"
 #include "gtk.h"
 #include "gtkprivate.h"
 
@@ -98,6 +99,8 @@ gtk_builder_error_get_type (void)
             { GTK_BUILDER_ERROR_INVALID_VALUE, "GTK_BUILDER_ERROR_INVALID_VALUE", "invalid-value" },
             { GTK_BUILDER_ERROR_VERSION_MISMATCH, "GTK_BUILDER_ERROR_VERSION_MISMATCH", "version-mismatch" },
             { GTK_BUILDER_ERROR_DUPLICATE_ID, "GTK_BUILDER_ERROR_DUPLICATE_ID", "duplicate-id" },
+            { GTK_BUILDER_ERROR_OBJECT_TYPE_REFUSED, "GTK_BUILDER_ERROR_OBJECT_TYPE_REFUSED", "object-type-refused" },
+            { GTK_BUILDER_ERROR_TEMPLATE_MISMATCH, "GTK_BUILDER_ERROR_TEMPLATE_MISMATCH", "template-mismatch" },
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkBuilderError"), values);
@@ -241,6 +244,9 @@ gtk_debug_flag_get_type (void)
             { GTK_DEBUG_BUILDER, "GTK_DEBUG_BUILDER", "builder" },
             { GTK_DEBUG_SIZE_REQUEST, "GTK_DEBUG_SIZE_REQUEST", "size-request" },
             { GTK_DEBUG_NO_CSS_CACHE, "GTK_DEBUG_NO_CSS_CACHE", "no-css-cache" },
+            { GTK_DEBUG_BASELINES, "GTK_DEBUG_BASELINES", "baselines" },
+            { GTK_DEBUG_PIXEL_CACHE, "GTK_DEBUG_PIXEL_CACHE", "pixel-cache" },
+            { GTK_DEBUG_NO_PIXEL_CACHE, "GTK_DEBUG_NO_PIXEL_CACHE", "no-pixel-cache" },
             { 0, NULL, NULL }
         };
         etype = g_flags_register_static (g_intern_static_string ("GtkDebugFlag"), values);
@@ -350,6 +356,7 @@ gtk_align_get_type (void)
             { GTK_ALIGN_START, "GTK_ALIGN_START", "start" },
             { GTK_ALIGN_END, "GTK_ALIGN_END", "end" },
             { GTK_ALIGN_CENTER, "GTK_ALIGN_CENTER", "center" },
+            { GTK_ALIGN_BASELINE, "GTK_ALIGN_BASELINE", "baseline" },
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkAlign"), values);
@@ -403,6 +410,22 @@ gtk_attach_options_get_type (void)
             { 0, NULL, NULL }
         };
         etype = g_flags_register_static (g_intern_static_string ("GtkAttachOptions"), values);
+    }
+    return etype;
+}
+
+GType
+gtk_baseline_position_get_type (void)
+{
+    static GType etype = 0;
+    if (G_UNLIKELY(etype == 0)) {
+        static const GEnumValue values[] = {
+            { GTK_BASELINE_POSITION_TOP, "GTK_BASELINE_POSITION_TOP", "top" },
+            { GTK_BASELINE_POSITION_CENTER, "GTK_BASELINE_POSITION_CENTER", "center" },
+            { GTK_BASELINE_POSITION_BOTTOM, "GTK_BASELINE_POSITION_BOTTOM", "bottom" },
+            { 0, NULL, NULL }
+        };
+        etype = g_enum_register_static (g_intern_static_string ("GtkBaselinePosition"), values);
     }
     return etype;
 }
@@ -1479,6 +1502,7 @@ gtk_image_type_get_type (void)
             { GTK_IMAGE_ANIMATION, "GTK_IMAGE_ANIMATION", "animation" },
             { GTK_IMAGE_ICON_NAME, "GTK_IMAGE_ICON_NAME", "icon-name" },
             { GTK_IMAGE_GICON, "GTK_IMAGE_GICON", "gicon" },
+            { GTK_IMAGE_SURFACE, "GTK_IMAGE_SURFACE", "surface" },
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkImageType"), values);
@@ -1518,6 +1542,23 @@ gtk_notebook_tab_get_type (void)
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkNotebookTab"), values);
+    }
+    return etype;
+}
+
+/* enumerations from "gtkplacessidebar.h" */
+GType
+gtk_places_open_flags_get_type (void)
+{
+    static GType etype = 0;
+    if (G_UNLIKELY(etype == 0)) {
+        static const GFlagsValue values[] = {
+            { GTK_PLACES_OPEN_NORMAL, "GTK_PLACES_OPEN_NORMAL", "normal" },
+            { GTK_PLACES_OPEN_NEW_TAB, "GTK_PLACES_OPEN_NEW_TAB", "new-tab" },
+            { GTK_PLACES_OPEN_NEW_WINDOW, "GTK_PLACES_OPEN_NEW_WINDOW", "new-window" },
+            { 0, NULL, NULL }
+        };
+        etype = g_flags_register_static (g_intern_static_string ("GtkPlacesOpenFlags"), values);
     }
     return etype;
 }
@@ -1670,6 +1711,26 @@ gtk_recent_manager_error_get_type (void)
     return etype;
 }
 
+/* enumerations from "gtkrevealer.h" */
+GType
+gtk_revealer_transition_type_get_type (void)
+{
+    static GType etype = 0;
+    if (G_UNLIKELY(etype == 0)) {
+        static const GEnumValue values[] = {
+            { GTK_REVEALER_TRANSITION_TYPE_NONE, "GTK_REVEALER_TRANSITION_TYPE_NONE", "none" },
+            { GTK_REVEALER_TRANSITION_TYPE_CROSSFADE, "GTK_REVEALER_TRANSITION_TYPE_CROSSFADE", "crossfade" },
+            { GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT, "GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT", "slide-right" },
+            { GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT, "GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT", "slide-left" },
+            { GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP, "GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP", "slide-up" },
+            { GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN, "GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN", "slide-down" },
+            { 0, NULL, NULL }
+        };
+        etype = g_enum_register_static (g_intern_static_string ("GtkRevealerTransitionType"), values);
+    }
+    return etype;
+}
+
 /* enumerations from "gtkspinbutton.h" */
 GType
 gtk_spin_button_update_policy_get_type (void)
@@ -1702,6 +1763,28 @@ gtk_spin_type_get_type (void)
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkSpinType"), values);
+    }
+    return etype;
+}
+
+/* enumerations from "gtkstack.h" */
+GType
+gtk_stack_transition_type_get_type (void)
+{
+    static GType etype = 0;
+    if (G_UNLIKELY(etype == 0)) {
+        static const GEnumValue values[] = {
+            { GTK_STACK_TRANSITION_TYPE_NONE, "GTK_STACK_TRANSITION_TYPE_NONE", "none" },
+            { GTK_STACK_TRANSITION_TYPE_CROSSFADE, "GTK_STACK_TRANSITION_TYPE_CROSSFADE", "crossfade" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_RIGHT, "GTK_STACK_TRANSITION_TYPE_SLIDE_RIGHT", "slide-right" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT, "GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT", "slide-left" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_UP, "GTK_STACK_TRANSITION_TYPE_SLIDE_UP", "slide-up" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_DOWN, "GTK_STACK_TRANSITION_TYPE_SLIDE_DOWN", "slide-down" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT, "GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT", "slide-left-right" },
+            { GTK_STACK_TRANSITION_TYPE_SLIDE_UP_DOWN, "GTK_STACK_TRANSITION_TYPE_SLIDE_UP_DOWN", "slide-up-down" },
+            { 0, NULL, NULL }
+        };
+        etype = g_enum_register_static (g_intern_static_string ("GtkStackTransitionType"), values);
     }
     return etype;
 }
@@ -1844,31 +1927,6 @@ gtk_tree_view_column_sizing_get_type (void)
     return etype;
 }
 
-/* enumerations from "gtkuimanager.h" */
-GType
-gtk_ui_manager_item_type_get_type (void)
-{
-    static GType etype = 0;
-    if (G_UNLIKELY(etype == 0)) {
-        static const GFlagsValue values[] = {
-            { GTK_UI_MANAGER_AUTO, "GTK_UI_MANAGER_AUTO", "auto" },
-            { GTK_UI_MANAGER_MENUBAR, "GTK_UI_MANAGER_MENUBAR", "menubar" },
-            { GTK_UI_MANAGER_MENU, "GTK_UI_MANAGER_MENU", "menu" },
-            { GTK_UI_MANAGER_TOOLBAR, "GTK_UI_MANAGER_TOOLBAR", "toolbar" },
-            { GTK_UI_MANAGER_PLACEHOLDER, "GTK_UI_MANAGER_PLACEHOLDER", "placeholder" },
-            { GTK_UI_MANAGER_POPUP, "GTK_UI_MANAGER_POPUP", "popup" },
-            { GTK_UI_MANAGER_MENUITEM, "GTK_UI_MANAGER_MENUITEM", "menuitem" },
-            { GTK_UI_MANAGER_TOOLITEM, "GTK_UI_MANAGER_TOOLITEM", "toolitem" },
-            { GTK_UI_MANAGER_SEPARATOR, "GTK_UI_MANAGER_SEPARATOR", "separator" },
-            { GTK_UI_MANAGER_ACCELERATOR, "GTK_UI_MANAGER_ACCELERATOR", "accelerator" },
-            { GTK_UI_MANAGER_POPUP_WITH_ACCELS, "GTK_UI_MANAGER_POPUP_WITH_ACCELS", "popup-with-accels" },
-            { 0, NULL, NULL }
-        };
-        etype = g_flags_register_static (g_intern_static_string ("GtkUIManagerItemType"), values);
-    }
-    return etype;
-}
-
 /* enumerations from "gtkwidget.h" */
 GType
 gtk_widget_help_type_get_type (void)
@@ -1952,6 +2010,31 @@ gtk_rc_token_type_get_type (void)
             { 0, NULL, NULL }
         };
         etype = g_enum_register_static (g_intern_static_string ("GtkRcTokenType"), values);
+    }
+    return etype;
+}
+
+/* enumerations from "deprecated/gtkuimanager.h" */
+GType
+gtk_ui_manager_item_type_get_type (void)
+{
+    static GType etype = 0;
+    if (G_UNLIKELY(etype == 0)) {
+        static const GFlagsValue values[] = {
+            { GTK_UI_MANAGER_AUTO, "GTK_UI_MANAGER_AUTO", "auto" },
+            { GTK_UI_MANAGER_MENUBAR, "GTK_UI_MANAGER_MENUBAR", "menubar" },
+            { GTK_UI_MANAGER_MENU, "GTK_UI_MANAGER_MENU", "menu" },
+            { GTK_UI_MANAGER_TOOLBAR, "GTK_UI_MANAGER_TOOLBAR", "toolbar" },
+            { GTK_UI_MANAGER_PLACEHOLDER, "GTK_UI_MANAGER_PLACEHOLDER", "placeholder" },
+            { GTK_UI_MANAGER_POPUP, "GTK_UI_MANAGER_POPUP", "popup" },
+            { GTK_UI_MANAGER_MENUITEM, "GTK_UI_MANAGER_MENUITEM", "menuitem" },
+            { GTK_UI_MANAGER_TOOLITEM, "GTK_UI_MANAGER_TOOLITEM", "toolitem" },
+            { GTK_UI_MANAGER_SEPARATOR, "GTK_UI_MANAGER_SEPARATOR", "separator" },
+            { GTK_UI_MANAGER_ACCELERATOR, "GTK_UI_MANAGER_ACCELERATOR", "accelerator" },
+            { GTK_UI_MANAGER_POPUP_WITH_ACCELS, "GTK_UI_MANAGER_POPUP_WITH_ACCELS", "popup-with-accels" },
+            { 0, NULL, NULL }
+        };
+        etype = g_flags_register_static (g_intern_static_string ("GtkUIManagerItemType"), values);
     }
     return etype;
 }

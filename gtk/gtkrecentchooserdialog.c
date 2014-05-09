@@ -51,8 +51,8 @@
  *
  * dialog = gtk_recent_chooser_dialog_new ("Recent Documents",
  *                                         parent_window,
- *                                         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
- *                                         GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+ *                                         _("_Cancel"), GTK_RESPONSE_CANCEL,
+ *                                         _("_Open"), GTK_RESPONSE_ACCEPT,
  *                                         NULL);
  *
  * if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
@@ -101,6 +101,7 @@ static void gtk_recent_chooser_dialog_get_property (GObject      *object,
 G_DEFINE_TYPE_WITH_CODE (GtkRecentChooserDialog,
 			 gtk_recent_chooser_dialog,
 			 GTK_TYPE_DIALOG,
+                         G_ADD_PRIVATE (GtkRecentChooserDialog)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_RECENT_CHOOSER,
 		       				_gtk_recent_chooser_delegate_iface_init))
 
@@ -115,20 +116,16 @@ gtk_recent_chooser_dialog_class_init (GtkRecentChooserDialogClass *klass)
   gobject_class->finalize = gtk_recent_chooser_dialog_finalize;
   
   _gtk_recent_chooser_install_properties (gobject_class);
-  
-  g_type_class_add_private (klass, sizeof (GtkRecentChooserDialogPrivate));
 }
 
 static void
 gtk_recent_chooser_dialog_init (GtkRecentChooserDialog *dialog)
 {
+  GtkRecentChooserDialogPrivate *priv;
   GtkWidget *content_area, *action_area;
-
-  GtkRecentChooserDialogPrivate *priv = G_TYPE_INSTANCE_GET_PRIVATE (dialog,
-  								     GTK_TYPE_RECENT_CHOOSER_DIALOG,
-  								     GtkRecentChooserDialogPrivate);
   GtkDialog *rc_dialog = GTK_DIALOG (dialog);
-  
+
+  priv = gtk_recent_chooser_dialog_get_instance_private (dialog);
   dialog->priv = priv;
 
   content_area = gtk_dialog_get_content_area (rc_dialog);
@@ -199,8 +196,6 @@ gtk_recent_chooser_dialog_constructor (GType                  type,
 										 construct_params);
   priv = GTK_RECENT_CHOOSER_DIALOG_GET_PRIVATE (object);
   
-  gtk_widget_push_composite_child ();
-  
   if (priv->manager)
     priv->chooser = g_object_new (GTK_TYPE_RECENT_CHOOSER_WIDGET,
   				  "recent-manager", priv->manager,
@@ -221,8 +216,6 @@ gtk_recent_chooser_dialog_constructor (GType                  type,
   
   _gtk_recent_chooser_set_delegate (GTK_RECENT_CHOOSER (object),
   				    GTK_RECENT_CHOOSER (priv->chooser));
-  
-  gtk_widget_pop_composite_child ();
   
   return object;
 }

@@ -41,11 +41,12 @@
 #include "gtkenums.h"
 #include "gtkbindings.h"
 #include "gtkdialog.h"
+#include "gtkrevealer.h"
 #include "gtkintl.h"
 #include "gtkprivate.h"
-#include "gtkstock.h"
 #include "gtkorientable.h"
 #include "gtktypebuiltins.h"
+#include "deprecated/gtkstock.h"
 
 /**
  * SECTION:gtkinfobar
@@ -56,8 +57,8 @@
  * #GtkInfoBar is a widget that can be used to show messages to
  * the user without showing a dialog. It is often temporarily shown
  * at the top or bottom of a document. In contrast to #GtkDialog, which
- * has a horizontal action area at the bottom, #GtkInfoBar has a
- * vertical action area at the side.
+ * has a action area at the bottom, #GtkInfoBar has an action area
+ * at the side.
  *
  * The API of #GtkInfoBar is very similar to #GtkDialog, allowing you
  * to add buttons to the action area with gtk_info_bar_add_button() or
@@ -68,8 +69,8 @@
  *
  * Similar to #GtkMessageDialog, the contents of a #GtkInfoBar can by
  * classified as error message, warning, informational message, etc,
- * by using gtk_info_bar_set_message_type(). GTK+ uses the message type
- * to determine the background color of the message area.
+ * by using gtk_info_bar_set_message_type(). GTK+ may use the message type
+ * to determine how the message is displayed.
  *
  * <example>
  * <title>Simple GtkInfoBar usage.</title>
@@ -82,7 +83,7 @@
  * content_area = gtk_info_bar_get_content_area (GTK_INFO_BAR (info_bar));
  * gtk_container_add (GTK_CONTAINER (content_area), message_label);
  * gtk_info_bar_add_button (GTK_INFO_BAR (info_bar),
- *                          GTK_STOCK_OK, GTK_RESPONSE_OK);
+ *                          _("_OK"), GTK_RESPONSE_OK);
  * g_signal_connect (info_bar, "response",
  *                   G_CALLBACK (gtk_widget_hide), NULL);
  * gtk_grid_attach (GTK_GRID (grid),
@@ -118,14 +119,18 @@
 enum
 {
   PROP_0,
-  PROP_MESSAGE_TYPE
+  PROP_MESSAGE_TYPE,
+  PROP_SHOW_CLOSE_BUTTON
 };
 
 struct _GtkInfoBarPrivate
 {
   GtkWidget *content_area;
   GtkWidget *action_area;
+  GtkWidget *close_button;
+  GtkWidget *revealer;
 
+  gboolean show_close_button;
   GtkMessageType message_type;
 };
 
@@ -167,9 +172,6 @@ static void     gtk_info_bar_get_preferred_height         (GtkWidget *widget,
 static gboolean gtk_info_bar_draw                         (GtkWidget      *widget,
                                                            cairo_t        *cr);
 static void     gtk_info_bar_buildable_interface_init     (GtkBuildableIface *iface);
-static GObject *gtk_info_bar_buildable_get_internal_child (GtkBuildable  *buildable,
-                                                           GtkBuilder    *builder,
-                                                           const gchar   *childname);
 static gboolean  gtk_info_bar_buildable_custom_tag_start   (GtkBuildable  *buildable,
                                                             GtkBuilder    *builder,
                                                             GObject       *child,
@@ -184,6 +186,7 @@ static void      gtk_info_bar_buildable_custom_finished    (GtkBuildable  *build
 
 
 G_DEFINE_TYPE_WITH_CODE (GtkInfoBar, gtk_info_bar, GTK_TYPE_BOX,
+                         G_ADD_PRIVATE (GtkInfoBar)
                          G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
                                                 gtk_info_bar_buildable_interface_init))
 
@@ -199,6 +202,9 @@ gtk_info_bar_set_property (GObject      *object,
     {
     case PROP_MESSAGE_TYPE:
       gtk_info_bar_set_message_type (info_bar, g_value_get_enum (value));
+      break;
+    case PROP_SHOW_CLOSE_BUTTON:
+      gtk_info_bar_set_show_close_button (info_bar, g_value_get_boolean (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -218,6 +224,9 @@ gtk_info_bar_get_property (GObject    *object,
     {
     case PROP_MESSAGE_TYPE:
       g_value_set_enum (value, gtk_info_bar_get_message_type (info_bar));
+      break;
+    case PROP_SHOW_CLOSE_BUTTON:
+      g_value_set_boolean (value, gtk_info_bar_get_show_close_button (info_bar));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -285,7 +294,8 @@ find_button (GtkInfoBar *info_bar,
 static void
 gtk_info_bar_close (GtkInfoBar *info_bar)
 {
-  if (!find_button (info_bar, GTK_RESPONSE_CANCEL))
+  if (!gtk_widget_get_visible (info_bar->priv->close_button)
+      && !find_button (info_bar, GTK_RESPONSE_CANCEL))
     return;
 
   gtk_info_bar_response (GTK_INFO_BAR (info_bar),
@@ -370,6 +380,36 @@ gtk_info_bar_draw (GtkWidget *widget,
 }
 
 static void
+gtk_info_bar_show (GtkWidget *widget)
+{
+  GtkInfoBarPrivate *priv = GTK_INFO_BAR (widget)->priv;
+
+  GTK_WIDGET_CLASS (gtk_info_bar_parent_class)->show (widget);
+
+  gtk_revealer_set_reveal_child (GTK_REVEALER (priv->revealer), TRUE);
+}
+
+static void
+child_revealed (GObject *object, GParamSpec *pspec, gpointer data)
+{
+  GtkWidget *widget = data;
+
+  GTK_WIDGET_CLASS (gtk_info_bar_parent_class)->hide (widget);
+  g_signal_handlers_disconnect_by_func (object, child_revealed, widget);
+  g_object_notify (G_OBJECT (widget), "visible");
+}
+
+static void
+gtk_info_bar_hide (GtkWidget *widget)
+{
+  GtkInfoBarPrivate *priv = GTK_INFO_BAR (widget)->priv;
+
+  g_signal_connect_object (priv->revealer, "notify::child-revealed",
+                           G_CALLBACK (child_revealed), widget, 0);
+  gtk_revealer_set_reveal_child (GTK_REVEALER (priv->revealer), FALSE);
+}
+
+static void
 gtk_info_bar_class_init (GtkInfoBarClass *klass)
 {
   GtkWidgetClass *widget_class;
@@ -386,6 +426,8 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
   widget_class->get_preferred_width = gtk_info_bar_get_preferred_width;
   widget_class->get_preferred_height = gtk_info_bar_get_preferred_height;
   widget_class->draw = gtk_info_bar_draw;
+  widget_class->show = gtk_info_bar_show;
+  widget_class->hide = gtk_info_bar_hide;
 
   klass->close = gtk_info_bar_close;
 
@@ -394,17 +436,7 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
    *
    * The type of the message.
    *
-   * The type is used to determine the colors to use in the info bar.
-   * The following symbolic color names can by used to customize
-   * these colors:
-   * "info_fg_color", "info_bg_color",
-   * "warning_fg_color", "warning_bg_color",
-   * "question_fg_color", "question_bg_color",
-   * "error_fg_color", "error_bg_color".
-   * "other_fg_color", "other_bg_color".
-   *
-   * If the type is #GTK_MESSAGE_OTHER, no info bar is painted but the
-   * colors are still set.
+   * The type may be used to determine the appearance of the info bar.
    *
    * Since: 2.18
    */
@@ -416,6 +448,21 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
                                                       GTK_TYPE_MESSAGE_TYPE,
                                                       GTK_MESSAGE_INFO,
                                                       GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT));
+
+  /**
+   * GtkInfoBar:show-close-button:
+   *
+   * Whether to include a standard close button.
+   *
+   * Since: 3.10
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_SHOW_CLOSE_BUTTON,
+                                   g_param_spec_boolean ("show-close-button",
+                                                         P_("Show Close Button"),
+                                                         P_("Whether to include a standard close button"),
+                                                         FALSE,
+                                                         GTK_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   /**
    * GtkInfoBar::response:
    * @info_bar: the object on which the signal is emitted
@@ -530,49 +577,42 @@ gtk_info_bar_class_init (GtkInfoBarClass *klass)
 
   gtk_binding_entry_add_signal (binding_set, GDK_KEY_Escape, 0, "close", 0);
 
-  g_type_class_add_private (object_class, sizeof (GtkInfoBarPrivate));
+  /* Bind class to template
+   */
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/gtk/libgtk/gtkinfobar.ui");
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkInfoBar, content_area);
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkInfoBar, action_area);
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkInfoBar, close_button);
+  gtk_widget_class_bind_template_child_internal_private (widget_class, GtkInfoBar, revealer);
+}
+
+static void
+close_button_clicked_cb (GtkWidget  *button,
+                         GtkInfoBar *info_bar)
+{
+  gtk_info_bar_response (GTK_INFO_BAR (info_bar),
+                         GTK_RESPONSE_CLOSE);
 }
 
 static void
 gtk_info_bar_init (GtkInfoBar *info_bar)
 {
   GtkWidget *widget = GTK_WIDGET (info_bar);
-  GtkWidget *content_area;
-  GtkWidget *action_area;
 
-  gtk_widget_push_composite_child ();
+  info_bar->priv = gtk_info_bar_get_instance_private (info_bar);
 
-  info_bar->priv = G_TYPE_INSTANCE_GET_PRIVATE (info_bar,
-                                                GTK_TYPE_INFO_BAR,
-                                                GtkInfoBarPrivate);
-
-  content_area = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_show (content_area);
-  gtk_box_pack_start (GTK_BOX (info_bar), content_area, TRUE, TRUE, 0);
-
-  action_area = gtk_button_box_new (GTK_ORIENTATION_VERTICAL);
-  gtk_widget_show (action_area);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (action_area), GTK_BUTTONBOX_END);
-  gtk_box_pack_start (GTK_BOX (info_bar), action_area, FALSE, TRUE, 0);
-
-  gtk_widget_set_app_paintable (widget, TRUE);
   gtk_widget_set_redraw_on_allocate (widget, TRUE);
-
-  info_bar->priv->content_area = content_area;
-  info_bar->priv->action_area = action_area;
-
-  /* set default spacings */
-  gtk_box_set_spacing (GTK_BOX (info_bar->priv->action_area), ACTION_AREA_DEFAULT_SPACING);
-  gtk_container_set_border_width (GTK_CONTAINER (info_bar->priv->action_area), ACTION_AREA_DEFAULT_BORDER);
-  gtk_box_set_spacing (GTK_BOX (info_bar->priv->content_area), CONTENT_AREA_DEFAULT_SPACING);
-  gtk_container_set_border_width (GTK_CONTAINER (info_bar->priv->content_area), CONTENT_AREA_DEFAULT_BORDER);
 
   /* message-type is a CONSTRUCT property, so we init to a value
    * different from its default to trigger its property setter
    * during construction */
   info_bar->priv->message_type = GTK_MESSAGE_OTHER;
 
-  gtk_widget_pop_composite_child ();
+  gtk_widget_init_template (GTK_WIDGET (info_bar));
+
+  gtk_widget_set_no_show_all (info_bar->priv->close_button, TRUE);
+  g_signal_connect (info_bar->priv->close_button, "clicked",
+                    G_CALLBACK (close_button_clicked_cb), info_bar);
 }
 
 static GtkBuildableIface *parent_buildable_iface;
@@ -581,24 +621,8 @@ static void
 gtk_info_bar_buildable_interface_init (GtkBuildableIface *iface)
 {
   parent_buildable_iface = g_type_interface_peek_parent (iface);
-  iface->get_internal_child = gtk_info_bar_buildable_get_internal_child;
   iface->custom_tag_start = gtk_info_bar_buildable_custom_tag_start;
   iface->custom_finished = gtk_info_bar_buildable_custom_finished;
-}
-
-static GObject *
-gtk_info_bar_buildable_get_internal_child (GtkBuildable *buildable,
-                                           GtkBuilder   *builder,
-                                           const gchar  *childname)
-{
-  if (strcmp (childname, "content_area") == 0)
-    return G_OBJECT (GTK_INFO_BAR (buildable)->priv->content_area);
-  else if (strcmp (childname, "action_area") == 0)
-    return G_OBJECT (GTK_INFO_BAR (buildable)->priv->action_area);
-
-  return parent_buildable_iface->get_internal_child (buildable,
-                                                     builder,
-                                                     childname);
 }
 
 static gint
@@ -714,14 +738,14 @@ gtk_info_bar_get_content_area (GtkInfoBar *info_bar)
 /**
  * gtk_info_bar_add_button:
  * @info_bar: a #GtkInfoBar
- * @button_text: text of button, or stock ID
+ * @button_text: text of button
  * @response_id: response ID for the button
  *
- * Adds a button with the given text (or a stock button, if button_text
- * is a stock ID) and sets things up so that clicking the button will emit
- * the "response" signal with the given response_id. The button is appended
- * to the end of the info bars's action area. The button widget is
- * returned, but usually you don't need it.
+ * Adds a button with the given text and sets things up so that
+ * clicking the button will emit the "response" signal with the given
+ * response_id. The button is appended to the end of the info bars's
+ * action area. The button widget is returned, but usually you don't
+ * need it.
  *
  * Returns: (transfer none): the #GtkButton widget that was added
  *
@@ -737,7 +761,19 @@ gtk_info_bar_add_button (GtkInfoBar  *info_bar,
   g_return_val_if_fail (GTK_IS_INFO_BAR (info_bar), NULL);
   g_return_val_if_fail (button_text != NULL, NULL);
 
-  button = gtk_button_new_from_stock (button_text);
+  button = gtk_button_new_with_label (button_text);
+  gtk_button_set_use_underline (GTK_BUTTON (button), TRUE);
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
+  if (button_text)
+    {
+      GtkStockItem item;
+      if (gtk_stock_lookup (button_text, &item))
+        g_object_set (button, "use-stock", TRUE, NULL);
+    }
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   gtk_widget_set_can_default (button, TRUE);
 
@@ -1146,27 +1182,26 @@ gtk_info_bar_set_message_type (GtkInfoBar     *info_bar,
       atk_obj = gtk_widget_get_accessible (GTK_WIDGET (info_bar));
       if (GTK_IS_ACCESSIBLE (atk_obj))
         {
-          GtkStockItem item;
-          const char *stock_id = NULL;
+          const char *name = NULL;
 
           atk_object_set_role (atk_obj, ATK_ROLE_ALERT);
 
           switch (message_type)
             {
             case GTK_MESSAGE_INFO:
-              stock_id = GTK_STOCK_DIALOG_INFO;
+              name = _("Information");
               break;
 
             case GTK_MESSAGE_QUESTION:
-              stock_id = GTK_STOCK_DIALOG_QUESTION;
+              name = _("Question");
               break;
 
             case GTK_MESSAGE_WARNING:
-              stock_id = GTK_STOCK_DIALOG_WARNING;
+              name = _("Warning");
               break;
 
             case GTK_MESSAGE_ERROR:
-              stock_id = GTK_STOCK_DIALOG_ERROR;
+              name = _("Error");
               break;
 
             case GTK_MESSAGE_OTHER:
@@ -1177,10 +1212,9 @@ gtk_info_bar_set_message_type (GtkInfoBar     *info_bar,
               break;
             }
 
-          if (stock_id)
+          if (name)
             {
-              gtk_stock_lookup (stock_id, &item);
-              atk_object_set_name (atk_obj, item.label);
+              atk_object_set_name (atk_obj, name);
             }
         }
 
@@ -1207,4 +1241,47 @@ gtk_info_bar_get_message_type (GtkInfoBar *info_bar)
   g_return_val_if_fail (GTK_IS_INFO_BAR (info_bar), GTK_MESSAGE_OTHER);
 
   return info_bar->priv->message_type;
+}
+
+
+/**
+ * gtk_info_bar_set_show_close_button:
+ * @info_bar: a #GtkInfoBar
+ * @setting: %TRUE to include a close button
+ *
+ * If true, a standard close button is shown. When clicked it emits
+ * the response %GTK_RESPONSE_CLOSE.
+ *
+ * Since: 3.10
+ */
+void
+gtk_info_bar_set_show_close_button (GtkInfoBar *info_bar,
+                                    gboolean    setting)
+{
+  g_return_if_fail (GTK_IS_INFO_BAR (info_bar));
+
+  if (setting != info_bar->priv->show_close_button)
+    {
+      info_bar->priv->show_close_button = setting;
+      gtk_widget_set_visible (info_bar->priv->close_button, setting);
+      g_object_notify (G_OBJECT (info_bar), "show-close-button");
+    }
+}
+
+/**
+ * gtk_info_bar_get_show_close_button:
+ * @info_bar: a #GtkInfoBar
+ *
+ * Returns whether the widget will display a standard close button.
+ *
+ * Returns: %TRUE if the widget displays standard close button
+ *
+ * Since: 3.10
+ */
+gboolean
+gtk_info_bar_get_show_close_button (GtkInfoBar *info_bar)
+{
+  g_return_val_if_fail (GTK_IS_INFO_BAR (info_bar), FALSE);
+
+  return info_bar->priv->show_close_button;
 }

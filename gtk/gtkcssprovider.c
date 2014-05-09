@@ -560,8 +560,7 @@
  * The optional blur radius parameter is parsed, but it is currently not rendered by
  * the GTK+ theming engine.
  * The inset parameter defines whether the drop shadow should be rendered inside or outside
- * the box canvas. Only inset box-shadows are currently supported by the GTK+ theming engine,
- * non-inset elements are currently ignored.
+ * the box canvas.
  * </para>
  * <para>
  * To set multiple box-shadows on an element, you can specify a comma-separated list
@@ -1048,6 +1047,7 @@ gtk_css_provider_error_quark (void)
 }
 
 G_DEFINE_TYPE_EXTENDED (GtkCssProvider, gtk_css_provider, G_TYPE_OBJECT, 0,
+                        G_ADD_PRIVATE (GtkCssProvider)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_STYLE_PROVIDER,
                                                gtk_css_style_provider_iface_init)
                         G_IMPLEMENT_INTERFACE (GTK_TYPE_STYLE_PROVIDER_PRIVATE,
@@ -1117,8 +1117,6 @@ gtk_css_provider_class_init (GtkCssProviderClass *klass)
   object_class->finalize = gtk_css_provider_finalize;
 
   klass->parsing_error = gtk_css_provider_parsing_error;
-
-  g_type_class_add_private (object_class, sizeof (GtkCssProviderPrivate));
 }
 
 static void
@@ -1388,9 +1386,7 @@ gtk_css_provider_init (GtkCssProvider *css_provider)
 {
   GtkCssProviderPrivate *priv;
 
-  priv = css_provider->priv = G_TYPE_INSTANCE_GET_PRIVATE (css_provider,
-                                                           GTK_TYPE_CSS_PROVIDER,
-                                                           GtkCssProviderPrivate);
+  priv = css_provider->priv = gtk_css_provider_get_instance_private (css_provider);
 
   priv->rulesets = g_array_new (FALSE, FALSE, sizeof (GtkCssRuleset));
 
@@ -1747,7 +1743,7 @@ gtk_css_provider_invalid_token (GtkCssProvider *provider,
                           scanner,
                           GTK_CSS_PROVIDER_ERROR,
                           GTK_CSS_PROVIDER_ERROR_SYNTAX,
-                          "expected a valid %s", expected);
+                          "expected %s", expected);
 }
 
 static void 
@@ -3025,12 +3021,12 @@ gtk_css_provider_print_keyframes (GHashTable *keyframes,
  * gtk_css_provider_to_string:
  * @provider: the provider to write to a string
  *
- * Convertes the @provider into a string representation in CSS
+ * Converts the @provider into a string representation in CSS
  * format.
- * 
+ *
  * Using gtk_css_provider_load_from_data() with the return value
  * from this function on a new provider created with
- * gtk_css_provider_new() will basicallu create a duplicate of
+ * gtk_css_provider_new() will basically create a duplicate of
  * this @provider.
  *
  * Returns: a new string representing the @provider.

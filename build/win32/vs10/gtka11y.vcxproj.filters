@@ -37,6 +37,8 @@
    <ClCompile Include="..\..\..\gtk\a11y\gtklabelaccessible.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\a11y\gtklevelbaraccessible.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\a11y\gtklinkbuttonaccessible.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\a11y\gtklistboxaccessible.c"><Filter>Source Files</Filter></ClCompile>
+   <ClCompile Include="..\..\..\gtk\a11y\gtklistboxrowaccessible.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\a11y\gtklockbuttonaccessible.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\a11y\gtkmenuaccessible.c"><Filter>Source Files</Filter></ClCompile>
    <ClCompile Include="..\..\..\gtk\a11y\gtkmenushellaccessible.c"><Filter>Source Files</Filter></ClCompile>

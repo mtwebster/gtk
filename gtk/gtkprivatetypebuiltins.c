@@ -1,6 +1,7 @@
 
 /* Generated data (by glib-mkenums) */
 
+#include "config.h"
 #include "gtk.h"
 #include "gtkprivate.h"
 #include "gtkprivatetypebuiltins.h"

@@ -63,7 +63,7 @@ struct _GdkFrameClockIdlePrivate
 static gboolean gdk_frame_clock_flush_idle (void *data);
 static gboolean gdk_frame_clock_paint_idle (void *data);
 
-G_DEFINE_TYPE (GdkFrameClockIdle, gdk_frame_clock_idle, GDK_TYPE_FRAME_CLOCK)
+G_DEFINE_TYPE_WITH_PRIVATE (GdkFrameClockIdle, gdk_frame_clock_idle, GDK_TYPE_FRAME_CLOCK)
 
 static gint64 sleep_serial;
 static gint64 sleep_source_prepare_time;
@@ -122,10 +122,8 @@ gdk_frame_clock_idle_init (GdkFrameClockIdle *frame_clock_idle)
 {
   GdkFrameClockIdlePrivate *priv;
 
-  frame_clock_idle->priv = G_TYPE_INSTANCE_GET_PRIVATE (frame_clock_idle,
-                                                        GDK_TYPE_FRAME_CLOCK_IDLE,
-                                                        GdkFrameClockIdlePrivate);
-  priv = frame_clock_idle->priv;
+  frame_clock_idle->priv = priv =
+    gdk_frame_clock_idle_get_instance_private (frame_clock_idle);
 
   priv->freeze_count = 0;
 }
@@ -371,6 +369,7 @@ gdk_frame_clock_paint_idle (void *data)
               g_signal_emit_by_name (G_OBJECT (clock), "before-paint");
               priv->phase = GDK_FRAME_CLOCK_PHASE_UPDATE;
             }
+          /* fallthrough */
         case GDK_FRAME_CLOCK_PHASE_UPDATE:
           if (priv->freeze_count == 0)
             {
@@ -381,9 +380,11 @@ gdk_frame_clock_paint_idle (void *data)
                   g_signal_emit_by_name (G_OBJECT (clock), "update");
                 }
             }
+          /* fallthrough */
         case GDK_FRAME_CLOCK_PHASE_LAYOUT:
           if (priv->freeze_count == 0)
             {
+	      int iter;
 #ifdef G_ENABLE_DEBUG
               if ((_gdk_debug_flags & GDK_DEBUG_FRAMES) != 0)
                 {
@@ -394,12 +395,22 @@ gdk_frame_clock_paint_idle (void *data)
 #endif /* G_ENABLE_DEBUG */
 
               priv->phase = GDK_FRAME_CLOCK_PHASE_LAYOUT;
-              if (priv->requested & GDK_FRAME_CLOCK_PHASE_LAYOUT)
+	      /* We loop in the layout phase, because we don't want to progress
+	       * into the paint phase with invalid size allocations. This may
+	       * happen in some situation like races between user window
+	       * resizes and natural size changes.
+	       */
+	      iter = 0;
+              while ((priv->requested & GDK_FRAME_CLOCK_PHASE_LAYOUT) &&
+		     priv->freeze_count == 0 && iter++ < 4)
                 {
                   priv->requested &= ~GDK_FRAME_CLOCK_PHASE_LAYOUT;
                   g_signal_emit_by_name (G_OBJECT (clock), "layout");
                 }
+	      if (iter == 5)
+		g_warning ("gdk-frame-clock: layout continuously requested, giving up after 4 tries");
             }
+          /* fallthrough */
         case GDK_FRAME_CLOCK_PHASE_PAINT:
           if (priv->freeze_count == 0)
             {
@@ -419,6 +430,7 @@ gdk_frame_clock_paint_idle (void *data)
                   g_signal_emit_by_name (G_OBJECT (clock), "paint");
                 }
             }
+          /* fallthrough */
         case GDK_FRAME_CLOCK_PHASE_AFTER_PAINT:
           if (priv->freeze_count == 0)
             {
@@ -433,6 +445,7 @@ gdk_frame_clock_paint_idle (void *data)
                 timings->frame_end_time = g_get_monotonic_time ();
 #endif /* G_ENABLE_DEBUG */
             }
+          /* fallthrough */
         case GDK_FRAME_CLOCK_PHASE_RESUME_EVENTS:
           ;
         }
@@ -571,8 +584,6 @@ gdk_frame_clock_idle_class_init (GdkFrameClockIdleClass *klass)
   frame_clock_class->end_updating = gdk_frame_clock_idle_end_updating;
   frame_clock_class->freeze = gdk_frame_clock_idle_freeze;
   frame_clock_class->thaw = gdk_frame_clock_idle_thaw;
-
-  g_type_class_add_private (klass, sizeof (GdkFrameClockIdlePrivate));
 }
 
 GdkFrameClock *

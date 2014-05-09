@@ -2208,19 +2208,6 @@ cups_create_printer (GtkPrintBackendCups *cups_backend,
 		   &port,
 		   resource, sizeof (resource));
 
-  if (strncmp (method, "dnssd", 5) == 0)
-    {
-      _httpResolveURI(cups_printer->printer_uri,
-		      uri, sizeof(uri), 0, NULL, NULL);
-      httpSeparateURI (HTTP_URI_CODING_ALL,
-		       uri,
-		       method, sizeof (method),
-		       username, sizeof (username),
-		       hostname, sizeof (hostname),
-		       &port,
-		       resource, sizeof (resource));
-    }
-
   if (strncmp (resource, "/printers/", 10) == 0)
     {
       cups_printer->ppd_name = g_strdup (resource + 10);
@@ -2639,10 +2626,11 @@ avahi_service_resolver_cb (GObject      *source_object,
   GError                  *error = NULL;
   gchar                   *suffix = NULL;
   gchar                   *tmp;
+  gsize                    length;
   gint                     interface;
   gint                     protocol;
   gint                     aprotocol;
-  gint                     i, j;
+  gint                     i;
 
   output = g_dbus_connection_call_finish (G_DBUS_CONNECTION (source_object),
                                           res,
@@ -2668,20 +2656,26 @@ avahi_service_resolver_cb (GObject      *source_object,
         {
           child = g_variant_get_child_value (txt, i);
 
-          tmp = g_new0 (gchar, g_variant_n_children (child) + 1);
-          for (j = 0; j < g_variant_n_children (child); j++)
+          length = g_variant_get_size (child);
+          if (length > 0)
             {
-              tmp[j] = g_variant_get_byte (g_variant_get_child_value (child, j));
-            }
+              tmp = g_strndup (g_variant_get_data (child), length);
 
-          if (g_str_has_prefix (tmp, "rp="))
-            {
-              suffix = g_strdup (tmp + 3);
+              g_variant_unref (child);
+
+              if (g_str_has_prefix (tmp, "rp="))
+                {
+                  suffix = g_strdup (tmp + 3);
+                  g_free (tmp);
+                  break;
+                }
+
               g_free (tmp);
-              break;
             }
-
-          g_free (tmp);
+          else
+            {
+              g_variant_unref (child);
+            }
         }
 
       if (suffix)
@@ -2715,6 +2709,7 @@ avahi_service_resolver_cb (GObject      *source_object,
           g_free (suffix);
         }
 
+      g_variant_unref (txt);
       g_variant_unref (output);
     }
   else
@@ -2778,10 +2773,6 @@ avahi_service_browser_signal_handler (GDBusConnection *connection,
     }
   else if (g_strcmp0 (signal_name, "ItemRemove") == 0)
     {
-      GtkPrinterCups *printer;
-      GList          *list;
-      GList          *iter;
-
       g_variant_get (parameters, "(ii&s&s&su)",
                      &interface,
                      &protocol,
@@ -2793,6 +2784,10 @@ avahi_service_browser_signal_handler (GDBusConnection *connection,
       if (g_strcmp0 (type, "_ipp._tcp") == 0 ||
           g_strcmp0 (type, "_ipps._tcp") == 0)
         {
+          GtkPrinterCups *printer;
+          GList          *list;
+          GList          *iter;
+
           list = gtk_print_backend_get_printer_list (GTK_PRINT_BACKEND (backend));
           for (iter = list; iter; iter = iter->next)
             {
@@ -2812,9 +2807,9 @@ avahi_service_browser_signal_handler (GDBusConnection *connection,
                   break;
                 }
             }
-        }
 
-      g_list_free (list);
+          g_list_free (list);
+        }
     }
 }
 
@@ -3371,7 +3366,7 @@ cups_request_ppd (GtkPrinter *printer)
   GtkPrintBackend *print_backend;
   GtkPrinterCups *cups_printer;
   GtkCupsRequest *request;
-  char *ppd_filename;
+  char *ppd_filename = NULL;
   gchar *resource;
   http_t *http;
   GetPPDData *data;

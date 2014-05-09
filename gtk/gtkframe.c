@@ -147,6 +147,7 @@ static void gtk_frame_get_preferred_width_for_height(GtkWidget           *layout
 
 
 G_DEFINE_TYPE_WITH_CODE (GtkFrame, gtk_frame, GTK_TYPE_BIN,
+                         G_ADD_PRIVATE (GtkFrame)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
 						gtk_frame_buildable_init))
 
@@ -220,8 +221,6 @@ gtk_frame_class_init (GtkFrameClass *class)
 
   class->compute_child_allocation = gtk_frame_real_compute_child_allocation;
 
-  g_type_class_add_private (class, sizeof (GtkFramePrivate));
-
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_FRAME_ACCESSIBLE);
 }
 
@@ -251,9 +250,7 @@ gtk_frame_init (GtkFrame *frame)
   GtkFramePrivate *priv;
   GtkStyleContext *context;
 
-  frame->priv = G_TYPE_INSTANCE_GET_PRIVATE (frame,
-                                             GTK_TYPE_FRAME,
-                                             GtkFramePrivate);
+  frame->priv = gtk_frame_get_instance_private (frame); 
   priv = frame->priv;
 
   priv->label_widget = NULL;
@@ -335,7 +332,7 @@ gtk_frame_get_property (GObject         *object,
 
 /**
  * gtk_frame_new:
- * @label: the text to use as the label of the frame
+ * @label: (allow-none): the text to use as the label of the frame
  * 
  * Creates a new #GtkFrame, with optional label @label.
  * If @label is %NULL, the label is omitted.
@@ -816,7 +813,7 @@ gtk_frame_real_compute_child_allocation (GtkFrame      *frame,
   GtkAllocation allocation;
   GtkBorder padding;
   gint top_margin;
-  guint border_width;
+  gint border_width;
 
   gtk_widget_get_allocation (widget, &allocation);
   get_padding_and_border (frame, &padding);

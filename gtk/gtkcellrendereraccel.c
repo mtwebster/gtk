@@ -98,29 +98,20 @@ struct _GtkCellRendererAccelPrivate
 
   GdkModifierType accel_mods;
 
-  /* Used to track the last modifier that was pressed down.
-   * We can then treat a directly-following release of the same key as a
-   * 'tap'.
-   */
-  GdkModifierType last_saw_state;
-  guint last_saw_keyval;
-
   guint accel_key;
   guint keycode;
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (GtkCellRendererAccel, gtk_cell_renderer_accel, GTK_TYPE_CELL_RENDERER_TEXT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkCellRendererAccel, gtk_cell_renderer_accel, GTK_TYPE_CELL_RENDERER_TEXT)
 
 static void
 gtk_cell_renderer_accel_init (GtkCellRendererAccel *cell_accel)
 {
   gchar *text;
 
-  cell_accel->priv = G_TYPE_INSTANCE_GET_PRIVATE (cell_accel,
-                                                  GTK_TYPE_CELL_RENDERER_ACCEL,
-                                                  GtkCellRendererAccelPrivate);
+  cell_accel->priv = gtk_cell_renderer_accel_get_instance_private (cell_accel);
 
   text = convert_keysym_state_to_string (cell_accel, 0, 0, 0);
   g_object_set (cell_accel, "text", text, NULL);
@@ -202,10 +193,6 @@ gtk_cell_renderer_accel_class_init (GtkCellRendererAccelClass *cell_accel_class)
    * accepted by GTK+ are allowed, and the accelerators are rendered
    * in the same way as they are in menus.
    *
-   * If the mode is set to %GTK_CELL_RENDERER_ACCEL_MODE_MODIFIER_TAP
-   * then bare modifiers can be set as accelerators by tapping (ie:
-   * pressing and immediately releasing) them.
-   *
    * Since: 2.10
    */
   g_object_class_install_property (object_class,
@@ -258,8 +245,6 @@ gtk_cell_renderer_accel_class_init (GtkCellRendererAccelClass *cell_accel_class)
                                          g_cclosure_marshal_VOID__STRING,
                                          G_TYPE_NONE, 1,
                                          G_TYPE_STRING);
-
-  g_type_class_add_private (cell_accel_class, sizeof (GtkCellRendererAccelPrivate));
 }
 
 
@@ -454,29 +439,6 @@ grab_key_callback (GtkWidget            *widget,
   GdkDisplay *display;
 
   display = gtk_widget_get_display (widget);
-
-  if (event->type == GDK_KEY_RELEASE)
-    {
-      /* User released a modifier key right after pressing it and we're
-       * in 'modifier tap' mode: this is our new accel.
-       */
-      if (priv->accel_mode == GTK_CELL_RENDERER_ACCEL_MODE_MODIFIER_TAP &&
-          event->is_modifier && event->keyval == priv->last_saw_keyval)
-        {
-          /* We use the mask from the down press -- the release event
-           * has the modifier mask from the modifier key itself.
-           */
-          accel_mods = priv->last_saw_state;
-          accel_key = event->keyval;
-          goto out;
-        }
-
-      /* Ignore other releases */
-      return TRUE;
-    }
-
-  priv->last_saw_keyval = event->keyval;
-  priv->last_saw_state = event->state;
 
   if (event->is_modifier)
     return TRUE;
@@ -756,9 +718,6 @@ gtk_cell_renderer_accel_start_editing (GtkCellRenderer      *cell,
   priv->grab_widget = widget;
 
   g_signal_connect (G_OBJECT (widget), "key-press-event",
-                    G_CALLBACK (grab_key_callback),
-                    accel);
-  g_signal_connect (G_OBJECT (widget), "key-release-event",
                     G_CALLBACK (grab_key_callback),
                     accel);
 

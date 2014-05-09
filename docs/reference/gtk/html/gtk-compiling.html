@@ -2,22 +2,22 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Compiling GTK+ Applications</title>
+<title>GTK+ 3 Reference Manual: Compiling GTK+ Applications</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GTK+ 3 Reference Manual">
-<link rel="up" href="gtk.html" title="Part I. GTK+ Overview">
+<link rel="up" href="platform-support.html" title="Part VII. GTK+ Platform Support">
 <link rel="prev" href="gtk-building.html" title="Compiling the GTK+ libraries">
 <link rel="next" href="gtk-running.html" title="Running GTK+ Applications">
-<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.20.1 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle">
-<td><a accesskey="p" href="gtk-building.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
-<td><a accesskey="u" href="gtk.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
-<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
-<th width="100%" align="center">GTK+ 3 Reference Manual</th>
-<td><a accesskey="n" href="gtk-running.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
+<td width="100%" align="left" class="shortcuts"></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
+<td><a accesskey="u" href="platform-support.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
+<td><a accesskey="p" href="gtk-building.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gtk-running.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gtk-compiling"></a><div class="titlepage"></div>
@@ -28,10 +28,10 @@
 How to compile your GTK+ application
 </p>
 </td>
-<td valign="top" align="right"></td>
+<td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
 <div class="refsect1">
-<a name="id-1.2.5.3"></a><h2>Compiling GTK+ Applications on UNIX</h2>
+<a name="id-1.8.3.3"></a><h2>Compiling GTK+ Applications on UNIX</h2>
 <p>
 To compile a GTK+ application, you need to tell the compiler where to
 find the GTK+ header files and libraries. This is done with the
@@ -58,7 +58,7 @@ substituted into the command line before execution. So to compile
 a GTK+ Hello, World, you would type the following:
 </p>
 <pre class="programlisting">
-$ cc `pkg-config --cflags --libs gtk+-3.0` hello.c -o hello
+$ cc `pkg-config --cflags gtk+-3.0` hello.c -o hello `pkg-config --libs gtk+-3.0`
 </pre>
 <p>
 </p>
@@ -67,7 +67,7 @@ Deprecated GTK+ functions are annotated to make the compiler
 emit warnings when they are used (e.g. with gcc, you need to use
 the -Wdeprecated-declarations option). If these warnings are
 problematic, they can be turned off by defining the preprocessor
-symbol <code class="literal">GDK_DISABLE_DEPRECATION_WARNINGS</code> by using the commandline
+symbol <a href="http://developer.gnome.org/gdk2/gdk3-General.html#GDK-DISABLE-DEPRECATION-WARNINGS:CAPS"><code class="literal">GDK_DISABLE_DEPRECATION_WARNINGS</code></a> by using the commandline
 option <code class="literal">-DGDK_DISABLE_DEPRECATION_WARNINGS</code>
 </p>
 <p>
@@ -82,7 +82,7 @@ Here is how you would compile hello.c if you want to allow it
 to use symbols that were not deprecated in 3.2:
 </p>
 <pre class="programlisting">
-$ cc -DGDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_2 `pkg-config --cflags --libs gtk+-3.0` hello.c -o hello
+$ cc `pkg-config --cflags gtk+-3.0` -DGDK_VERSION_MIN_REQIRED=GDK_VERSION_3_2 hello.c -o hello `pkg-config --libs gtk+-3.0`
 </pre>
 <p>
 </p>
@@ -91,7 +91,7 @@ And here is how you would compile hello.c if you don't want
 it to use any symbols that were introduced after 3.4:
 </p>
 <pre class="programlisting">
-$ cc -DGDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_4 `pkg-config --cflags --libs gtk+-3.0` hello.c -o hello
+$ cc `pkg-config --cflags gtk+-3.0` -DGDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_4 hello.c -o hello `pkg-config --libs gtk+-3.0`
 </pre>
 <p>
 </p>
@@ -118,7 +118,7 @@ define the preprocessor symbol GDK_MULTIDEVICE_SAFE by using the command
 line option <code class="literal">-DGTK_MULTIDEVICE_SAFE=1</code>.
 </p>
 <div class="refsect2">
-<a name="id-1.2.5.3.12"></a><h3>Useful autotools macros</h3>
+<a name="id-1.8.3.3.12"></a><h3>Useful autotools macros</h3>
 <p>
       GTK+ provides various macros for easily checking version and backends
       supported. The macros are
@@ -156,6 +156,6 @@ line option <code class="literal">-DGTK_MULTIDEVICE_SAFE=1</code>.
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.19</div>
+          Generated by GTK-Doc V1.20.1</div>
 </body>
 </html>

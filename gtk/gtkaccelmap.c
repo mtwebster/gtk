@@ -40,7 +40,7 @@
  * SECTION:gtkaccelmap
  * @Short_description: Loadable keyboard accelerator specifications
  * @Title: Accelerator Maps
- * @See_also: #GtkAccelGroup, #GtkAccelKey, #GtkUIManager, gtk_widget_set_accel_path(), gtk_menu_item_set_accel_path(), #GtkSettings:gtk-can-change-accels
+ * @See_also: #GtkAccelGroup, #GtkAccelKey, #GtkUIManager, gtk_widget_set_accel_path(), gtk_menu_item_set_accel_path()
  *
  * Accelerator maps are used to define runtime configurable accelerators.
  * Functions for manipulating them are are usually used by higher level
@@ -683,9 +683,6 @@ gtk_accel_map_load (const gchar *file_name)
   gint fd;
 
   g_return_if_fail (file_name != NULL);
-
-  if (!g_file_test (file_name, G_FILE_TEST_IS_REGULAR))
-    return;
 
   fd = g_open (file_name, O_RDONLY, 0);
   if (fd < 0)

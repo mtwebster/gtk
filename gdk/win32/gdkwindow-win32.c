@@ -228,7 +228,7 @@ _gdk_windowing_window_init (GdkScreen *screen)
   window->visual = gdk_screen_get_system_visual (screen);
 
   window->window_type = GDK_WINDOW_ROOT;
-  window->depth = gdk_visual_get_system ()->depth;
+  window->depth = window->visual->depth;
 
   _gdk_root_window_size_init ();
 
@@ -714,6 +714,8 @@ gdk_win32_window_foreign_new_for_display (GdkDisplay      *display,
     window->parent = _gdk_root;
   
   window->parent->children = g_list_prepend (window->parent->children, window);
+  window->parent->impl_window->native_children =
+    g_list_prepend (window->parent->impl_window->native_children, window);
 
   GetClientRect ((HWND) anid, &rect);
   point.x = rect.left;
@@ -2126,8 +2128,8 @@ gdk_win32_window_get_frame_extents (GdkWindow    *window,
 static gboolean
 gdk_window_win32_get_device_state (GdkWindow       *window,
                                    GdkDevice       *device,
-                                   gint            *x,
-                                   gint            *y,
+                                   gdouble         *x,
+                                   gdouble         *y,
                                    GdkModifierType *mask)
 {
   GdkWindow *child;
@@ -2139,27 +2141,6 @@ gdk_window_win32_get_device_state (GdkWindow       *window,
                                               NULL, NULL,
                                               x, y, mask);
   return (child != NULL);
-}
-
-void
-_gdk_windowing_get_device_state (GdkDisplay       *display,
-                                 GdkDevice        *device,
-                                 GdkScreen       **screen,
-                                 gint             *x,
-                                 gint             *y,
-                                 GdkModifierType  *mask)
-{
-  g_return_if_fail (display == _gdk_display);
-
-  if (screen)
-    *screen = _gdk_screen;
-
-  GDK_DEVICE_GET_CLASS (device)->query_state (device,
-                                              gdk_screen_get_root_window (_gdk_screen),
-                                              NULL, NULL,
-                                              x, y,
-                                              NULL, NULL,
-                                              mask);
 }
 
 void
@@ -2175,17 +2156,6 @@ gdk_display_warp_device (GdkDisplay *display,
   g_return_if_fail (display == gdk_device_get_display (device));
 
   GDK_DEVICE_GET_CLASS (device)->warp (device, screen, x, y);
-}
-
-GdkWindow*
-_gdk_windowing_window_at_device_position (GdkDisplay      *display,
-                                          GdkDevice       *device,
-                                          gint            *win_x,
-                                          gint            *win_y,
-                                          GdkModifierType *mask,
-                                          gboolean         get_toplevel)
-{
-  return GDK_DEVICE_GET_CLASS (device)->window_at_position (device, win_x, win_y, mask, get_toplevel);
 }
 
 static GdkEventMask  
@@ -2685,7 +2655,7 @@ gdk_win32_window_begin_resize_drag (GdkWindow     *window,
   /* Must break the automatic grab that occured when the button was
    * pressed, otherwise it won't work.
    */
-  gdk_display_pointer_ungrab (_gdk_display, 0);
+  gdk_device_ungrab (device, 0);
 
   switch (edge)
     {
@@ -2752,7 +2722,7 @@ gdk_win32_window_begin_move_drag (GdkWindow *window,
   /* Must break the automatic grab that occured when the button was pressed,
    * otherwise it won't work.
    */
-  gdk_display_pointer_ungrab (_gdk_display, 0);
+  gdk_device_ungrab (device, 0);
 
   DefWindowProcW (GDK_WINDOW_HWND (window), WM_NCLBUTTONDOWN, HTCAPTION,
 		  MAKELPARAM (root_x - _gdk_offset_x, root_y - _gdk_offset_y));
@@ -3319,80 +3289,6 @@ _gdk_win32_window_queue_antiexpose (GdkWindow *window,
   return FALSE;
 }
 
-/* Gets called from gdwindow.c(do_move_region_bits_on_impl)
- * and got tested with testgtk::big_window. Given the previous,
- * untested implementation this one looks much too simple ;)
- */
-static void
-_gdk_win32_window_translate (GdkWindow *window,
-                             cairo_region_t *area, /* In impl window coords */
-                             gint       dx,
-                             gint       dy)
-{
-  GdkWindowImplWin32 *impl = GDK_WINDOW_IMPL_WIN32 (window->impl);
-  GdkRectangle extents;
-  RECT rect;
-  HRGN hrgn, area_hrgn;
-  HDC hdc;
-  int ret;
-
-  /* Note: This is the destination area, not the source, and
-     it has been moved by dx, dy from the source area */
-  area_hrgn = cairo_region_to_hrgn (area, 0, 0);
-
-  /* First we copy any outstanding invalid areas in the 
-     source area to the new position in the destination area */
-  hrgn = CreateRectRgn (0, 0, 0, 0);
-  ret = GetUpdateRgn (GDK_WINDOW_HWND (window), hrgn, FALSE);
-  if (ret == ERROR)
-    WIN32_API_FAILED ("GetUpdateRgn");
-  else if (ret != NULLREGION)
-    {
-      /* Convert the source invalid region as it would be copied */
-      OffsetRgn (hrgn, dx, dy);
-      /* Keep what intersects the copy destination area */
-      ret = CombineRgn (hrgn, hrgn, area_hrgn, RGN_AND);
-      /* And invalidate it */
-      if (ret == ERROR)
-        WIN32_API_FAILED ("CombineRgn");
-      else if (ret != NULLREGION)
-	API_CALL (InvalidateRgn, (GDK_WINDOW_HWND (window), hrgn, TRUE));
-    }
-
-  /* Then we copy the bits, invalidating whatever is copied from
-     otherwise invisible areas */
-
-  hdc = _gdk_win32_impl_acquire_dc (impl);
-
-  /* Clip hdc to target region */
-  API_CALL (SelectClipRgn, (hdc, area_hrgn));
-
-  cairo_region_get_extents (area, &extents);
-
-  rect.left = MIN (extents.x, extents.x - dx);
-  rect.top = MIN (extents.y, extents.y - dy);
-  rect.right = MAX (extents.x + extents.width, extents.x - dx  + extents.width);
-  rect.bottom = MAX (extents.y + extents.height, extents.y - dy  + extents.height);
-
-  SetRectRgn (hrgn, 0, 0, 0, 0);
-
-  if (!ScrollDC (hdc, dx, dy, &rect, NULL, hrgn, NULL))
-    WIN32_GDI_FAILED ("ScrollDC");
-  else if (!InvalidateRgn (GDK_WINDOW_HWND (window), hrgn, FALSE))
-    WIN32_GDI_FAILED ("InvalidateRgn");
-
-  /* Unset hdc clip region */
-  API_CALL (SelectClipRgn, (hdc, NULL));
-
-  _gdk_win32_impl_release_dc (impl);
-
-  if (!DeleteObject (hrgn))
-    WIN32_GDI_FAILED ("DeleteObject");
-
-  if (!DeleteObject (area_hrgn))
-    WIN32_GDI_FAILED ("DeleteObject");
-}
-
 static void
 gdk_win32_input_shape_combine_region (GdkWindow *window,
 				      const cairo_region_t *shape_region,
@@ -3559,7 +3455,6 @@ gdk_window_impl_win32_class_init (GdkWindowImplWin32Class *klass)
   impl_class->input_shape_combine_region = gdk_win32_input_shape_combine_region;
   impl_class->set_static_gravities = gdk_win32_window_set_static_gravities;
   impl_class->queue_antiexpose = _gdk_win32_window_queue_antiexpose;
-  impl_class->translate = _gdk_win32_window_translate;
   impl_class->destroy = gdk_win32_window_destroy;
   impl_class->destroy_foreign = gdk_win32_window_destroy_foreign;
   impl_class->resize_cairo_surface = gdk_win32_window_resize_cairo_surface;

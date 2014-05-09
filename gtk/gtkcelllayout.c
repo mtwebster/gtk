@@ -812,7 +812,7 @@ cell_packing_end_element (GMarkupParseContext *context,
       /* translate the string */
       if (parser_data->string->len && parser_data->translatable)
 	{
-	  gchar *translated;
+	  const gchar *translated;
 	  const gchar* domain;
 
 	  domain = gtk_builder_get_translation_domain (parser_data->builder);
@@ -820,8 +820,7 @@ cell_packing_end_element (GMarkupParseContext *context,
 	  translated = _gtk_builder_parser_translate (domain,
 						      parser_data->context,
 						      parser_data->string->str);
-	  g_string_set_size (parser_data->string, 0);
-	  g_string_append (parser_data->string, translated);
+	  g_string_assign (parser_data->string, translated);
 	}
 
       if (parser_data->cell_prop_name)

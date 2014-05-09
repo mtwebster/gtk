@@ -30,6 +30,7 @@
 #endif
 
 #include <glib.h>
+#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 
@@ -47,7 +48,10 @@ typedef enum {
   GTK_DEBUG_PRINTING        = 1 << 10,
   GTK_DEBUG_BUILDER         = 1 << 11,
   GTK_DEBUG_SIZE_REQUEST    = 1 << 12,
-  GTK_DEBUG_NO_CSS_CACHE    = 1 << 13
+  GTK_DEBUG_NO_CSS_CACHE    = 1 << 13,
+  GTK_DEBUG_BASELINES       = 1 << 14,
+  GTK_DEBUG_PIXEL_CACHE     = 1 << 15,
+  GTK_DEBUG_NO_PIXEL_CACHE  = 1 << 16
 } GtkDebugFlag;
 
 #ifdef G_ENABLE_DEBUG
@@ -62,7 +66,9 @@ typedef enum {
 
 #endif /* G_ENABLE_DEBUG */
 
+GDK_AVAILABLE_IN_ALL
 guint gtk_get_debug_flags (void);
+GDK_AVAILABLE_IN_ALL
 void  gtk_set_debug_flags  (guint flags);
 
 G_END_DECLS

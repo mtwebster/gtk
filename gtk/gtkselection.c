@@ -558,8 +558,8 @@ gtk_target_list_remove (GtkTargetList *list,
  * gtk_target_list_find:
  * @list: a #GtkTargetList
  * @target: an interned atom representing the target to search for
- * @info: a pointer to the location to store application info for target,
- *        or %NULL
+ * @info: (out) (allow-none): a pointer to the location to store
+ *        application info for target, or %NULL
  *
  * Looks up a given target in a #GtkTargetList.
  *
@@ -2292,6 +2292,9 @@ _gtk_selection_request (GtkWidget *widget,
   GList *tmp_list;
   int i;
   gulong selection_max_size;
+
+  if (event->requestor == NULL)
+    return FALSE;
 
   if (initialize)
     gtk_selection_init ();

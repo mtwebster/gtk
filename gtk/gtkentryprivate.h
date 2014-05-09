@@ -34,7 +34,6 @@ struct _GtkEntryCompletionPrivate
   GtkTreeViewColumn *column;
   GtkTreeModelFilter *filter_model;
   GtkListStore *actions;
-  gboolean first_sel_changed;
   GtkCellArea *cell_area;
 
   GtkEntryCompletionMatchFunc match_func;
@@ -43,7 +42,6 @@ struct _GtkEntryCompletionPrivate
 
   gint minimum_key_length;
   gint text_column;
-  gint current_selected;
 
   gchar *case_normalized_key;
 
@@ -57,6 +55,9 @@ struct _GtkEntryCompletionPrivate
   gulong changed_id;
   gulong insert_text_id;
 
+  gint current_selected;
+
+  guint first_sel_changed : 1;
   guint ignore_enter      : 1;
   guint has_completion    : 1;
   guint inline_completion : 1;
@@ -87,7 +88,8 @@ void     _gtk_entry_get_borders            (GtkEntry  *entry,
 GtkIMContext* _gtk_entry_get_im_context    (GtkEntry  *entry);
 void     _gtk_entry_set_is_cell_renderer   (GtkEntry  *entry,
                                             gboolean   is_cell_renderer);
-
+void     _gtk_entry_grab_focus             (GtkEntry  *entry,
+                                            gboolean   select_all);
 
 G_END_DECLS
 

@@ -71,7 +71,6 @@ struct _GdkX11Keymap
   GdkModifierType num_lock_mask;
   GdkModifierType modmap[8];
   PangoDirection current_direction;
-  guint sun_keypad      : 1;
   guint have_direction  : 1;
   guint have_lock_state : 1;
   guint caps_lock_state : 1;
@@ -114,7 +113,6 @@ gdk_x11_keymap_init (GdkX11Keymap *keymap)
   keymap->mod_keymap = NULL;
 
   keymap->num_lock_mask = 0;
-  keymap->sun_keypad = FALSE;
   keymap->group_switch_mask = 0;
   keymap->lock_keysym = GDK_KEY_Caps_Lock;
   keymap->have_direction = FALSE;
@@ -445,16 +443,6 @@ update_keymaps (GdkX11Keymap *keymap_x11)
               break;
             }
         }
-
-      /* Hack: The Sun X server puts the keysym to use when the Num Lock
-       * modifier is on in the third element of the keysym array, instead
-       * of the second.
-       */
-      if ((strcmp (ServerVendor (xdisplay), "Sun Microsystems, Inc.") == 0) &&
-          (keymap_x11->keysyms_per_keycode > 2))
-        keymap_x11->sun_keypad = TRUE;
-      else
-        keymap_x11->sun_keypad = FALSE;
     }
 }
 
@@ -1210,7 +1198,6 @@ translate_keysym (GdkX11Keymap   *keymap_x11,
   GdkModifierType shift_modifiers;
   gint shift_level;
   guint tmp_keyval;
-  gint num_lock_index;
 
   shift_modifiers = GDK_SHIFT_MASK;
   if (keymap_x11->lock_keysym == GDK_KEY_Shift_Lock)
@@ -1222,31 +1209,12 @@ translate_keysym (GdkX11Keymap   *keymap_x11,
       (SYM (keymap_x11, 0, 0) || SYM (keymap_x11, 0, 1)))
     group = 0;
 
-  /* Hack: On Sun, the Num Lock modifier uses the third element in the
-   * keysym array, and Mode_Switch does not apply for a keypad key.
-   */
-  if (keymap_x11->sun_keypad)
-    {
-      num_lock_index = 2;
-
-      if (group != 0)
-        {
-          gint i;
-
-          for (i = 0; i < keymap_x11->keysyms_per_keycode; i++)
-            if (KEYSYM_IS_KEYPAD (SYM (keymap_x11, 0, i)))
-              group = 0;
-        }
-    }
-  else
-    num_lock_index = 1;
-
   if ((state & keymap_x11->num_lock_mask) &&
-      KEYSYM_IS_KEYPAD (SYM (keymap_x11, group, num_lock_index)))
+      KEYSYM_IS_KEYPAD (SYM (keymap_x11, group, 1)))
     {
       /* Shift, Shift_Lock cancel Num_Lock
        */
-      shift_level = (state & shift_modifiers) ? 0 : num_lock_index;
+      shift_level = (state & shift_modifiers) ? 0 : 1;
       if (!SYM (keymap_x11, group, shift_level) && SYM (keymap_x11, group, 0))
         shift_level = 0;
 
@@ -1380,63 +1348,6 @@ gdk_x11_keymap_translate_keyboard_state (GdkKeymap       *keymap,
     *keyval = tmp_keyval;
 
   return tmp_keyval != NoSymbol;
-}
-
-/* Key handling not part of the keymap */
-gchar*
-_gdk_x11_display_manager_get_keyval_name (GdkDisplayManager *manager,
-                                          guint              keyval)
-{
-  switch (keyval)
-    {
-    case GDK_KEY_Page_Up:
-      return "Page_Up";
-    case GDK_KEY_Page_Down:
-      return "Page_Down";
-    case GDK_KEY_KP_Page_Up:
-      return "KP_Page_Up";
-    case GDK_KEY_KP_Page_Down:
-      return "KP_Page_Down";
-    }
-
-  return XKeysymToString (keyval);
-}
-
-guint
-_gdk_x11_display_manager_lookup_keyval (GdkDisplayManager *manager,
-                                        const gchar       *keyval_name)
-{
-  g_return_val_if_fail (keyval_name != NULL, 0);
-
-  return XStringToKeysym (keyval_name);
-}
-
-void
-_gdk_x11_display_manager_keyval_convert_case (GdkDisplayManager *manager,
-                                              guint              symbol,
-                                              guint             *lower,
-                                              guint             *upper)
-{
-  KeySym xlower = 0;
-  KeySym xupper = 0;
-
-  /* Check for directly encoded 24-bit UCS characters: */
-  if ((symbol & 0xff000000) == 0x01000000)
-    {
-      if (lower)
-        *lower = gdk_unicode_to_keyval (g_unichar_tolower (symbol & 0x00ffffff));
-      if (upper)
-        *upper = gdk_unicode_to_keyval (g_unichar_toupper (symbol & 0x00ffffff));
-      return;
-    }
-
-  if (symbol)
-    XConvertCase (symbol, &xlower, &xupper);
-
-  if (lower)
-    *lower = xlower;
-  if (upper)
-    *upper = xupper;
 }
 
 /**

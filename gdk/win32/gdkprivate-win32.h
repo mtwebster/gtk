@@ -373,10 +373,10 @@ GdkCursor *_gdk_win32_display_get_cursor_for_type (GdkDisplay   *display,
 						   GdkCursorType cursor_type);
 GdkCursor *_gdk_win32_display_get_cursor_for_name (GdkDisplay  *display,
 						   const gchar *name);
-GdkCursor *_gdk_win32_display_get_cursor_for_pixbuf (GdkDisplay *display, 
-						     GdkPixbuf  *pixbuf,
-						     gint        x,
-						     gint        y);
+GdkCursor *_gdk_win32_display_get_cursor_for_surface (GdkDisplay *display,
+						     cairo_surface_t  *surface,
+						     gdouble          x,
+						     gdouble          y);
 void     _gdk_win32_display_get_default_cursor_size (GdkDisplay  *display,
 						     guint       *width,
 						     guint       *height);
@@ -502,7 +502,7 @@ void _gdk_win32_windowing_init (void);
 void _gdk_windowing_window_init (GdkScreen *screen);
 void _gdk_root_window_size_init (void);
 void _gdk_monitor_init(void);
-void _gdk_visual_init (void);
+void _gdk_visual_init (GdkScreen *screen);
 void _gdk_dnd_init    (void);
 void _gdk_events_init (void);
 void _gdk_input_init  (GdkDisplay *display);

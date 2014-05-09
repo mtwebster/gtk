@@ -51,6 +51,11 @@ struct _GdkWindowImplClass
 
   cairo_surface_t *
                (* ref_cairo_surface)    (GdkWindow       *window);
+  cairo_surface_t *
+               (* create_similar_image_surface) (GdkWindow *     window,
+                                                 cairo_format_t  format,
+                                                 int             width,
+                                                 int             height);
 
   void         (* show)                 (GdkWindow       *window,
 					 gboolean         already_mapped);
@@ -98,9 +103,12 @@ struct _GdkWindowImplClass
                                          gint            *root_y);
   gboolean     (* get_device_state)     (GdkWindow       *window,
                                          GdkDevice       *device,
-                                         gint            *x,
-                                         gint            *y,
+                                         gdouble         *x,
+                                         gdouble         *y,
                                          GdkModifierType *mask);
+  gboolean    (* begin_paint_region)    (GdkWindow       *window,
+					 const cairo_region_t *region);
+  void        (* end_paint)             (GdkWindow       *window);
 
   cairo_region_t * (* get_shape)        (GdkWindow       *window);
   cairo_region_t * (* get_input_shape)  (GdkWindow       *window);
@@ -124,16 +132,6 @@ struct _GdkWindowImplClass
    */
   gboolean     (* queue_antiexpose)     (GdkWindow       *window,
 					 cairo_region_t  *update_area);
-
-  /* Called to move @area inside @window by @dx x @dy pixels. @area is 
-   * guaranteed to be inside @window. If part of @area is not invisible or
-   * invalid, it is this function's job to queue expose events in those 
-   * areas.
-   */
-  void         (* translate)            (GdkWindow       *window,
-					 cairo_region_t  *area,
-					 gint            dx,
-					 gint            dy);
 
 /* Called to do the windowing system specific part of gdk_window_destroy(),
  *
@@ -292,6 +290,11 @@ struct _GdkWindowImplClass
                                            gint            n_elements);
   void         (*delete_property)         (GdkWindow      *window,
                                            GdkAtom         property);
+
+  gint         (* get_scale_factor)       (GdkWindow      *window);
+
+  void         (* set_opaque_region)      (GdkWindow      *window,
+                                           cairo_region_t *region);
 };
 
 /* Interface Functions */

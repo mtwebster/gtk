@@ -9,9 +9,9 @@
 # set GTK_BINARY_AGE and GTK_INTERFACE_AGE to 0.
 
 m4_define([gtk_major_version], [3])
-m4_define([gtk_minor_version], [8])
-m4_define([gtk_micro_version], [7])
-m4_define([gtk_interface_age], [4])
+m4_define([gtk_minor_version], [10])
+m4_define([gtk_micro_version], [8])
+m4_define([gtk_interface_age], [8])
 m4_define([gtk_binary_age],
           [m4_eval(100 * gtk_minor_version + gtk_micro_version)])
 m4_define([gtk_version],
@@ -30,7 +30,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
 
 # Define a string for the earliest version that this release has
 # backwards binary compatibility with for all interfaces a module
@@ -42,10 +41,10 @@ AC_CANONICAL_TARGET
 m4_define([gtk_binary_version], [3.0.0])
 
 # required versions of other packages
-m4_define([glib_required_version], [2.35.3])
+m4_define([glib_required_version], [2.37.5])
 m4_define([pango_required_version], [1.32.4])
 m4_define([atk_required_version], [2.7.5])
-m4_define([cairo_required_version], [1.10.0])
+m4_define([cairo_required_version], [1.12.0])
 m4_define([gdk_pixbuf_required_version], [2.27.1])
 m4_define([introspection_required_version], [1.32.0])
 GLIB_REQUIRED_VERSION=glib_required_version
@@ -251,10 +250,11 @@ AC_ARG_ENABLE(debug,
                               [turn on debugging @<:@default=debug_default@:>@])],,
               [enable_debug=debug_default])
 
-AC_ARG_ENABLE(rebuilds,
-              [AS_HELP_STRING([--disable-rebuilds],
-                              [disable all source autogeneration rules])],,
-              [enable_rebuilds=yes])
+AC_ARG_ENABLE(installed_tests,
+              AS_HELP_STRING([--enable-installed-tests],
+                             [Install test programs (default: no)]),,
+              [enable_installed_tests=no])
+AM_CONDITIONAL(BUILDOPT_INSTALL_TESTS, test x$enable_installed_tests = xyes)
 
 AC_ARG_ENABLE(gtk2-dependency,
               [AS_HELP_STRING([--enable-gtk2-dependency],
@@ -314,6 +314,7 @@ if test -z "$backend_set"; then
     enable_win32_backend=yes
   else
     enable_x11_backend=yes
+    enable_wayland_backend=maybe
   fi
 fi
 
@@ -382,7 +383,9 @@ AC_SUBST(DISABLE_ON_QUARTZ)
 if test "x$enable_broadway_backend" = xyes; then
   GDK_BACKENDS="$GDK_BACKENDS broadway"
   cairo_backends="$cairo_backends cairo"
-  have_gio_unix=yes
+  if test "$os_unix" = "yes"; then
+    have_gio_unix=yes
+  fi
   GDK_WINDOWING="$GDK_WINDOWING
 #define GDK_WINDOWING_BROADWAY"
   GDK_EXTRA_LIBS="$GDK_EXTRA_LIBS -lz"
@@ -391,8 +394,23 @@ else
   AM_CONDITIONAL(USE_BROADWAY, false)
 fi
 
+PKG_PROG_PKG_CONFIG
+
+WAYLAND_DEPENDENCIES="wayland-client >= 1.2.0 xkbcommon >= 0.2.0 wayland-cursor"
+if test "$enable_wayland_backend" = "maybe" ; then
+  AC_PATH_PROG([WAYLAND_SCANNER],[wayland-scanner],[no])
+  PKG_CHECK_EXISTS($WAYLAND_DEPENDENCIES, [have_wayland_deps=yes], [have_wayland_deps=no])
+  AC_MSG_CHECKING([for WAYLAND_DEPENDENCIES])
+  if test "$WAYLAND_SCANNER" = "no" -o "$have_wayland_deps" = "no" ; then
+    enable_wayland_backend=no
+  else
+    enable_wayland_backend=yes
+  fi
+  AC_MSG_RESULT($enable_wayland_backend)
+fi
+
 DISABLE_ON_WAYLAND=''
-if test "x$enable_wayland_backend" = "xyes"; then
+if test "$enable_wayland_backend" = "yes"; then
   # For the cairo image backend
   cairo_backends="$cairo_backends cairo"
   GDK_BACKENDS="$GDK_BACKENDS wayland"
@@ -400,7 +418,12 @@ if test "x$enable_wayland_backend" = "xyes"; then
   GDK_WINDOWING="$GDK_WINDOWING
 #define GDK_WINDOWING_WAYLAND"
   DISABLE_ON_WAYLAND='%'
-  WAYLAND_PACKAGES="wayland-client >= 1.0.0 xkbcommon >= 0.2.0 wayland-cursor"
+  WAYLAND_PACKAGES="$WAYLAND_DEPENDENCIES"
+  AC_PATH_PROG([WAYLAND_SCANNER],[wayland-scanner],[no])
+  AS_IF([test "x$WAYLAND_SCANNER" = "xno"],
+    AC_MSG_ERROR([Could not find wayland-scanner in your PATH, required for parsing wayland extension protocols]))
+  AC_SUBST([WAYLAND_SCANNER])
+
   AM_CONDITIONAL(USE_WAYLAND, true)
 else
   AM_CONDITIONAL(USE_WAYLAND, false)
@@ -509,16 +532,6 @@ PKG_CHECK_MODULES(CAIRO_BACKEND, [$cairo_backends])
 
 PKG_CHECK_MODULES(GMODULE, [gmodule-2.0])
 
-if test "$os_win32" != yes; then
-    # libtool option to control which symbols are exported
-    # right now, symbols starting with _ are not exported
-    LIBTOOL_EXPORT_OPTIONS='-export-symbols-regex "^[[^_]].*"'
-else
-    # We currently use .def files on Windows (for gdk and gtk)
-    LIBTOOL_EXPORT_OPTIONS=
-fi
-AC_SUBST(LIBTOOL_EXPORT_OPTIONS)
-
 dnl ******************************************************
 dnl * See whether to include shared library dependencies *
 dnl ******************************************************
@@ -528,7 +541,7 @@ AC_ARG_ENABLE(explicit-deps,
                               [use explicit dependencies in .pc files [default=auto]])],,
               [enable_explicit_deps=auto])
 
-AC_MSG_CHECKING([Whether to write dependencies into .pc files])
+AC_MSG_CHECKING([whether to write dependencies into .pc files])
 case $enable_explicit_deps in
   auto)
     export SED
@@ -552,17 +565,6 @@ AM_CONDITIONAL(DISABLE_EXPLICIT_DEPS, test $enable_explicit_deps = no)
 # and awk are found, so autogenerated sources can be rebuilt
 
 AC_PATH_PROGS(PERL, perl5 perl)
-
-# We would like indent, but don't require it.
-AC_CHECK_PROG(INDENT, indent, indent)
-
-REBUILD=\#
-if test "x$enable_rebuilds" = "xyes" && \
-     test -n "$PERL" && \
-     $PERL -e 'exit !($] >= 5.002)' > /dev/null 2>&1 ; then
-  REBUILD=
-fi
-AC_SUBST(REBUILD)
 
 AC_CHECK_FUNCS(lstat mkstemp)
 AC_CHECK_FUNCS(localtime_r)
@@ -705,6 +707,12 @@ AM_PATH_GLIB_2_0(glib_required_version, :,
 *** GLIB is always available from ftp://ftp.gtk.org/pub/gtk/.]),
   gobject gmodule-no-export)
 
+PKG_PROG_PKG_CONFIG_FOR_BUILD
+GLIB_CFLAGS_FOR_BUILD=`$PKG_CONFIG_FOR_BUILD --cflags glib-2.0 gobject-2.0 gmodule-no-export-2.0`
+GLIB_LIBS_FOR_BUILD=`$PKG_CONFIG_FOR_BUILD --libs glib-2.0 gobject-2.0 gmodule-no-export-2.0`
+AC_SUBST(GLIB_CFLAGS_FOR_BUILD)
+AC_SUBST(GLIB_LIBS_FOR_BUILD)
+
 dnl Check for bind_textdomain_codeset, including -lintl if GLib brings it in.
 dnl
 gtk_save_LIBS=$LIBS
@@ -715,6 +723,9 @@ LIBS=$gtk_save_LIBS
 AC_CHECK_HEADERS(pwd.h,
                  AC_DEFINE(HAVE_PWD_H, 1,
                            [Define to 1 if pwd.h is available]))
+AC_CHECK_HEADERS(sys/mman.h,
+                 AC_DEFINE(HAVE_SYS_MMAN_H, 1,
+                           [Define to 1 if mman.h is available]))
 AC_CHECK_HEADERS(sys/time.h,
                  AC_DEFINE(HAVE_SYS_TIME_H, 1,
                            [Define to 1 if time.h is available]))
@@ -1087,13 +1098,14 @@ if test "x$enable_x11_backend" = xyes; then
       case "$host" in
         *-*-solaris*)
             # Check for solaris
-	    AC_MSG_CHECKING(for Xinerama support on Solaris)
 
 	    have_solaris_xinerama=false
 	    AC_CHECK_FUNC(XineramaGetInfo,
 	        [AC_CHECK_HEADER(X11/extensions/xinerama.h,
 		    [have_solaris_xinerama=true], :,
 		    [#include <X11/Xlib.h>])])
+
+	    AC_MSG_CHECKING(for Xinerama support on Solaris)
 
             if $have_solaris_xinerama ; then
               X_EXTENSIONS="$X_EXTENSIONS Xinerama"
@@ -1272,6 +1284,17 @@ else
 *** GTK+. For more information see http://www.pango.org]))
         LIBS="$gtk_save_LIBS"
 fi
+
+# Check for cairo_set_device_scale, as we don't want to depend hard on
+# this until there is a stable release with it
+CAIRO_CFLAGS=`$PKG_CONFIG --cflags cairo`
+CAIRO_LIBS=`$PKG_CONFIG --libs cairo`
+CFLAGS="$CFLAGS $CAIRO_CFLAGS"
+gtk_save_LIBS="$LIBS"
+LIBS="$CAIRO_LIBS $LIBS"
+AC_CHECK_FUNCS(cairo_surface_set_device_scale)
+LIBS="$gtk_save_LIBS"
+
 
 CFLAGS="$saved_cflags"
 LDFLAGS="$saved_ldflags"
@@ -1676,6 +1699,39 @@ else
 fi
 
 ##################################################
+# Visibility handling
+##################################################
+
+GDK_HIDDEN_VISIBILITY_CFLAGS=""
+case "$host" in
+  *-*-mingw*)
+    dnl on mingw32 we do -fvisibility=hidden and __declspec(dllexport)
+    AC_DEFINE([_GDK_EXTERN], [__attribute__((visibility("default"))) __declspec(dllexport) extern],
+              [defines how to decorate public symbols while building])
+    CFLAGS="${CFLAGS} -fvisibility=hidden"
+    ;;
+  *)
+    dnl on other compilers, check if we can do -fvisibility=hidden
+    SAVED_CFLAGS="${CFLAGS}"
+    CFLAGS="-fvisibility=hidden"
+    AC_MSG_CHECKING([for -fvisibility=hidden compiler flag])
+    AC_TRY_COMPILE([], [int main (void) { return 0; }],
+                   AC_MSG_RESULT(yes)
+                   enable_fvisibility_hidden=yes,
+                   AC_MSG_RESULT(no)
+                   enable_fvisibility_hidden=no)
+    CFLAGS="${SAVED_CFLAGS}"
+
+    AS_IF([test "${enable_fvisibility_hidden}" = "yes"], [
+      AC_DEFINE([_GDK_EXTERN], [__attribute__((visibility("default"))) extern],
+                [defines how to decorate public symbols while building])
+      GDK_HIDDEN_VISIBILITY_CFLAGS="-fvisibility=hidden"
+    ])
+    ;;
+esac
+AC_SUBST(GDK_HIDDEN_VISIBILITY_CFLAGS)
+
+##################################################
 # Output commands
 ##################################################
 
@@ -1762,12 +1818,24 @@ demos/gtk-demo/geninclude.pl
 demos/pixbuf-demo/Makefile
 demos/widget-factory/Makefile
 examples/Makefile
+examples/application1/Makefile
+examples/application2/Makefile
+examples/application3/Makefile
+examples/application4/Makefile
+examples/application5/Makefile
+examples/application6/Makefile
+examples/application7/Makefile
+examples/application8/Makefile
+examples/application9/Makefile
 tests/Makefile
-tests/a11y/Makefile
-tests/css/Makefile
-tests/css/parser/Makefile
-tests/reftests/Makefile
 tests/visuals/Makefile
+testsuite/Makefile
+testsuite/a11y/Makefile
+testsuite/css/Makefile
+testsuite/css/parser/Makefile
+testsuite/gdk/Makefile
+testsuite/gtk/Makefile
+testsuite/reftests/Makefile
 docs/Makefile
 docs/reference/Makefile
 docs/reference/gdk/Makefile
@@ -1780,6 +1848,7 @@ docs/reference/libgail-util/version.xml
 docs/tools/Makefile
 build/Makefile
 build/win32/Makefile
+build/win32/crypt/Makefile
 build/win32/vs9/Makefile
 build/win32/vs10/Makefile
 gdk/Makefile
@@ -1790,7 +1859,6 @@ gdk/win32/rc/Makefile
 gdk/win32/rc/gdk.rc
 gdk/quartz/Makefile
 gdk/wayland/Makefile
-gdk/tests/Makefile
 gdk/gdkversionmacros.h
 gtk/Makefile
 gtk/makefile.msc
@@ -1798,7 +1866,6 @@ gtk/gtkversion.h
 gtk/gtk-win32.rc
 gtk/a11y/Makefile
 gtk/native/Makefile
-gtk/tests/Makefile
 libgail-util/Makefile
 modules/Makefile
 modules/engines/Makefile
@@ -1810,7 +1877,6 @@ modules/printbackends/lpr/Makefile
 modules/printbackends/file/Makefile
 modules/printbackends/papi/Makefile
 modules/printbackends/test/Makefile
-perf/Makefile
 ])
 
 AC_OUTPUT

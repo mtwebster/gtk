@@ -30,8 +30,8 @@
 #include "gtklabel.h"
 #include "gtkmain.h"
 #include "gtkmarshalers.h"
-#include "gtktoggleaction.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtktoggleaction.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkprivate.h"
 #include "gtkintl.h"
 #include "a11y/gtktogglebuttonaccessible.h"
@@ -139,9 +139,12 @@ static void gtk_toggle_button_sync_action_properties (GtkActivatable       *acti
 static GtkActivatableIface *parent_activatable_iface;
 static guint                toggle_button_signals[LAST_SIGNAL] = { 0 };
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
 G_DEFINE_TYPE_WITH_CODE (GtkToggleButton, gtk_toggle_button, GTK_TYPE_BUTTON,
+                         G_ADD_PRIVATE (GtkToggleButton)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_ACTIVATABLE,
 						gtk_toggle_button_activatable_interface_init))
+G_GNUC_END_IGNORE_DEPRECATIONS;
 
 static void
 gtk_toggle_button_class_init (GtkToggleButtonClass *class)
@@ -207,23 +210,16 @@ gtk_toggle_button_class_init (GtkToggleButtonClass *class)
 		  _gtk_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
 
-  g_type_class_add_private (class, sizeof (GtkToggleButtonPrivate));
-
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_TOGGLE_BUTTON_ACCESSIBLE);
 }
 
 static void
 gtk_toggle_button_init (GtkToggleButton *toggle_button)
 {
-  GtkToggleButtonPrivate *priv;
+  toggle_button->priv = gtk_toggle_button_get_instance_private (toggle_button);
+  toggle_button->priv->active = FALSE;
+  toggle_button->priv->draw_indicator = FALSE;
 
-  toggle_button->priv = G_TYPE_INSTANCE_GET_PRIVATE (toggle_button,
-                                                     GTK_TYPE_TOGGLE_BUTTON,
-                                                     GtkToggleButtonPrivate);
-  priv = toggle_button->priv;
-
-  priv->active = FALSE;
-  priv->draw_indicator = FALSE;
   GTK_BUTTON (toggle_button)->priv->depress_on_activate = TRUE;
 }
 
@@ -248,9 +244,11 @@ gtk_toggle_button_update (GtkActivatable *activatable,
 
   if (strcmp (property_name, "active") == 0)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_action_block_activate (action);
       gtk_toggle_button_set_active (button, gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
       gtk_action_unblock_activate (action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 
 }
@@ -260,17 +258,24 @@ gtk_toggle_button_sync_action_properties (GtkActivatable *activatable,
 				          GtkAction      *action)
 {
   GtkToggleButton *button;
+  gboolean is_toggle_action;
 
   parent_activatable_iface->sync_action_properties (activatable, action);
 
-  if (!GTK_IS_TOGGLE_ACTION (action))
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+  is_toggle_action = GTK_IS_TOGGLE_ACTION (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
+  if (!is_toggle_action)
     return;
 
   button = GTK_TOGGLE_BUTTON (activatable);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_action_block_activate (action);
   gtk_toggle_button_set_active (button, gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)));
   gtk_action_unblock_activate (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 }
 
 /**

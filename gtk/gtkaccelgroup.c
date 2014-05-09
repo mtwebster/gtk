@@ -87,7 +87,7 @@ enum {
   PROP_MODIFIER_MASK,
 };
 
-G_DEFINE_TYPE (GtkAccelGroup, gtk_accel_group, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkAccelGroup, gtk_accel_group, G_TYPE_OBJECT)
 
 /* --- functions --- */
 static void
@@ -167,8 +167,6 @@ gtk_accel_group_class_init (GtkAccelGroupClass *class)
                   G_TYPE_UINT,
                   GDK_TYPE_MODIFIER_TYPE,
                   G_TYPE_CLOSURE);
-
-  g_type_class_add_private (object_class, sizeof (GtkAccelGroupPrivate));
 }
 
 static void
@@ -225,9 +223,7 @@ gtk_accel_group_init (GtkAccelGroup *accel_group)
 {
   GtkAccelGroupPrivate *priv;
 
-  accel_group->priv = G_TYPE_INSTANCE_GET_PRIVATE (accel_group,
-                                                   GTK_TYPE_ACCEL_GROUP,
-                                                   GtkAccelGroupPrivate);
+  accel_group->priv = gtk_accel_group_get_instance_private (accel_group);
   priv = accel_group->priv;
 
   priv->lock_count = 0;
@@ -822,7 +818,7 @@ _gtk_accel_group_get_accelerables (GtkAccelGroup *accel_group)
  * @accel_group: the accelerator group to query
  * @accel_key: key value of the accelerator
  * @accel_mods: modifier combination of the accelerator
- * @n_entries: (allow-none): location to return the number
+ * @n_entries: (out) (allow-none): location to return the number
  *     of entries found, or %NULL
  *
  * Queries an accelerator group for all entries matching @accel_key
@@ -1177,8 +1173,8 @@ is_keycode (const gchar *string)
  * @accelerator: string representing an accelerator
  * @accelerator_key: (out) (allow-none): return location for accelerator
  *     keyval, or %NULL
- * @accelerator_codes: (out) (allow-none): return location for accelerator
- *     keycodes, or %NULL
+ * @accelerator_codes: (out) (array zero-terminated=1) (transfer full) (allow-none):
+ *     return location for accelerator keycodes, or %NULL
  * @accelerator_mods: (out) (allow-none): return location for accelerator
  *     modifier mask, %NULL
  *
@@ -1186,6 +1182,9 @@ is_keycode (const gchar *string)
  * gtk_accelerator_parse() but handles keycodes as well. This is only
  * useful for system-level components, applications should use
  * gtk_accelerator_parse() instead.
+ *
+ * If @accelerator_codes is given and the result stored in it is non-%NULL,
+ * the result must be freed with g_free().
  *
  * If a keycode is present in the accelerator and no @accelerator_codes
  * is given, the parse will fail.

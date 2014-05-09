@@ -41,8 +41,7 @@ typedef struct _GtkCellRendererAccelClass         GtkCellRendererAccelClass;
 typedef enum
 {
   GTK_CELL_RENDERER_ACCEL_MODE_GTK,
-  GTK_CELL_RENDERER_ACCEL_MODE_OTHER,
-  GTK_CELL_RENDERER_ACCEL_MODE_MODIFIER_TAP
+  GTK_CELL_RENDERER_ACCEL_MODE_OTHER
 } GtkCellRendererAccelMode;
 
 
@@ -75,7 +74,9 @@ struct _GtkCellRendererAccelClass
   void (*_gtk_reserved4) (void);
 };
 
+GDK_AVAILABLE_IN_ALL
 GType            gtk_cell_renderer_accel_get_type        (void) G_GNUC_CONST;
+GDK_AVAILABLE_IN_ALL
 GtkCellRenderer *gtk_cell_renderer_accel_new             (void);
 
 

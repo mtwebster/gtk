@@ -36,11 +36,11 @@
 #include "gtkcombobox.h"
 #include "gtkdnd.h"
 #include "gtkicontheme.h"
-#include "gtkiconfactory.h"
+#include "deprecated/gtkiconfactory.h"
 #include "gtkimage.h"
 #include "gtklabel.h"
 #include "gtkliststore.h"
-#include "gtkstock.h"
+#include "deprecated/gtkstock.h"
 #include "gtktreemodelfilter.h"
 #include "gtkseparator.h"
 #include "gtkfilechooserdialog.h"
@@ -89,7 +89,7 @@
  *
  * <important>
  * The #GtkFileChooserButton will ellipsize the label,
- * and thus will thus request little horizontal space.  To give the button
+ * and will thus request little horizontal space.  To give the button
  * more space, you should call gtk_widget_get_preferred_size(),
  * gtk_file_chooser_button_set_width_chars(), or pack the button in
  * such a way that other interface elements give space to the widget.
@@ -104,7 +104,6 @@
 #define DEFAULT_TITLE		N_("Select a File")
 #define DESKTOP_DISPLAY_NAME	N_("Desktop")
 #define FALLBACK_DISPLAY_NAME	N_("(None)") /* this string is used in gtk+/gtk/tests/filechooser.c - change it there if you change it here */
-#define FALLBACK_ICON_NAME	"stock_unknown"
 #define FALLBACK_ICON_SIZE	16
 
 
@@ -130,7 +129,10 @@ enum
   LAST_SIGNAL
 };
 
-/* TreeModel Columns */
+/* TreeModel Columns
+ *
+ * keep in line with the store defined in gtkfilechooserbutton.ui
+ */
 enum
 {
   ICON_COLUMN,
@@ -182,13 +184,13 @@ struct _GtkFileChooserButtonPrivate
   GFile *selection_while_inactive;
   GFile *current_folder_while_inactive;
 
-  gulong combo_box_changed_id;
   gulong fs_volumes_changed_id;
-  gulong fs_bookmarks_changed_id;
 
   GCancellable *dnd_select_folder_cancellable;
   GCancellable *update_button_cancellable;
   GSList *change_icon_theme_cancellables;
+
+  GtkBookmarksManager *bookmarks_manager;
 
   gint icon_size;
 
@@ -321,8 +323,7 @@ static void          update_label_and_image       (GtkFileChooserButton *button)
 /* Child Object Callbacks */
 static void     fs_volumes_changed_cb            (GtkFileSystem  *fs,
 						  gpointer        user_data);
-static void     fs_bookmarks_changed_cb          (GtkFileSystem  *fs,
-						  gpointer        user_data);
+static void     bookmarks_changed_cb             (gpointer        user_data);
 
 static void     combo_box_changed_cb             (GtkComboBox    *combo_box,
 						  gpointer        user_data);
@@ -351,9 +352,10 @@ static guint file_chooser_button_signals[LAST_SIGNAL] = { 0 };
  *  GType Declaration  *
  * ******************* */
 
-G_DEFINE_TYPE_WITH_CODE (GtkFileChooserButton, gtk_file_chooser_button, GTK_TYPE_BOX, { \
-    G_IMPLEMENT_INTERFACE (GTK_TYPE_FILE_CHOOSER, gtk_file_chooser_button_file_chooser_iface_init) \
-})
+G_DEFINE_TYPE_WITH_CODE (GtkFileChooserButton, gtk_file_chooser_button, GTK_TYPE_BOX,
+                         G_ADD_PRIVATE (GtkFileChooserButton)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_FILE_CHOOSER,
+                                                gtk_file_chooser_button_file_chooser_iface_init))
 
 
 /* ***************** *
@@ -465,94 +467,42 @@ gtk_file_chooser_button_class_init (GtkFileChooserButtonClass * class)
 
   _gtk_file_chooser_install_properties (gobject_class);
 
-  g_type_class_add_private (class, sizeof (GtkFileChooserButtonPrivate));
+  /* Bind class to template
+   */
+  gtk_widget_class_set_template_from_resource (widget_class,
+					       "/org/gtk/libgtk/gtkfilechooserbutton.ui");
+
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, model);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, button);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, image);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, label);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, combo_box);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, icon_cell);
+  gtk_widget_class_bind_template_child_private (widget_class, GtkFileChooserButton, name_cell);
+
+  gtk_widget_class_bind_template_callback (widget_class, button_clicked_cb);
+  gtk_widget_class_bind_template_callback (widget_class, combo_box_changed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, combo_box_notify_popup_shown_cb);
 }
 
 static void
 gtk_file_chooser_button_init (GtkFileChooserButton *button)
 {
   GtkFileChooserButtonPrivate *priv;
-  GtkWidget *box, *image, *sep;
   GtkTargetList *target_list;
 
-  priv = button->priv = G_TYPE_INSTANCE_GET_PRIVATE (button,
-                                                     GTK_TYPE_FILE_CHOOSER_BUTTON,
-                                                     GtkFileChooserButtonPrivate);
+  priv = button->priv = gtk_file_chooser_button_get_instance_private (button);
 
   priv->icon_size = FALLBACK_ICON_SIZE;
   priv->focus_on_click = TRUE;
 
-  gtk_widget_push_composite_child ();
+  gtk_widget_init_template (GTK_WIDGET (button));
 
-  /* Button */
-  priv->button = gtk_button_new ();
-  g_signal_connect (priv->button, "clicked",
-                    G_CALLBACK (button_clicked_cb), button);
-  gtk_box_pack_start (GTK_BOX (button), priv->button, TRUE, TRUE, 0);
-  gtk_widget_set_halign (priv->button, GTK_ALIGN_FILL);
-  gtk_widget_show (priv->button);
-
-  box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 4);
-  gtk_container_add (GTK_CONTAINER (priv->button), box);
-  gtk_widget_show (box);
-
-  priv->image = gtk_image_new ();
-  gtk_box_pack_start (GTK_BOX (box), priv->image, FALSE, FALSE, 0);
-  gtk_widget_show (priv->image);
-
-  priv->label = gtk_label_new (_(FALLBACK_DISPLAY_NAME));
-  gtk_label_set_ellipsize (GTK_LABEL (priv->label), PANGO_ELLIPSIZE_END);
-  gtk_widget_set_halign (priv->label, GTK_ALIGN_START);
-  gtk_widget_set_valign (priv->label, GTK_ALIGN_CENTER);
-  gtk_box_pack_start (GTK_BOX (box), priv->label, TRUE, TRUE, 0);
-  //gtk_container_add (GTK_CONTAINER (box), priv->label);
-  gtk_widget_show (priv->label);
-
-  sep = gtk_separator_new (GTK_ORIENTATION_VERTICAL);
-  gtk_box_pack_start (GTK_BOX (box), sep, FALSE, FALSE, 0);
-  gtk_widget_show (sep);
-
-  image = gtk_image_new_from_stock (GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU);
-  gtk_box_pack_start (GTK_BOX (box), image, FALSE, FALSE, 0);
-  gtk_widget_show (image);
-
-  /* Combo Box */
-  /* Keep in sync with columns enum, line 88 */
-  priv->model =
-    GTK_TREE_MODEL (gtk_list_store_new (NUM_COLUMNS,
-					GDK_TYPE_PIXBUF, /* ICON_COLUMN */
-					G_TYPE_STRING,	 /* DISPLAY_NAME_COLUMN */
-					G_TYPE_CHAR,	 /* TYPE_COLUMN */
-					G_TYPE_POINTER	 /* DATA_COLUMN (Volume || Path) */,
-					G_TYPE_BOOLEAN   /* IS_FOLDER_COLUMN */,
-					G_TYPE_POINTER	 /* CANCELLABLE_COLUMN */));
-
-  priv->combo_box = gtk_combo_box_new ();
-  priv->combo_box_changed_id = g_signal_connect (priv->combo_box, "changed",
-						 G_CALLBACK (combo_box_changed_cb), button);
-
-  g_signal_connect (priv->combo_box, "notify::popup-shown",
-		    G_CALLBACK (combo_box_notify_popup_shown_cb), button);
-
-  gtk_box_pack_start (GTK_BOX (button), priv->combo_box, TRUE, TRUE, 0);
-  gtk_widget_set_halign (priv->combo_box, GTK_ALIGN_FILL);
-
-  priv->icon_cell = gtk_cell_renderer_pixbuf_new ();
-  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (priv->combo_box),
-			      priv->icon_cell, FALSE);
-  gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (priv->combo_box),
-				 priv->icon_cell, "pixbuf", ICON_COLUMN);
-
-  priv->name_cell = gtk_cell_renderer_text_new ();
-  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (priv->combo_box),
-			      priv->name_cell, TRUE);
-  gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (priv->combo_box),
-				 priv->name_cell, "text", DISPLAY_NAME_COLUMN);
+  /* Bookmarks manager */
+  priv->bookmarks_manager = _gtk_bookmarks_manager_new (bookmarks_changed_cb, button);
   gtk_cell_layout_set_cell_data_func (GTK_CELL_LAYOUT (priv->combo_box),
 				      priv->name_cell, name_cell_data_func,
 				      NULL, NULL);
-
-  gtk_widget_pop_composite_child ();
 
   /* DnD */
   gtk_drag_dest_set (GTK_WIDGET (button),
@@ -852,9 +802,9 @@ gtk_file_chooser_button_constructor (GType                  type,
     {
       priv->dialog = gtk_file_chooser_dialog_new (NULL, NULL,
 						  GTK_FILE_CHOOSER_ACTION_OPEN,
-						  GTK_STOCK_CANCEL,
+						  _("_Cancel"),
 						  GTK_RESPONSE_CANCEL,
-						  GTK_STOCK_OPEN,
+						  _("_Open"),
 						  GTK_RESPONSE_ACCEPT,
 						  NULL);
 
@@ -897,7 +847,7 @@ gtk_file_chooser_button_constructor (GType                  type,
   model_add_volumes (button, list);
   g_slist_free (list);
 
-  list = _gtk_file_system_list_bookmarks (priv->fs);
+  list = _gtk_bookmarks_manager_list_bookmarks (priv->bookmarks_manager);
   model_add_bookmarks (button, list);
   g_slist_foreach (list, (GFunc) g_object_unref, NULL);
   g_slist_free (list);
@@ -926,9 +876,6 @@ gtk_file_chooser_button_constructor (GType                  type,
   priv->fs_volumes_changed_id =
     g_signal_connect (priv->fs, "volumes-changed",
 		      G_CALLBACK (fs_volumes_changed_cb), object);
-  priv->fs_bookmarks_changed_id =
-    g_signal_connect (priv->fs, "bookmarks-changed",
-		      G_CALLBACK (fs_bookmarks_changed_cb), object);
 
   update_label_and_image (button);
   update_combo_box (button);
@@ -1012,7 +959,7 @@ gtk_file_chooser_button_set_property (GObject      *object,
     case GTK_FILE_CHOOSER_PROP_LOCAL_ONLY:
       g_object_set_property (G_OBJECT (priv->dialog), pspec->name, value);
       fs_volumes_changed_cb (priv->fs, button);
-      fs_bookmarks_changed_cb (priv->fs, button);
+      bookmarks_changed_cb (button);
       break;
 
     case GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE:
@@ -1128,12 +1075,6 @@ gtk_file_chooser_button_destroy (GtkWidget *widget)
       priv->change_icon_theme_cancellables = NULL;
     }
 
-  if (priv->model)
-    {
-      g_object_unref (priv->model);
-      priv->model = NULL;
-    }
-
   if (priv->filter_model)
     {
       g_object_unref (priv->filter_model);
@@ -1143,9 +1084,14 @@ gtk_file_chooser_button_destroy (GtkWidget *widget)
   if (priv->fs)
     {
       g_signal_handler_disconnect (priv->fs, priv->fs_volumes_changed_id);
-      g_signal_handler_disconnect (priv->fs, priv->fs_bookmarks_changed_id);
       g_object_unref (priv->fs);
       priv->fs = NULL;
+    }
+
+  if (priv->bookmarks_manager)
+    {
+      _gtk_bookmarks_manager_free (priv->bookmarks_manager);
+      priv->bookmarks_manager = NULL;
     }
 
   GTK_WIDGET_CLASS (gtk_file_chooser_button_parent_class)->destroy (widget);
@@ -1372,7 +1318,7 @@ change_icon_theme_get_info_cb (GCancellable *cancellable,
 			       gpointer      user_data)
 {
   gboolean cancelled = g_cancellable_is_cancelled (cancellable);
-  GdkPixbuf *pixbuf;
+  cairo_surface_t *surface;
   struct ChangeIconThemeData *data = user_data;
 
   if (!g_slist_find (data->button->priv->change_icon_theme_cancellables, cancellable))
@@ -1384,15 +1330,15 @@ change_icon_theme_get_info_cb (GCancellable *cancellable,
   if (cancelled || error)
     goto out;
 
-  pixbuf = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
+  surface = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
 
-  if (pixbuf)
+  if (surface)
     {
       gint width = 0;
       GtkTreeIter iter;
       GtkTreePath *path;
 
-      width = MAX (width, gdk_pixbuf_get_width (pixbuf));
+      width = MAX (width, data->button->priv->icon_size);
 
       path = gtk_tree_row_reference_get_path (data->row_ref);
       if (path)
@@ -1401,14 +1347,14 @@ change_icon_theme_get_info_cb (GCancellable *cancellable,
           gtk_tree_path_free (path);
 
           gtk_list_store_set (GTK_LIST_STORE (data->button->priv->model), &iter,
-	  		      ICON_COLUMN, pixbuf,
+	  		      ICON_COLUMN, surface,
 			      -1);
 
           g_object_set (data->button->priv->icon_cell,
 		        "width", width,
 		        NULL);
         }
-      g_object_unref (pixbuf);
+      cairo_surface_destroy (surface);
     }
 
 out:
@@ -1423,7 +1369,6 @@ static void
 change_icon_theme (GtkFileChooserButton *button)
 {
   GtkFileChooserButtonPrivate *priv = button->priv;
-  GtkSettings *settings;
   GtkIconTheme *theme;
   GtkTreeIter iter;
   GSList *l;
@@ -1437,10 +1382,7 @@ change_icon_theme (GtkFileChooserButton *button)
   g_slist_free (button->priv->change_icon_theme_cancellables);
   button->priv->change_icon_theme_cancellables = NULL;
 
-  settings = gtk_settings_get_for_screen (gtk_widget_get_screen (GTK_WIDGET (button)));
-
-  if (gtk_icon_size_lookup_for_settings (settings, GTK_ICON_SIZE_MENU,
-					 &width, &height))
+  if (gtk_icon_size_lookup (GTK_ICON_SIZE_MENU, &width, &height))
     priv->icon_size = MAX (width, height);
   else
     priv->icon_size = FALLBACK_ICON_SIZE;
@@ -1453,7 +1395,7 @@ change_icon_theme (GtkFileChooserButton *button)
 
   do
     {
-      GdkPixbuf *pixbuf;
+      cairo_surface_t *surface = NULL;
       gchar type;
       gpointer data;
 
@@ -1490,45 +1432,47 @@ change_icon_theme (GtkFileChooserButton *button)
 					       info);
 		  button->priv->change_icon_theme_cancellables =
 		    g_slist_append (button->priv->change_icon_theme_cancellables, cancellable);
-		  pixbuf = NULL;
+		  surface = NULL;
 		}
 	      else
-		/* Don't call get_info for remote paths to avoid latency and
-		 * auth dialogs.
-		 * If we switch to a better bookmarks file format (XBEL), we
-		 * should use mime info to get a better icon.
-		 */
-		pixbuf = gtk_icon_theme_load_icon (theme, "folder-remote",
-						   priv->icon_size, 0, NULL);
+                {
+                  /* Don't call get_info for remote paths to avoid latency and
+                   * auth dialogs.
+                   * If we switch to a better bookmarks file format (XBEL), we
+                   * should use mime info to get a better icon.
+                   */
+                  surface = gtk_icon_theme_load_surface (theme, "folder-remote",
+                                                         priv->icon_size, 
+                                                         gtk_widget_get_scale_factor (GTK_WIDGET (button)),
+                                                         gtk_widget_get_window (GTK_WIDGET (button)),
+                                                         0, NULL);
+                }
 	    }
-	  else
-	    pixbuf = gtk_icon_theme_load_icon (theme, FALLBACK_ICON_NAME,
-					       priv->icon_size, 0, NULL);
 	  break;
 	case ROW_TYPE_VOLUME:
 	  if (data)
-	    pixbuf = _gtk_file_system_volume_render_icon (data,
-							  GTK_WIDGET (button),
-							  priv->icon_size,
-							  NULL);
-	  else
-	    pixbuf = gtk_icon_theme_load_icon (theme, FALLBACK_ICON_NAME,
-					       priv->icon_size, 0, NULL);
+            {
+              surface = _gtk_file_system_volume_render_icon (data,
+                                                             GTK_WIDGET (button),
+                                                             priv->icon_size,
+                                                             NULL);
+            }
+
 	  break;
 	default:
 	  continue;
 	  break;
 	}
 
-      if (pixbuf)
-	width = MAX (width, gdk_pixbuf_get_width (pixbuf));
+      if (surface)
+	width = MAX (width, priv->icon_size);
 
       gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
-			  ICON_COLUMN, pixbuf,
+			  ICON_COLUMN, surface,
 			  -1);
 
-      if (pixbuf)
-	g_object_unref (pixbuf);
+      if (surface)
+	cairo_surface_destroy (surface);
     }
   while (gtk_tree_model_iter_next (priv->model, &iter));
 
@@ -1587,7 +1531,7 @@ set_info_get_info_cb (GCancellable *cancellable,
 		      gpointer      callback_data)
 {
   gboolean cancelled = g_cancellable_is_cancelled (cancellable);
-  GdkPixbuf *pixbuf;
+  cairo_surface_t *surface;
   GtkTreePath *path;
   GtkTreeIter iter;
   GCancellable *model_cancellable = NULL;
@@ -1621,7 +1565,7 @@ set_info_get_info_cb (GCancellable *cancellable,
     /* There was an error, leave the fallback name in there */
     goto out;
 
-  pixbuf = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
+  surface = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
 
   if (!data->label)
     data->label = g_strdup (g_file_info_get_display_name (info));
@@ -1629,13 +1573,13 @@ set_info_get_info_cb (GCancellable *cancellable,
   is_folder = _gtk_file_info_consider_as_directory (info);
 
   gtk_list_store_set (GTK_LIST_STORE (data->button->priv->model), &iter,
-		      ICON_COLUMN, pixbuf,
+		      ICON_COLUMN, surface,
 		      DISPLAY_NAME_COLUMN, data->label,
 		      IS_FOLDER_COLUMN, is_folder,
 		      -1);
 
-  if (pixbuf)
-    g_object_unref (pixbuf);
+  if (surface)
+    cairo_surface_destroy (surface);
 
 out:
   g_object_unref (data->button);
@@ -1658,7 +1602,7 @@ set_info_for_file_at_iter (GtkFileChooserButton *button,
 
   data = g_new0 (struct SetDisplayNameData, 1);
   data->button = g_object_ref (button);
-  data->label = _gtk_file_system_get_bookmark_label (button->priv->fs, file);
+  data->label = _gtk_bookmarks_manager_get_bookmark_label (button->priv->bookmarks_manager, file);
 
   tree_path = gtk_tree_model_get_path (button->priv->model, iter);
   data->row_ref = gtk_tree_row_reference_new (button->priv->model, tree_path);
@@ -1777,7 +1721,7 @@ model_add_special_get_info_cb (GCancellable *cancellable,
   gboolean cancelled = g_cancellable_is_cancelled (cancellable);
   GtkTreeIter iter;
   GtkTreePath *path;
-  GdkPixbuf *pixbuf;
+  cairo_surface_t *surface;
   GCancellable *model_cancellable = NULL;
   struct ChangeIconThemeData *data = user_data;
   gchar *name;
@@ -1807,14 +1751,13 @@ model_add_special_get_info_cb (GCancellable *cancellable,
   if (cancelled || error)
     goto out;
 
-  pixbuf = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
-
-  if (pixbuf)
+  surface = _gtk_file_info_render_icon (info, GTK_WIDGET (data->button), data->button->priv->icon_size);
+  if (surface)
     {
       gtk_list_store_set (GTK_LIST_STORE (data->button->priv->model), &iter,
-			  ICON_COLUMN, pixbuf,
+			  ICON_COLUMN, surface,
 			  -1);
-      g_object_unref (pixbuf);
+      cairo_surface_destroy (surface);
     }
 
   gtk_tree_model_get (data->button->priv->model, &iter,
@@ -1942,7 +1885,7 @@ model_add_volumes (GtkFileChooserButton *button,
     {
       GtkFileSystemVolume *volume;
       GtkTreeIter iter;
-      GdkPixbuf *pixbuf;
+      cairo_surface_t *surface;
       gchar *display_name;
 
       volume = l->data;
@@ -1967,23 +1910,23 @@ model_add_volumes (GtkFileChooserButton *button,
             }
         }
 
-      pixbuf = _gtk_file_system_volume_render_icon (volume,
-                                                    GTK_WIDGET (button),
-                                                    button->priv->icon_size,
-                                                    NULL);
+      surface = _gtk_file_system_volume_render_icon (volume,
+                                                     GTK_WIDGET (button),
+                                                     button->priv->icon_size,
+                                                     NULL);
       display_name = _gtk_file_system_volume_get_display_name (volume);
 
       gtk_list_store_insert (store, &iter, pos);
       gtk_list_store_set (store, &iter,
-                          ICON_COLUMN, pixbuf,
+                          ICON_COLUMN, surface,
                           DISPLAY_NAME_COLUMN, display_name,
                           TYPE_COLUMN, ROW_TYPE_VOLUME,
                           DATA_COLUMN, _gtk_file_system_volume_ref (volume),
                           IS_FOLDER_COLUMN, TRUE,
                           -1);
 
-      if (pixbuf)
-        g_object_unref (pixbuf);
+      if (surface)
+        cairo_surface_destroy (surface);
       g_free (display_name);
 
       button->priv->n_volumes++;
@@ -2032,7 +1975,7 @@ model_add_bookmarks (GtkFileChooserButton *button,
 	{
 	  gchar *label;
 	  GtkIconTheme *icon_theme;
-	  GdkPixbuf *pixbuf;
+	  cairo_surface_t *surface = NULL;
 
 	  if (local_only)
 	    continue;
@@ -2042,17 +1985,20 @@ model_add_bookmarks (GtkFileChooserButton *button,
 	   * If we switch to a better bookmarks file format (XBEL), we
 	   * should use mime info to get a better icon.
 	   */
-	  label = _gtk_file_system_get_bookmark_label (button->priv->fs, file);
+	  label = _gtk_bookmarks_manager_get_bookmark_label (button->priv->bookmarks_manager, file);
 	  if (!label)
 	    label = _gtk_file_chooser_label_for_file (file);
 
 	  icon_theme = gtk_icon_theme_get_for_screen (gtk_widget_get_screen (GTK_WIDGET (button)));
-	  pixbuf = gtk_icon_theme_load_icon (icon_theme, "folder-remote",
-					     button->priv->icon_size, 0, NULL);
+	  surface = gtk_icon_theme_load_surface (icon_theme, "folder-remote",
+						 button->priv->icon_size, 
+						 gtk_widget_get_scale_factor (GTK_WIDGET (button)),
+						 gtk_widget_get_window (GTK_WIDGET (button)),
+						 0, NULL);
 
 	  gtk_list_store_insert (store, &iter, pos);
 	  gtk_list_store_set (store, &iter,
-			      ICON_COLUMN, pixbuf,
+			      ICON_COLUMN, surface,
 			      DISPLAY_NAME_COLUMN, label,
 			      TYPE_COLUMN, ROW_TYPE_BOOKMARK,
 			      DATA_COLUMN, g_object_ref (file),
@@ -2060,7 +2006,8 @@ model_add_bookmarks (GtkFileChooserButton *button,
 			      -1);
 
 	  g_free (label);
-	  g_object_unref (pixbuf);
+	  if (surface)
+	    cairo_surface_destroy (surface);
 	}
 
       button->priv->n_bookmarks++;
@@ -2138,28 +2085,34 @@ model_update_current_folder (GtkFileChooserButton *button,
     {
       gchar *label;
       GtkIconTheme *icon_theme;
-      GdkPixbuf *pixbuf;
+      cairo_surface_t *surface;
 
       /* Don't call get_info for remote paths to avoid latency and
        * auth dialogs.
        * If we switch to a better bookmarks file format (XBEL), we
        * should use mime info to get a better icon.
        */
-      label = _gtk_file_system_get_bookmark_label (button->priv->fs, file);
+      label = _gtk_bookmarks_manager_get_bookmark_label (button->priv->bookmarks_manager, file);
       if (!label)
 	label = _gtk_file_chooser_label_for_file (file);
 
       icon_theme = gtk_icon_theme_get_for_screen (gtk_widget_get_screen (GTK_WIDGET (button)));
 
       if (g_file_is_native (file))
-	  pixbuf = gtk_icon_theme_load_icon (icon_theme, "folder",
-					     button->priv->icon_size, 0, NULL);
+	  surface = gtk_icon_theme_load_surface (icon_theme, "folder",
+						 button->priv->icon_size, 
+						 gtk_widget_get_scale_factor (GTK_WIDGET (button)),
+						 gtk_widget_get_window (GTK_WIDGET (button)),
+						 0, NULL);
       else
-	  pixbuf = gtk_icon_theme_load_icon (icon_theme, "folder-remote",
-					     button->priv->icon_size, 0, NULL);
+	  surface = gtk_icon_theme_load_surface (icon_theme, "folder-remote",
+						 button->priv->icon_size, 
+						 gtk_widget_get_scale_factor (GTK_WIDGET (button)),
+						 gtk_widget_get_window (GTK_WIDGET (button)),
+						 0, NULL);
 
       gtk_list_store_set (store, &iter,
-			  ICON_COLUMN, pixbuf,
+			  ICON_COLUMN, surface,
 			  DISPLAY_NAME_COLUMN, label,
 			  TYPE_COLUMN, ROW_TYPE_CURRENT_FOLDER,
 			  DATA_COLUMN, g_object_ref (file),
@@ -2167,7 +2120,8 @@ model_update_current_folder (GtkFileChooserButton *button,
 			  -1);
 
       g_free (label);
-      g_object_unref (pixbuf);
+      if (surface)
+	cairo_surface_destroy (surface);
     }
 }
 
@@ -2374,6 +2328,8 @@ name_cell_data_func (GtkCellLayout   *layout,
 
   if (type == ROW_TYPE_CURRENT_FOLDER)
     g_object_set (cell, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+  else if (type == ROW_TYPE_BOOKMARK || type == ROW_TYPE_SHORTCUT)
+    g_object_set (cell, "ellipsize", PANGO_ELLIPSIZE_MIDDLE, NULL);
   else
     g_object_set (cell, "ellipsize", PANGO_ELLIPSIZE_NONE, NULL);
 }
@@ -2402,9 +2358,9 @@ select_combo_box_row_no_notify (GtkFileChooserButton *button, int pos)
   gtk_tree_model_filter_convert_child_iter_to_iter (GTK_TREE_MODEL_FILTER (priv->filter_model),
 						    &filter_iter, &iter);
 
-  g_signal_handler_block (priv->combo_box, priv->combo_box_changed_id);
+  g_signal_handlers_block_by_func (priv->combo_box, combo_box_changed_cb, button);
   gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->combo_box), &filter_iter);
-  g_signal_handler_unblock (priv->combo_box, priv->combo_box_changed_id);
+  g_signal_handlers_unblock_by_func (priv->combo_box, combo_box_changed_cb, button);
 }
 
 static void
@@ -2461,11 +2417,10 @@ update_combo_box (GtkFileChooserButton *button)
 
       if (row_found)
 	{
-	  g_signal_handler_block (priv->combo_box, priv->combo_box_changed_id);
+	  g_signal_handlers_block_by_func (priv->combo_box, combo_box_changed_cb, button);
 	  gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->combo_box),
 					 &iter);
-	  g_signal_handler_unblock (priv->combo_box,
-				    priv->combo_box_changed_id);
+	  g_signal_handlers_unblock_by_func (priv->combo_box, combo_box_changed_cb, button);
 	}
     }
   while (!row_found && gtk_tree_model_iter_next (priv->filter_model, &iter));
@@ -2504,7 +2459,7 @@ update_label_get_info_cb (GCancellable *cancellable,
 			  gpointer      data)
 {
   gboolean cancelled = g_cancellable_is_cancelled (cancellable);
-  GdkPixbuf *pixbuf;
+  cairo_surface_t *surface;
   GtkFileChooserButton *button = data;
   GtkFileChooserButtonPrivate *priv = button->priv;
 
@@ -2518,16 +2473,10 @@ update_label_get_info_cb (GCancellable *cancellable,
 
   gtk_label_set_text (GTK_LABEL (priv->label), g_file_info_get_display_name (info));
 
-  pixbuf = _gtk_file_info_render_icon (info, GTK_WIDGET (priv->image), priv->icon_size);
-
-  if (!pixbuf)
-    pixbuf = gtk_icon_theme_load_icon (get_icon_theme (GTK_WIDGET (priv->image)),
-				       FALLBACK_ICON_NAME,
-				       priv->icon_size, 0, NULL);
-
-  gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image), pixbuf);
-  if (pixbuf)
-    g_object_unref (pixbuf);
+  surface = _gtk_file_info_render_icon (info, GTK_WIDGET (priv->image), priv->icon_size);
+  gtk_image_set_from_surface (GTK_IMAGE (priv->image), surface);
+  if (surface)
+    cairo_surface_destroy (surface);
 
 out:
   emit_selection_changed_if_changing_selection (button);
@@ -2567,16 +2516,16 @@ update_label_and_image (GtkFileChooserButton *button)
           base_file = _gtk_file_system_volume_get_root (volume);
           if (base_file && g_file_equal (base_file, file))
             {
-              GdkPixbuf *pixbuf;
+              cairo_surface_t *surface;
 
               label_text = _gtk_file_system_volume_get_display_name (volume);
-              pixbuf = _gtk_file_system_volume_render_icon (volume,
-                                                            GTK_WIDGET (button),
-                                                            priv->icon_size,
-                                                            NULL);
-              gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image), pixbuf);
-              if (pixbuf)
-                g_object_unref (pixbuf);
+              surface = _gtk_file_system_volume_render_icon (volume,
+							     GTK_WIDGET (button),
+							     priv->icon_size,
+							     NULL);
+              gtk_image_set_from_surface (GTK_IMAGE (priv->image), surface);
+              if (surface)
+                cairo_surface_destroy (surface);
             }
 
           if (base_file)
@@ -2601,15 +2550,18 @@ update_label_and_image (GtkFileChooserButton *button)
         }
       else
         {
-          GdkPixbuf *pixbuf;
+          cairo_surface_t *surface;
 
-          label_text = _gtk_file_system_get_bookmark_label (button->priv->fs, file);
-          pixbuf = gtk_icon_theme_load_icon (get_icon_theme (GTK_WIDGET (priv->image)),
-                                             "text-x-generic",
-                                             priv->icon_size, 0, NULL);
-          gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image), pixbuf);
-          if (pixbuf)
-            g_object_unref (pixbuf);
+          label_text = _gtk_bookmarks_manager_get_bookmark_label (button->priv->bookmarks_manager, file);
+          surface = gtk_icon_theme_load_surface (get_icon_theme (GTK_WIDGET (priv->image)),
+						 "text-x-generic",
+						 priv->icon_size, 
+						 gtk_widget_get_scale_factor (GTK_WIDGET (button)),
+						 gtk_widget_get_window (GTK_WIDGET (button)),
+						 0, NULL);
+          gtk_image_set_from_surface (GTK_IMAGE (priv->image), surface);
+          if (surface)
+            cairo_surface_destroy (surface);
 
 	  done_changing_selection = TRUE;
         }
@@ -2633,7 +2585,7 @@ out:
   else
     {
       gtk_label_set_text (GTK_LABEL (priv->label), _(FALLBACK_DISPLAY_NAME));
-      gtk_image_set_from_pixbuf (GTK_IMAGE (priv->image), NULL);
+      gtk_image_set_from_surface (GTK_IMAGE (priv->image), NULL);
     }
 
   if (done_changing_selection)
@@ -2671,14 +2623,13 @@ fs_volumes_changed_cb (GtkFileSystem *fs,
 }
 
 static void
-fs_bookmarks_changed_cb (GtkFileSystem *fs,
-			 gpointer       user_data)
+bookmarks_changed_cb (gpointer user_data)
 {
   GtkFileChooserButton *button = GTK_FILE_CHOOSER_BUTTON (user_data);
   GtkFileChooserButtonPrivate *priv = button->priv;
   GSList *bookmarks;
 
-  bookmarks = _gtk_file_system_list_bookmarks (fs);
+  bookmarks = _gtk_bookmarks_manager_list_bookmarks (priv->bookmarks_manager);
   model_remove_rows (user_data,
 		     model_get_type_position (user_data,
 					      ROW_TYPE_BOOKMARK_SEPARATOR),

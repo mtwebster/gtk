@@ -26,12 +26,13 @@
 
 #include <math.h>
 #include <string.h>
+#include <cairo-gobject.h>
 
 #include "gtkcontainer.h"
 #include "gtkiconhelperprivate.h"
 #include "gtkimageprivate.h"
-#include "gtkiconfactory.h"
-#include "gtkstock.h"
+#include "deprecated/gtkiconfactory.h"
+#include "deprecated/gtkstock.h"
 #include "gtkicontheme.h"
 #include "gtksizerequest.h"
 #include "gtkintl.h"
@@ -135,8 +136,10 @@ struct _GtkImagePrivate
 {
   GtkIconHelper *icon_helper;
 
-  gint animation_timeout;
   GdkPixbufAnimationIter *animation_iter;
+  gint animation_timeout;
+
+  float baseline_align;
 
   gchar                *filename;       /* Only used with GTK_IMAGE_ANIMATION, GTK_IMAGE_PIXBUF */
   gchar                *resource_path;  /* Only used with GTK_IMAGE_PIXBUF */
@@ -147,6 +150,7 @@ struct _GtkImagePrivate
 static gint gtk_image_draw                 (GtkWidget    *widget,
                                             cairo_t      *cr);
 static void gtk_image_unmap                (GtkWidget    *widget);
+static void gtk_image_realize              (GtkWidget    *widget);
 static void gtk_image_unrealize            (GtkWidget    *widget);
 static void gtk_image_get_preferred_width  (GtkWidget    *widget,
                                             gint         *minimum,
@@ -154,6 +158,12 @@ static void gtk_image_get_preferred_width  (GtkWidget    *widget,
 static void gtk_image_get_preferred_height (GtkWidget    *widget,
                                             gint         *minimum,
                                             gint         *natural);
+static void gtk_image_get_preferred_height_and_baseline_for_width (GtkWidget *widget,
+								   gint       width,
+								   gint      *minimum,
+								   gint      *natural,
+								   gint      *minimum_baseline,
+								   gint      *natural_baseline);
 
 static void gtk_image_style_updated        (GtkWidget    *widget);
 static void gtk_image_screen_changed       (GtkWidget    *widget,
@@ -176,6 +186,7 @@ enum
 {
   PROP_0,
   PROP_PIXBUF,
+  PROP_SURFACE,
   PROP_FILE,
   PROP_STOCK,
   PROP_ICON_SET,
@@ -189,7 +200,7 @@ enum
   PROP_USE_FALLBACK
 };
 
-G_DEFINE_TYPE (GtkImage, gtk_image, GTK_TYPE_MISC)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkImage, gtk_image, GTK_TYPE_MISC)
 
 static void
 gtk_image_class_init (GtkImageClass *class)
@@ -207,7 +218,9 @@ gtk_image_class_init (GtkImageClass *class)
   widget_class->draw = gtk_image_draw;
   widget_class->get_preferred_width = gtk_image_get_preferred_width;
   widget_class->get_preferred_height = gtk_image_get_preferred_height;
+  widget_class->get_preferred_height_and_baseline_for_width = gtk_image_get_preferred_height_and_baseline_for_width;
   widget_class->unmap = gtk_image_unmap;
+  widget_class->realize = gtk_image_realize;
   widget_class->unrealize = gtk_image_unrealize;
   widget_class->style_updated = gtk_image_style_updated;
   widget_class->screen_changed = gtk_image_screen_changed;
@@ -221,6 +234,14 @@ gtk_image_class_init (GtkImageClass *class)
                                                         GTK_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class,
+                                   PROP_SURFACE,
+                                   g_param_spec_boxed ("surface",
+						       P_("Surface"),
+						       P_("A cairo_surface_t to display"),
+						       CAIRO_GOBJECT_TYPE_SURFACE,
+						       GTK_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class,
                                    PROP_FILE,
                                    g_param_spec_string ("file",
                                                         P_("Filename"),
@@ -229,22 +250,34 @@ gtk_image_class_init (GtkImageClass *class)
                                                         GTK_PARAM_READWRITE));
   
 
+  /**
+   * GtkImage:stock:
+   *
+   * Deprecated: 3.10: Use #GtkImage:icon-name instead.
+   */
   g_object_class_install_property (gobject_class,
                                    PROP_STOCK,
                                    g_param_spec_string ("stock",
                                                         P_("Stock ID"),
                                                         P_("Stock ID for a stock image to display"),
                                                         NULL,
-                                                        GTK_PARAM_READWRITE));
+                                                        GTK_PARAM_READWRITE | G_PARAM_DEPRECATED));
   
+  /**
+   * GtkImage:icon-set:
+   *
+   * Deprecated: 3.10: Use #GtkImage:icon-name instead.
+   */
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   g_object_class_install_property (gobject_class,
                                    PROP_ICON_SET,
                                    g_param_spec_boxed ("icon-set",
                                                        P_("Icon set"),
                                                        P_("Icon set to display"),
                                                        GTK_TYPE_ICON_SET,
-                                                       GTK_PARAM_READWRITE));
-  
+                                                       GTK_PARAM_READWRITE | G_PARAM_DEPRECATED));
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
   g_object_class_install_property (gobject_class,
                                    PROP_ICON_SIZE,
                                    g_param_spec_int ("icon-size",
@@ -354,8 +387,6 @@ gtk_image_class_init (GtkImageClass *class)
                                                          FALSE,
                                                          GTK_PARAM_READWRITE));
 
-  g_type_class_add_private (class, sizeof (GtkImagePrivate));
-
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_IMAGE_ACCESSIBLE);
 }
 
@@ -364,13 +395,12 @@ gtk_image_init (GtkImage *image)
 {
   GtkImagePrivate *priv;
 
-  image->priv = G_TYPE_INSTANCE_GET_PRIVATE (image,
-                                             GTK_TYPE_IMAGE,
-                                             GtkImagePrivate);
+  image->priv = gtk_image_get_instance_private (image);
   priv = image->priv;
 
   gtk_widget_set_has_window (GTK_WIDGET (image), FALSE);
   priv->icon_helper = _gtk_icon_helper_new ();
+  _gtk_icon_helper_set_icon_size (priv->icon_helper, DEFAULT_ICON_SIZE);
 
   priv->filename = NULL;
 }
@@ -406,16 +436,24 @@ gtk_image_set_property (GObject      *object,
       gtk_image_set_from_pixbuf (image,
                                  g_value_get_object (value));
       break;
+    case PROP_SURFACE:
+      gtk_image_set_from_surface (image,
+				  g_value_get_boxed (value));
+      break;
     case PROP_FILE:
       gtk_image_set_from_file (image, g_value_get_string (value));
       break;
     case PROP_STOCK:
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_image_set_from_stock (image, g_value_get_string (value),
                                 icon_size);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       break;
     case PROP_ICON_SET:
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_image_set_from_icon_set (image, g_value_get_boxed (value),
                                    icon_size);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       break;
     case PROP_ICON_SIZE:
       _gtk_icon_helper_set_icon_size (priv->icon_helper, g_value_get_int (value));
@@ -463,6 +501,9 @@ gtk_image_get_property (GObject     *object,
     case PROP_PIXBUF:
       g_value_set_object (value, _gtk_icon_helper_peek_pixbuf (priv->icon_helper));
       break;
+    case PROP_SURFACE:
+      g_value_set_boxed (value, _gtk_icon_helper_peek_surface (priv->icon_helper));
+      break;
     case PROP_FILE:
       g_value_set_string (value, priv->filename);
       break;
@@ -470,8 +511,10 @@ gtk_image_get_property (GObject     *object,
       g_value_set_string (value, _gtk_icon_helper_get_stock_id (priv->icon_helper));
       break;
     case PROP_ICON_SET:
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       g_value_set_boxed (value, _gtk_icon_helper_peek_icon_set (priv->icon_helper));
-      break;      
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+      break;
     case PROP_ICON_SIZE:
       g_value_set_int (value, _gtk_icon_helper_get_icon_size (priv->icon_helper));
       break;
@@ -586,7 +629,7 @@ gtk_image_new_from_resource (const gchar *resource_path)
  * 
  * Note that this function just creates an #GtkImage from the pixbuf. The
  * #GtkImage created will not react to state changes. Should you want that, 
- * you should use gtk_image_new_from_icon_set().
+ * you should use gtk_image_new_from_icon_name().
  * 
  * Return value: a new #GtkImage
  **/
@@ -598,6 +641,29 @@ gtk_image_new_from_pixbuf (GdkPixbuf *pixbuf)
   image = g_object_new (GTK_TYPE_IMAGE, NULL);
 
   gtk_image_set_from_pixbuf (image, pixbuf);
+
+  return GTK_WIDGET (image);  
+}
+
+/**
+ * gtk_image_new_from_surface:
+ * @surface: (allow-none): a #cairo_surface_t, or %NULL
+ *
+ * Creates a new #GtkImage displaying @surface.
+ * The #GtkImage does not assume a reference to the
+ * surface; you still need to unref it if you own references.
+ * #GtkImage will add its own reference rather than adopting yours.
+ * 
+ * Return value: a new #GtkImage
+ **/
+GtkWidget*
+gtk_image_new_from_surface (cairo_surface_t *surface)
+{
+  GtkImage *image;
+
+  image = g_object_new (GTK_TYPE_IMAGE, NULL);
+
+  gtk_image_set_from_surface (image, surface);
 
   return GTK_WIDGET (image);  
 }
@@ -615,6 +681,8 @@ gtk_image_new_from_pixbuf (GdkPixbuf *pixbuf)
  * gtk_icon_factory_add_default() and gtk_icon_factory_add().
  * 
  * Return value: a new #GtkImage displaying the stock icon
+ *
+ * Deprecated: 3.10: Use gtk_image_new_from_icon_name() instead.
  **/
 GtkWidget*
 gtk_image_new_from_stock (const gchar    *stock_id,
@@ -624,7 +692,9 @@ gtk_image_new_from_stock (const gchar    *stock_id,
 
   image = g_object_new (GTK_TYPE_IMAGE, NULL);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_image_set_from_stock (image, stock_id, size);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   return GTK_WIDGET (image);
 }
@@ -647,6 +717,8 @@ gtk_image_new_from_stock (const gchar    *stock_id,
  * #GtkImage will add its own reference rather than adopting yours.
  * 
  * Return value: a new #GtkImage
+ *
+ * Deprecated: 3.10: Use gtk_image_new_from_icon_name() instead.
  **/
 GtkWidget*
 gtk_image_new_from_icon_set (GtkIconSet     *icon_set,
@@ -656,7 +728,11 @@ gtk_image_new_from_icon_set (GtkIconSet     *icon_set,
 
   image = g_object_new (GTK_TYPE_IMAGE, NULL);
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   gtk_image_set_from_icon_set (image, icon_set, size);
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   return GTK_WIDGET (image);
 }
@@ -778,9 +854,9 @@ gtk_image_set_from_file   (GtkImage    *image,
 
   if (anim == NULL)
     {
-      gtk_image_set_from_stock (image,
-                                GTK_STOCK_MISSING_IMAGE,
-                                DEFAULT_ICON_SIZE);
+      gtk_image_set_from_icon_name (image,
+                                    "image-missing",
+                                    DEFAULT_ICON_SIZE);
       g_object_thaw_notify (G_OBJECT (image));
       return;
     }
@@ -835,9 +911,9 @@ gtk_image_set_from_resource (GtkImage    *image,
 
   if (animation == NULL)
     {
-      gtk_image_set_from_stock (image,
-                                GTK_STOCK_MISSING_IMAGE,
-                                DEFAULT_ICON_SIZE);
+      gtk_image_set_from_icon_name (image,
+                                    "image-missing",
+                                    DEFAULT_ICON_SIZE);
       g_object_thaw_notify (G_OBJECT (image));
       return;
     }
@@ -895,6 +971,8 @@ gtk_image_set_from_pixbuf (GtkImage  *image,
  * @size: (type int): a stock icon size
  *
  * See gtk_image_new_from_stock() for details.
+ *
+ * Deprecated: 3.10: Use gtk_image_set_from_icon_name() instead.
  **/
 void
 gtk_image_set_from_stock  (GtkImage       *image,
@@ -932,6 +1010,8 @@ gtk_image_set_from_stock  (GtkImage       *image,
  * @size: (type int): a stock icon size
  *
  * See gtk_image_new_from_icon_set() for details.
+ *
+ * Deprecated: 3.10: Use gtk_image_set_from_icon_name() instead.
  **/
 void
 gtk_image_set_from_icon_set  (GtkImage       *image,
@@ -946,6 +1026,8 @@ gtk_image_set_from_icon_set  (GtkImage       *image,
 
   g_object_freeze_notify (G_OBJECT (image));
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+
   if (icon_set)
     gtk_icon_set_ref (icon_set);
   
@@ -956,7 +1038,9 @@ gtk_image_set_from_icon_set  (GtkImage       *image,
       _gtk_icon_helper_set_icon_set (priv->icon_helper, icon_set, size);
       gtk_icon_set_unref (icon_set);
     }
-  
+
+  G_GNUC_END_IGNORE_DEPRECATIONS;
+
   g_object_notify (G_OBJECT (image), "icon-set");
   g_object_notify (G_OBJECT (image), "icon-size");
   
@@ -1081,6 +1165,43 @@ gtk_image_set_from_gicon  (GtkImage       *image,
 }
 
 /**
+ * gtk_image_set_from_surface:
+ * @image: a #GtkImage
+ * @surface: a cairo_surface_t
+ *
+ * See gtk_image_new_from_surface() for details.
+ * 
+ * Since: 3.10
+ **/
+void
+gtk_image_set_from_surface (GtkImage       *image,
+			    cairo_surface_t *surface)
+{
+  GtkImagePrivate *priv;
+
+  g_return_if_fail (GTK_IS_IMAGE (image));
+
+  priv = image->priv;
+
+  g_object_freeze_notify (G_OBJECT (image));
+
+  if (surface)
+    cairo_surface_reference (surface);
+
+  gtk_image_clear (image);
+
+  if (surface)
+    {
+      _gtk_icon_helper_set_surface (priv->icon_helper, surface);
+      cairo_surface_destroy (surface);
+    }
+
+  g_object_notify (G_OBJECT (image), "surface");
+  
+  g_object_thaw_notify (G_OBJECT (image));
+}
+
+/**
  * gtk_image_get_storage_type:
  * @image: a #GtkImage
  * 
@@ -1132,6 +1253,8 @@ gtk_image_get_pixbuf (GtkImage *image)
  * %GTK_IMAGE_STOCK (see gtk_image_get_storage_type()).
  * The returned string is owned by the #GtkImage and should not
  * be freed.
+ *
+ * Deprecated: 3.10: Use gtk_image_get_icon_name() instead.
  **/
 void
 gtk_image_get_stock  (GtkImage        *image,
@@ -1162,6 +1285,8 @@ gtk_image_get_stock  (GtkImage        *image,
  * Gets the icon set and size being displayed by the #GtkImage.
  * The storage type of the image must be %GTK_IMAGE_EMPTY or
  * %GTK_IMAGE_ICON_SET (see gtk_image_get_storage_type()).
+ *
+ * Deprecated: 3.10: Use gtk_image_get_icon_name() instead.
  **/
 void
 gtk_image_get_icon_set  (GtkImage        *image,
@@ -1314,8 +1439,24 @@ gtk_image_unmap (GtkWidget *widget)
 }
 
 static void
+gtk_image_realize (GtkWidget *widget)
+{
+  GtkImage *image = GTK_IMAGE (widget);
+  GtkImagePrivate *priv = image->priv;
+
+  GTK_WIDGET_CLASS (gtk_image_parent_class)->realize (widget);
+
+  _gtk_icon_helper_set_window (priv->icon_helper,
+			       gtk_widget_get_window (widget));
+}
+
+static void
 gtk_image_unrealize (GtkWidget *widget)
 {
+  GtkImage *image = GTK_IMAGE (widget);
+  GtkImagePrivate *priv = image->priv;
+
+  _gtk_icon_helper_set_window (priv->icon_helper, NULL);
   gtk_image_reset_anim_iter (GTK_IMAGE (widget));
 
   GTK_WIDGET_CLASS (gtk_image_parent_class)->unrealize (widget);
@@ -1393,6 +1534,28 @@ gtk_image_get_preferred_size (GtkImage *image,
     *height_out = height;
 }
 
+static float
+gtk_image_get_baseline_align (GtkImage *image)
+{
+  PangoContext *pango_context;
+  PangoFontMetrics *metrics;
+
+  if (image->priv->baseline_align == 0.0)
+    {
+      pango_context = gtk_widget_get_pango_context (GTK_WIDGET (image));
+      metrics = pango_context_get_metrics (pango_context,
+					   pango_context_get_font_description (pango_context),
+					   pango_context_get_language (pango_context));
+      image->priv->baseline_align =
+	(float)pango_font_metrics_get_ascent (metrics) /
+	(pango_font_metrics_get_ascent (metrics) + pango_font_metrics_get_descent (metrics));
+
+      pango_font_metrics_unref (metrics);
+    }
+
+  return image->priv->baseline_align;
+}
+
 static gint
 gtk_image_draw (GtkWidget *widget,
                 cairo_t   *cr)
@@ -1401,7 +1564,7 @@ gtk_image_draw (GtkWidget *widget,
   GtkImagePrivate *priv;
   GtkMisc *misc;
   GtkStyleContext *context;
-  gint x, y, width, height;
+  gint x, y, width, height, baseline;
   gfloat xalign, yalign;
   GtkBorder border;
 
@@ -1427,8 +1590,14 @@ gtk_image_draw (GtkWidget *widget,
   if (gtk_widget_get_direction (widget) != GTK_TEXT_DIR_LTR)
     xalign = 1.0 - xalign;
 
+  baseline = gtk_widget_get_allocated_baseline (widget);
+
   x = floor ((gtk_widget_get_allocated_width (widget) - width) * xalign) + border.left;
-  y = floor ((gtk_widget_get_allocated_height (widget) - height) * yalign) + border.top;
+  if (baseline == -1)
+    y = floor ((gtk_widget_get_allocated_height (widget) - height) * yalign) + border.top;
+  else
+    y = CLAMP (baseline - height * gtk_image_get_baseline_align (image),
+	       border.top, gtk_widget_get_allocated_height (widget) - height);
 
   if (gtk_image_get_storage_type (image) == GTK_IMAGE_ANIMATION)
     {
@@ -1536,14 +1705,36 @@ gtk_image_get_preferred_width (GtkWidget *widget,
 } 
 
 static void
+gtk_image_get_preferred_height_and_baseline_for_width (GtkWidget *widget,
+						       gint       width,
+						       gint      *minimum,
+						       gint      *natural,
+						       gint      *minimum_baseline,
+						       gint      *natural_baseline)
+{
+  gint height;
+  float baseline_align;
+
+  gtk_image_get_preferred_size (GTK_IMAGE (widget), NULL, &height);
+  *minimum = *natural = height;
+
+  if (minimum_baseline || natural_baseline)
+    {
+      baseline_align = gtk_image_get_baseline_align (GTK_IMAGE (widget));
+      if (minimum_baseline)
+	*minimum_baseline = height * baseline_align;
+      if (natural_baseline)
+	*natural_baseline = height * baseline_align;
+    }
+}
+
+static void
 gtk_image_get_preferred_height (GtkWidget *widget,
                                 gint      *minimum,
                                 gint      *natural)
 {
-  gint height;
-
-  gtk_image_get_preferred_size (GTK_IMAGE (widget), NULL, &height);
-  *minimum = *natural = height;
+  gtk_image_get_preferred_height_and_baseline_for_width (widget, -1, minimum, natural,
+							 NULL, NULL);
 }
 
 static void
@@ -1558,9 +1749,13 @@ icon_theme_changed (GtkImage *image)
 static void
 gtk_image_style_updated (GtkWidget *widget)
 {
+  GtkImage *image = GTK_IMAGE (widget);
+  GtkImagePrivate *priv = image->priv;
+
   GTK_WIDGET_CLASS (gtk_image_parent_class)->style_updated (widget);
 
-  icon_theme_changed (GTK_IMAGE (widget));
+  icon_theme_changed (image);
+  priv->baseline_align = 0.0;
 }
 
 static void

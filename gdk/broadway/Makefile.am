@@ -4,13 +4,14 @@ include $(top_srcdir)/Makefile.decl
 libgdkincludedir = $(includedir)/gtk-3.0/gdk
 libgdkbroadwayincludedir = $(includedir)/gtk-3.0/gdk/broadway
 
-AM_CPPFLAGS =			\
-	-DG_LOG_DOMAIN=\"Gdk\"	\
-	-DGDK_COMPILATION	\
-	-I$(top_srcdir)		\
-	-I$(top_srcdir)/gdk	\
-	-I$(top_builddir)/gdk	\
-	$(GTK_DEBUG_FLAGS)	\
+AM_CPPFLAGS =				\
+	-DG_LOG_DOMAIN=\"Gdk\"		\
+	-DGDK_COMPILATION		\
+	-I$(top_srcdir)			\
+	-I$(top_srcdir)/gdk		\
+	-I$(top_builddir)/gdk		\
+	$(GDK_HIDDEN_VISIBILITY_CFLAGS) \
+	$(GTK_DEBUG_FLAGS)		\
 	$(GDK_DEP_CFLAGS)
 
 LDADDS = $(GDK_DEP_LIBS)
@@ -23,7 +24,6 @@ libgdkinclude_HEADERS = 	\
 	gdkbroadway.h
 
 libgdkbroadwayinclude_HEADERS = 	\
-	gdkbroadwaydisplaymanager.h	\
 	gdkbroadwaywindow.h		\
 	gdkbroadwaycursor.h		\
 	gdkbroadwayvisual.h
@@ -55,14 +55,11 @@ libgdk_broadway_la_SOURCES =		\
 	gdkdevicemanager-broadway.c \
 	gdkdisplay-broadway.c	\
 	gdkdisplay-broadway.h	\
-	gdkdisplaymanager-broadway.c	\
 	gdkdnd-broadway.c	\
 	gdkeventsource.c	\
 	gdkeventsource.h	\
 	gdkglobals-broadway.c	\
-	gdkim-broadway.c	\
 	gdkkeys-broadway.c	\
-	gdkmain-broadway.c	\
 	gdkproperty-broadway.c	\
 	gdkscreen-broadway.c	\
 	gdkscreen-broadway.h	\
@@ -75,6 +72,11 @@ libgdk_broadway_la_SOURCES =		\
 	gdkbroadway-server.h	\
 	gdkbroadway-server.c
 
+if OS_UNIX
+libgdk_broadway_la_LIBADD = \
+	-lrt
+endif
+
 broadwayd_SOURCES = \
 	broadway-protocol.h		\
 	broadwayd.c 			\
@@ -83,7 +85,11 @@ broadwayd_SOURCES = \
 	broadway-output.h		\
 	broadway-output.c
 
+if OS_WIN32
+broadwayd_LDADD = $(GDK_DEP_LIBS) -lcrypt -lws2_32
+else
 broadwayd_LDADD = $(GDK_DEP_LIBS) -lrt -lcrypt
+endif
 
 MAINTAINERCLEANFILES = $(broadway_built_sources)
 EXTRA_DIST += $(broadway_built_sources)

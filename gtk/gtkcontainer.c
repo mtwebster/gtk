@@ -236,8 +236,8 @@ struct _GtkContainerPrivate
 {
   GtkWidget *focus_child;
 
-  guint resize_handler;
   GdkFrameClock *resize_clock;
+  guint resize_handler;
 
   guint border_width : 16;
 
@@ -309,12 +309,17 @@ static void     gtk_container_adjust_size_request  (GtkWidget         *widget,
                                                     GtkOrientation     orientation,
                                                     gint              *minimum_size,
                                                     gint              *natural_size);
+static void     gtk_container_adjust_baseline_request (GtkWidget      *widget,
+						       gint           *minimum_baseline,
+						       gint           *natural_baseline);
 static void     gtk_container_adjust_size_allocation (GtkWidget       *widget,
                                                       GtkOrientation   orientation,
                                                       gint            *minimum_size,
                                                       gint            *natural_size,
                                                       gint            *allocated_pos,
                                                       gint            *allocated_size);
+static void     gtk_container_adjust_baseline_allocation (GtkWidget      *widget,
+							  gint           *baseline);
 static GtkSizeRequestMode gtk_container_get_request_mode (GtkWidget   *widget);
 
 static gchar* gtk_container_child_default_composite_name (GtkContainer *container,
@@ -341,6 +346,9 @@ static void    gtk_container_buildable_custom_tag_end (GtkBuildable *buildable,
                                                        const gchar  *tagname,
                                                        gpointer     *data);
 
+static gboolean gtk_container_should_propagate_draw (GtkContainer   *container,
+                                                     GtkWidget      *child,
+                                                     cairo_t        *cr);
 
 /* --- variables --- */
 static const gchar           vadjustment_key[] = "gtk-vadjustment";
@@ -348,6 +356,7 @@ static guint                 vadjustment_key_id = 0;
 static const gchar           hadjustment_key[] = "gtk-hadjustment";
 static guint                 hadjustment_key_id = 0;
 static guint                 container_signals[LAST_SIGNAL] = { 0 };
+static gint                  GtkContainer_private_offset;
 static GtkWidgetClass       *parent_class = NULL;
 extern GParamSpecPool       *_gtk_widget_child_property_pool;
 extern GObjectNotifyContext *_gtk_widget_child_property_notify_context;
@@ -355,6 +364,12 @@ static GtkBuildableIface    *parent_buildable_iface;
 
 
 /* --- functions --- */
+static inline gpointer
+gtk_container_get_instance_private (GtkContainer *self)
+{
+  return G_STRUCT_MEMBER_P (self, GtkContainer_private_offset);
+}
+
 GType
 gtk_container_get_type (void)
 {
@@ -386,6 +401,9 @@ gtk_container_get_type (void)
       container_type =
         g_type_register_static (GTK_TYPE_WIDGET, I_("GtkContainer"),
                                 &container_info, G_TYPE_FLAG_ABSTRACT);
+
+      GtkContainer_private_offset =
+        g_type_add_instance_private (container_type, sizeof (GtkContainerPrivate));
 
       g_type_add_interface_static (container_type,
                                    GTK_TYPE_BUILDABLE,
@@ -444,7 +462,9 @@ gtk_container_class_init (GtkContainerClass *class)
   widget_class->focus = gtk_container_focus;
 
   widget_class->adjust_size_request = gtk_container_adjust_size_request;
+  widget_class->adjust_baseline_request = gtk_container_adjust_baseline_request;
   widget_class->adjust_size_allocation = gtk_container_adjust_size_allocation;
+  widget_class->adjust_baseline_allocation = gtk_container_adjust_baseline_allocation;
   widget_class->get_request_mode = gtk_container_get_request_mode;
 
   class->add = gtk_container_add_unimplemented;
@@ -516,7 +536,8 @@ gtk_container_class_init (GtkContainerClass *class)
                   G_TYPE_NONE, 1,
                   GTK_TYPE_WIDGET);
 
-  g_type_class_add_private (class, sizeof (GtkContainerPrivate));
+  if (GtkContainer_private_offset != 0)
+    g_type_class_adjust_private_offset (class, &GtkContainer_private_offset);
 
   gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_CONTAINER_ACCESSIBLE);
 }
@@ -561,8 +582,16 @@ gtk_container_buildable_set_child_property (GtkContainer *container,
   GValue gvalue = G_VALUE_INIT;
   GError *error = NULL;
 
-  pspec = gtk_container_class_find_child_property
-    (G_OBJECT_GET_CLASS (container), name);
+  if (gtk_widget_get_parent (child) != (GtkWidget *)container && !GTK_IS_ASSISTANT (container))
+    {
+      /* This can happen with internal children of complex widgets.
+       * Silently ignore the child properties in this case. We explicitly
+       * allow it for GtkAssistant, since that is how it works.
+       */
+      return;
+    }
+
+  pspec = gtk_container_class_find_child_property (G_OBJECT_GET_CLASS (container), name);
   if (!pspec)
     {
       g_warning ("%s does not have a property called %s",
@@ -657,16 +686,15 @@ attributes_end_element (GMarkupParseContext *context,
   /* translate the string */
   if (parser_data->string->len && parser_data->translatable)
     {
-      gchar *translated;
-      const gchar* domain;
+      const gchar *translated;
+      const gchar *domain;
 
       domain = gtk_builder_get_translation_domain (parser_data->builder);
 
       translated = _gtk_builder_parser_translate (domain,
-						  parser_data->context,
-						  parser_data->string->str);
-      g_string_set_size (parser_data->string, 0);
-      g_string_append (parser_data->string, translated);
+                                                  parser_data->context,
+                                                  parser_data->string->str);
+      g_string_assign (parser_data->string, translated);
     }
 
   if (parser_data->child_prop_name)
@@ -1339,9 +1367,7 @@ gtk_container_init (GtkContainer *container)
 {
   GtkContainerPrivate *priv;
 
-  container->priv = G_TYPE_INSTANCE_GET_PRIVATE (container,
-                                                 GTK_TYPE_CONTAINER,
-                                                 GtkContainerPrivate);
+  container->priv = gtk_container_get_instance_private (container);
   priv = container->priv;
 
   priv->focus_child = NULL;
@@ -1494,7 +1520,11 @@ gtk_container_get_border_width (GtkContainer *container)
  * gtk_grid_attach() as an alternative to gtk_container_add() in
  * those cases. A widget may be added to only one container at a time;
  * you can't place the same widget inside two different containers.
- **/
+ *
+ * Note that some containers, such as #GtkScrolledWindow or #GtkListBox,
+ * may add intermediate children between the added widget and the
+ * container.
+ */
 void
 gtk_container_add (GtkContainer *container,
                    GtkWidget    *widget)
@@ -1798,7 +1828,7 @@ _gtk_container_queue_restyle (GtkContainer *container)
  * (typically the toplevel, but other containers can be set as resize
  * containers with gtk_container_set_resize_mode()), marks the container
  * and all parents up to and including the resize container as needing
- * to have sizes recompted, and if necessary adds the resize container
+ * to have sizes recomputed, and if necessary adds the resize container
  * to the queue of containers that will be resized out at idle.
  */
 void
@@ -1859,7 +1889,8 @@ gtk_container_real_check_resize (GtkContainer *container)
     }
   else
     {
-      gtk_container_resize_children (container);
+      gtk_widget_size_allocate (widget, &allocation);
+      gtk_widget_set_allocation (widget, &allocation);
     }
 }
 
@@ -1870,6 +1901,12 @@ gtk_container_real_check_resize (GtkContainer *container)
  *  so we simply need to reallocate and let the allocation
  *  trickle down via GTK_WIDGET_ALLOC_NEEDED flags.
  */
+/**
+ * gtk_container_resize_children:
+ * @container: a #GtkContainer
+ *
+ * Deprecated: 3.10
+ **/
 void
 gtk_container_resize_children (GtkContainer *container)
 {
@@ -1918,6 +1955,28 @@ gtk_container_adjust_size_request (GtkWidget         *widget,
 }
 
 static void
+gtk_container_adjust_baseline_request (GtkWidget         *widget,
+				       gint              *minimum_baseline,
+				       gint              *natural_baseline)
+{
+  GtkContainer *container;
+
+  container = GTK_CONTAINER (widget);
+
+  if (GTK_CONTAINER_GET_CLASS (widget)->_handle_border_width)
+    {
+      int border_width;
+
+      border_width = container->priv->border_width;
+
+      *minimum_baseline += border_width;
+      *natural_baseline += border_width;
+    }
+
+  parent_class->adjust_baseline_request (widget, minimum_baseline, natural_baseline);
+}
+
+static void
 gtk_container_adjust_size_allocation (GtkWidget         *widget,
                                       GtkOrientation     orientation,
                                       gint              *minimum_size,
@@ -1951,6 +2010,27 @@ gtk_container_adjust_size_allocation (GtkWidget         *widget,
                                         minimum_size, natural_size, allocated_pos,
                                         allocated_size);
 }
+
+static void
+gtk_container_adjust_baseline_allocation (GtkWidget         *widget,
+					  gint              *baseline)
+{
+  GtkContainer *container;
+  int border_width;
+
+  container = GTK_CONTAINER (widget);
+
+  if (GTK_CONTAINER_GET_CLASS (widget)->_handle_border_width)
+    {
+      border_width = container->priv->border_width;
+
+      if (*baseline >= 0)
+	*baseline -= border_width;
+    }
+
+  parent_class->adjust_baseline_allocation (widget, baseline);
+}
+
 
 typedef struct {
   gint hfw;
@@ -3210,35 +3290,81 @@ gtk_container_show_all (GtkWidget *widget)
   gtk_widget_show (widget);
 }
 
+typedef struct {
+  GtkWidget *child;
+  int window_depth;
+} ChildOrderInfo;
+
 static void
-gtk_container_draw_child (GtkWidget *child,
-                          gpointer   client_data)
+gtk_container_draw_forall (GtkWidget *widget,
+                           gpointer   client_data)
 {
   struct {
-    GtkWidget *container;
+    GtkContainer *container;
+    GArray *child_infos;
     cairo_t *cr;
   } *data = client_data;
+  ChildOrderInfo info;
+  GList *siblings;
+  GdkWindow *window;
 
-  gtk_container_propagate_draw (GTK_CONTAINER (data->container),
-                                child,
-                                data->cr);
+  if (gtk_container_should_propagate_draw (data->container, widget, data->cr))
+    {
+      info.child = widget;
+      info.window_depth = G_MAXINT;
+      if (gtk_widget_get_has_window (widget))
+        {
+          window = gtk_widget_get_window (widget);
+          siblings = gdk_window_peek_children (gdk_window_get_parent (window));
+          info.window_depth = g_list_index (siblings, window);
+        }
+      g_array_append_val (data->child_infos, info);
+    }
+}
+
+static gint
+compare_children_for_draw (gconstpointer  _a,
+                           gconstpointer  _b)
+{
+  const ChildOrderInfo *a = _a;
+  const ChildOrderInfo *b = _b;
+
+  return b->window_depth - a->window_depth;
 }
 
 static gint
 gtk_container_draw (GtkWidget *widget,
                     cairo_t   *cr)
 {
+  GtkContainer *container = GTK_CONTAINER (widget);
+  GArray *child_infos;
+  int i;
+  ChildOrderInfo *child_info;
   struct {
-    GtkWidget *container;
+    GtkContainer *container;
+    GArray *child_infos;
     cairo_t *cr;
   } data;
 
-  data.container = widget;
-  data.cr = cr;
+  child_infos = g_array_new (FALSE, TRUE, sizeof (ChildOrderInfo));
 
-  gtk_container_forall (GTK_CONTAINER (widget),
-                        gtk_container_draw_child,
+  data.container = container;
+  data.cr = cr;
+  data.child_infos = child_infos;
+  gtk_container_forall (container,
+                        gtk_container_draw_forall,
                         &data);
+
+  g_array_sort (child_infos, compare_children_for_draw);
+
+  for (i = 0; i < child_infos->len; i++)
+    {
+      child_info = &g_array_index (child_infos, ChildOrderInfo, i);
+      gtk_container_propagate_draw (container,
+                                    child_info->child, cr);
+    }
+
+  g_array_free (child_infos, TRUE);
 
   return FALSE;
 }
@@ -3284,6 +3410,39 @@ gtk_container_unmap (GtkWidget *widget)
                         NULL);
 }
 
+static gboolean
+gtk_container_should_propagate_draw (GtkContainer   *container,
+                                     GtkWidget      *child,
+                                     cairo_t        *cr)
+{
+  GdkEventExpose *event;
+  GdkWindow *event_window, *child_in_window;
+
+  if (!gtk_widget_is_drawable (child))
+    return FALSE;
+
+  /* Only propagate to native child window if we're not handling
+     an expose (i.e. in a pure gtk_widget_draw() call */
+  event = _gtk_cairo_get_event (cr);
+  if (event &&
+      (gtk_widget_get_has_window (child) &&
+       gdk_window_has_native (gtk_widget_get_window (child))))
+    return FALSE;
+
+  /* Never propagate to a child window when exposing a window
+     that is not the one the child widget is in. */
+  event_window = _gtk_cairo_get_event_window (cr);
+  if (gtk_widget_get_has_window (child))
+    child_in_window = gdk_window_get_parent (gtk_widget_get_window (child));
+  else
+    child_in_window = gtk_widget_get_window (child);
+  if (event_window != NULL && child_in_window != event_window)
+    return FALSE;
+
+  return TRUE;
+}
+
+
 /**
  * gtk_container_propagate_draw:
  * @container: a #GtkContainer
@@ -3313,7 +3472,6 @@ gtk_container_propagate_draw (GtkContainer   *container,
                               GtkWidget      *child,
                               cairo_t        *cr)
 {
-  GdkEventExpose *event;
   GtkAllocation allocation;
   GdkWindow *window, *w;
   int x, y;
@@ -3324,13 +3482,8 @@ gtk_container_propagate_draw (GtkContainer   *container,
 
   g_assert (gtk_widget_get_parent (child) == GTK_WIDGET (container));
 
-  event = _gtk_cairo_get_event (cr);
-  if (event)
-    {
-      if (gtk_widget_get_has_window (child) ||
-          gtk_widget_get_window (child) != event->window)
-        return;
-    }
+  if (!gtk_container_should_propagate_draw (container, child, cr))
+    return;
 
   cairo_save (cr);
 
@@ -3372,7 +3525,7 @@ gtk_container_propagate_draw (GtkContainer   *container,
 
   cairo_translate (cr, x, y);
 
-  _gtk_widget_draw_internal (child, cr, TRUE);
+  _gtk_widget_draw (child, cr);
 
   cairo_restore (cr);
 }

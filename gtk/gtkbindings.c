@@ -73,10 +73,10 @@
  * {
  *   bind "&lt;Control&gt;Right" { "move-cursor" (visual-positions, 3, 0) };
  *   bind "&lt;Control&gt;Left" { "move-cursor" (visual-positions, -3, 0) };
- * };
+ * }
  * GtkEntry
  * {
- *   gtk-key-bindings: MoveCursor3
+ *   gtk-key-bindings: MoveCursor3;
  * }
  * </programlisting></informalexample>
  * </para>
@@ -96,10 +96,10 @@
  * {
  *   bind "&lt;Control&gt;Right" {  };
  *   bind "&lt;Control&gt;Left" {  };
- * };
+ * }
  * GtkEntry
  * {
- *   gtk-key-bindings: MoveCursor3
+ *   gtk-key-bindings: MoveCursor3;
  * }
  * </programlisting></informalexample>
  * The above example will not have the desired effect of causing
@@ -117,10 +117,10 @@
  * {
  *   unbind "&lt;Control&gt;Right";
  *   unbind "&lt;Control&gt;Left";
- * };
+ * }
  * GtkEntry
  * {
- *   gtk-key-bindings: MoveCursor3
+ *   gtk-key-bindings: MoveCursor3;
  * }
  * </programlisting></informalexample>
  * Now, GTK+ will find a match when looking up "&lt;Control&gt;Right"
@@ -138,6 +138,7 @@
 
 
 #define GTK_TYPE_IDENTIFIER (gtk_identifier_get_type ())
+_GDK_EXTERN
 GType gtk_identifier_get_type (void) G_GNUC_CONST;
 
 
@@ -1557,7 +1558,7 @@ gtk_bindings_activate_list (GObject  *object,
           handled = binding_activate (binding_set, entries,
                                       object, is_release,
                                       &unbound);
-          if (handled)
+          if (handled || unbound)
             break;
         }
 
@@ -1584,6 +1585,8 @@ gtk_bindings_activate_list (GObject  *object,
           handled = binding_activate (binding_set, entries,
                                       object, is_release,
                                       &unbound);
+          if (unbound)
+            break;
         }
 
       if (unbound)

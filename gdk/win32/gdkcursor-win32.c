@@ -21,8 +21,7 @@
 #include "gdkdisplay.h"
 #include "gdkscreen.h"
 #include "gdkcursor.h"
-#include "gdkprivate-win32.h"
-#include "gdkwin32cursor.h"
+#include "gdkwin32.h"
 
 #ifdef __MINGW32__
 #include <w32api.h>
@@ -251,7 +250,9 @@ _gdk_win32_display_get_cursor_for_name (GdkDisplay  *display,
 }
 
 GdkPixbuf *
-gdk_win32_icon_to_pixbuf_libgtk_only (HICON hicon)
+gdk_win32_icon_to_pixbuf_libgtk_only (HICON hicon,
+                                      gdouble *x_hot,
+                                      gdouble *y_hot)
 {
   GdkPixbuf *pixbuf = NULL;
   ICONINFO ii;
@@ -408,11 +409,10 @@ gdk_win32_icon_to_pixbuf_libgtk_only (HICON hicon)
 	}
     }
 
-  g_snprintf (buf, sizeof (buf), "%ld", ii.xHotspot);
-  gdk_pixbuf_set_option (pixbuf, "x_hot", buf);
-
-  g_snprintf (buf, sizeof (buf), "%ld", ii.yHotspot);
-  gdk_pixbuf_set_option (pixbuf, "y_hot", buf);
+  if (x_hot)
+    *x_hot = ii.xHotspot;
+  if (y_hot)
+    *y_hot = ii.yHotspot;
 
   /* release temporary resources */
  out2:
@@ -426,28 +426,55 @@ gdk_win32_icon_to_pixbuf_libgtk_only (HICON hicon)
   return pixbuf;
 }
 
-static GdkPixbuf *
-_gdk_win32_cursor_get_image (GdkCursor *cursor)
+static cairo_surface_t *
+_gdk_win32_cursor_get_surface (GdkCursor *cursor,
+			       gdouble *x_hot,
+			       gdouble *y_hot)
 {
+  GdkPixbuf *pixbuf;
+  cairo_surface_t *surface;
+
   g_return_val_if_fail (cursor != NULL, NULL);
 
-  return gdk_win32_icon_to_pixbuf_libgtk_only (((GdkWin32Cursor *) cursor)->hcursor);
+  pixbuf = gdk_win32_icon_to_pixbuf_libgtk_only (((GdkWin32Cursor *) cursor)->hcursor, x_hot, y_hot);
+
+  if (pixbuf == NULL)
+    return NULL;
+
+  surface = gdk_cairo_surface_create_from_pixbuf (pixbuf, 1, NULL);
+  g_object_unref (pixbuf);
+
+  return surface;
 }
 
 GdkCursor *
-_gdk_win32_display_get_cursor_for_pixbuf (GdkDisplay *display, 
-					  GdkPixbuf  *pixbuf,
-					  gint        x,
-					  gint        y)
+_gdk_win32_display_get_cursor_for_surface (GdkDisplay *display,
+					  cairo_surface_t  *surface,
+					  gdouble          x,
+					  gdouble          y)
 {
   HCURSOR hcursor;
+  GdkPixbuf *pixbuf;
+  gint width, height;
 
   g_return_val_if_fail (display == _gdk_display, NULL);
+  g_return_val_if_fail (surface != NULL, NULL);
+
+  width = cairo_image_surface_get_width (surface);
+  height = cairo_image_surface_get_height (surface);
+  pixbuf = gdk_pixbuf_get_from_surface (surface,
+                                        0,
+                                        0,
+                                        width,
+                                        height);
+
   g_return_val_if_fail (GDK_IS_PIXBUF (pixbuf), NULL);
   g_return_val_if_fail (0 <= x && x < gdk_pixbuf_get_width (pixbuf), NULL);
   g_return_val_if_fail (0 <= y && y < gdk_pixbuf_get_height (pixbuf), NULL);
 
   hcursor = _gdk_win32_pixbuf_to_hcursor (pixbuf, x, y);
+
+  g_object_unref (pixbuf);
   if (!hcursor)
     return NULL;
   return cursor_new_from_hcursor (hcursor, GDK_CURSOR_IS_PIXMAP);
@@ -831,5 +858,5 @@ gdk_win32_cursor_class_init(GdkWin32CursorClass *klass)
 
   object_class->finalize = _gdk_win32_cursor_finalize;
   
-  cursor_class->get_image = _gdk_win32_cursor_get_image;
+  cursor_class->get_surface = _gdk_win32_cursor_get_surface;
 }

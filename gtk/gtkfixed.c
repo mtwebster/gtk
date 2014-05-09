@@ -99,6 +99,8 @@ static void gtk_fixed_get_preferred_height (GtkWidget *widget,
                                             gint      *natural);
 static void gtk_fixed_size_allocate (GtkWidget        *widget,
                                      GtkAllocation    *allocation);
+static gboolean gtk_fixed_draw      (GtkWidget        *widget,
+                                     cairo_t          *cr);
 static void gtk_fixed_add           (GtkContainer     *container,
                                      GtkWidget        *widget);
 static void gtk_fixed_remove        (GtkContainer     *container,
@@ -120,7 +122,7 @@ static void gtk_fixed_get_child_property (GtkContainer *container,
                                           GValue       *value,
                                           GParamSpec   *pspec);
 
-G_DEFINE_TYPE (GtkFixed, gtk_fixed, GTK_TYPE_CONTAINER)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkFixed, gtk_fixed, GTK_TYPE_CONTAINER)
 
 static void
 gtk_fixed_class_init (GtkFixedClass *class)
@@ -135,6 +137,7 @@ gtk_fixed_class_init (GtkFixedClass *class)
   widget_class->get_preferred_width = gtk_fixed_get_preferred_width;
   widget_class->get_preferred_height = gtk_fixed_get_preferred_height;
   widget_class->size_allocate = gtk_fixed_size_allocate;
+  widget_class->draw = gtk_fixed_draw;
 
   container_class->add = gtk_fixed_add;
   container_class->remove = gtk_fixed_remove;
@@ -159,8 +162,6 @@ gtk_fixed_class_init (GtkFixedClass *class)
                                                                 P_("Y position of child widget"),
                                                                 G_MININT, G_MAXINT, 0,
                                                                 GTK_PARAM_READWRITE));
-
-  g_type_class_add_private (class, sizeof (GtkFixedPrivate));
 }
 
 static GType
@@ -172,7 +173,7 @@ gtk_fixed_child_type (GtkContainer *container)
 static void
 gtk_fixed_init (GtkFixed *fixed)
 {
-  fixed->priv = G_TYPE_INSTANCE_GET_PRIVATE (fixed, GTK_TYPE_FIXED, GtkFixedPrivate);
+  fixed->priv = gtk_fixed_get_instance_private (fixed);
 
   gtk_widget_set_has_window (GTK_WIDGET (fixed), FALSE);
 
@@ -547,3 +548,27 @@ gtk_fixed_forall (GtkContainer *container,
       (* callback) (child->widget, callback_data);
     }
 }
+
+static gboolean
+gtk_fixed_draw (GtkWidget *widget,
+                cairo_t   *cr)
+{
+  GtkFixed *fixed = GTK_FIXED (widget);
+  GtkFixedPrivate *priv = fixed->priv;
+  GtkFixedChild *child;
+  GList *list;
+
+  for (list = priv->children;
+       list;
+       list = list->next)
+    {
+      child = list->data;
+
+      gtk_container_propagate_draw (GTK_CONTAINER (fixed),
+                                    child->widget,
+                                    cr);
+    }
+  
+  return FALSE;
+}
+

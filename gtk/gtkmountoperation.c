@@ -38,7 +38,6 @@
 #include "gtkmountoperation.h"
 #include "gtkprivate.h"
 #include "gtkradiobutton.h"
-#include "gtkstock.h"
 #include "gtkgrid.h"
 #include "gtkwindow.h"
 #include "gtktreeview.h"
@@ -47,7 +46,7 @@
 #include "gtkcellrendererpixbuf.h"
 #include "gtkscrolledwindow.h"
 #include "gtkicontheme.h"
-#include "gtkimagemenuitem.h"
+#include "gtkmenuitem.h"
 #include "gtkmain.h"
 
 #include <glib/gprintf.h>
@@ -103,16 +102,6 @@ static void   gtk_mount_operation_show_processes (GMountOperation *op,
 
 static void   gtk_mount_operation_aborted      (GMountOperation *op);
 
-G_DEFINE_TYPE (GtkMountOperation, gtk_mount_operation, G_TYPE_MOUNT_OPERATION);
-
-enum {
-  PROP_0,
-  PROP_PARENT,
-  PROP_IS_SHOWING,
-  PROP_SCREEN
-
-};
-
 struct _GtkMountOperationPrivate {
   GtkWindow *parent_window;
   GtkDialog *dialog;
@@ -140,13 +129,21 @@ struct _GtkMountOperationPrivate {
   GtkListStore *process_list_store;
 };
 
+enum {
+  PROP_0,
+  PROP_PARENT,
+  PROP_IS_SHOWING,
+  PROP_SCREEN
+
+};
+
+G_DEFINE_TYPE_WITH_PRIVATE (GtkMountOperation, gtk_mount_operation, G_TYPE_MOUNT_OPERATION)
+
 static void
 gtk_mount_operation_class_init (GtkMountOperationClass *klass)
 {
   GObjectClass         *object_class = G_OBJECT_CLASS (klass);
   GMountOperationClass *mount_op_class = G_MOUNT_OPERATION_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (GtkMountOperationPrivate));
 
   object_class->finalize     = gtk_mount_operation_finalize;
   object_class->get_property = gtk_mount_operation_get_property;
@@ -187,9 +184,7 @@ gtk_mount_operation_init (GtkMountOperation *operation)
 {
   gchar *name_owner;
 
-  operation->priv = G_TYPE_INSTANCE_GET_PRIVATE (operation,
-                                                 GTK_TYPE_MOUNT_OPERATION,
-                                                 GtkMountOperationPrivate);
+  operation->priv = gtk_mount_operation_get_instance_private (operation);
 
   operation->priv->handler =
     _gtk_mount_operation_handler_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
@@ -216,7 +211,12 @@ gtk_mount_operation_finalize (GObject *object)
     g_list_free (priv->user_widgets);
 
   if (priv->parent_window)
-    g_object_unref (priv->parent_window);
+    {
+      g_signal_handlers_disconnect_by_func (priv->parent_window,
+                                            gtk_widget_destroyed,
+                                            &priv->parent_window);
+      g_object_unref (priv->parent_window);
+    }
 
   if (priv->screen)
     g_object_unref (priv->screen);
@@ -528,10 +528,10 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
 
   gtk_window_set_resizable (window, FALSE);
   gtk_window_set_title (window, "");
-  gtk_window_set_icon_name (window, GTK_STOCK_DIALOG_AUTHENTICATION);
+  gtk_window_set_icon_name (window, "dialog-password");
 
   gtk_dialog_add_buttons (dialog,
-                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                          _("_Cancel"), GTK_RESPONSE_CANCEL,
                           _("Co_nnect"), GTK_RESPONSE_OK,
                           NULL);
   gtk_dialog_set_default_response (dialog, GTK_RESPONSE_OK);
@@ -546,8 +546,8 @@ gtk_mount_operation_ask_password_do_gtk (GtkMountOperation *operation,
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
   gtk_box_pack_start (GTK_BOX (content_area), hbox, TRUE, TRUE, 0);
 
-  icon = gtk_image_new_from_stock (GTK_STOCK_DIALOG_AUTHENTICATION,
-                                   GTK_ICON_SIZE_DIALOG);
+  icon = gtk_image_new_from_icon_name ("dialog-password",
+                                       GTK_ICON_SIZE_DIALOG);
 
   gtk_widget_set_halign (icon, GTK_ALIGN_CENTER);
   gtk_widget_set_valign (icon, GTK_ALIGN_START);
@@ -1296,10 +1296,10 @@ do_popup_menu_for_process_tree_view (GtkWidget         *widget,
   popped_up_menu = FALSE;
 
   menu = gtk_menu_new ();
+  gtk_style_context_add_class (gtk_widget_get_style_context (menu),
+                               GTK_STYLE_CLASS_CONTEXT_MENU);
 
-  item = gtk_image_menu_item_new_with_mnemonic (_("_End Process"));
-  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item),
-                                 gtk_image_new_from_stock (GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+  item = gtk_menu_item_new_with_mnemonic (_("_End Process"));
   g_signal_connect (item, "activate",
                     G_CALLBACK (on_end_process_activated),
                     op);
@@ -1724,20 +1724,19 @@ gtk_mount_operation_set_parent (GtkMountOperation *op,
       g_signal_handlers_disconnect_by_func (priv->parent_window,
                                             gtk_widget_destroyed,
                                             &priv->parent_window);
-      priv->parent_window = NULL;
+      g_object_unref (priv->parent_window);
     }
-
-  if (parent)
+  priv->parent_window = parent;
+  if (priv->parent_window)
     {
-      priv->parent_window = g_object_ref (parent);
-
-      g_signal_connect (parent, "destroy",
+      g_object_ref (priv->parent_window);
+      g_signal_connect (priv->parent_window, "destroy",
                         G_CALLBACK (gtk_widget_destroyed),
                         &priv->parent_window);
-
-      if (priv->dialog)
-        gtk_window_set_transient_for (GTK_WINDOW (priv->dialog), parent);
     }
+
+  if (priv->dialog)
+    gtk_window_set_transient_for (GTK_WINDOW (priv->dialog), priv->parent_window);
 
   g_object_notify (G_OBJECT (op), "parent");
 }

@@ -321,6 +321,7 @@ static void     gtk_icon_view_buildable_custom_tag_end   (GtkBuildable  *buildab
 static guint icon_view_signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE_WITH_CODE (GtkIconView, gtk_icon_view, GTK_TYPE_CONTAINER,
+                         G_ADD_PRIVATE (GtkIconView)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_CELL_LAYOUT,
 						gtk_icon_view_cell_layout_init)
 			 G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE,
@@ -336,8 +337,6 @@ gtk_icon_view_class_init (GtkIconViewClass *klass)
   GtkBindingSet *binding_set;
   
   binding_set = gtk_binding_set_by_class (klass);
-
-  g_type_class_add_private (klass, sizeof (GtkIconViewPrivate));
 
   gobject_class = (GObjectClass *) klass;
   widget_class = (GtkWidgetClass *) klass;
@@ -958,9 +957,7 @@ gtk_icon_view_cell_layout_init (GtkCellLayoutIface *iface)
 static void
 gtk_icon_view_init (GtkIconView *icon_view)
 {
-  icon_view->priv = G_TYPE_INSTANCE_GET_PRIVATE (icon_view,
-                                                 GTK_TYPE_ICON_VIEW,
-                                                 GtkIconViewPrivate);
+  icon_view->priv = gtk_icon_view_get_instance_private (icon_view);
 
   icon_view->priv->width = 0;
   icon_view->priv->height = 0;
@@ -2238,9 +2235,10 @@ gtk_icon_view_set_cursor (GtkIconView     *icon_view,
 /**
  * gtk_icon_view_get_cursor:
  * @icon_view: A #GtkIconView
- * @path: (out) (allow-none): Return location for the current cursor path,
- *        or %NULL
- * @cell: (out) (allow-none): Return location the current focus cell, or %NULL
+ * @path: (out) (allow-none) (transfer full): Return location for the current
+ *        cursor path, or %NULL
+ * @cell: (out) (allow-none) (transfer none): Return location the current
+ *        focus cell, or %NULL
  *
  * Fills in @path and @cell with the current cursor path and cell. 
  * If the cursor isn't currently set, then *@path will be %NULL.  
@@ -2507,7 +2505,7 @@ gtk_icon_view_key_release (GtkWidget      *widget,
   if (icon_view->priv->doing_rubberband)
     return TRUE;
 
-  return GTK_WIDGET_CLASS (gtk_icon_view_parent_class)->key_press_event (widget, event);
+  return GTK_WIDGET_CLASS (gtk_icon_view_parent_class)->key_release_event (widget, event);
 }
 
 static void
@@ -3285,7 +3283,9 @@ _gtk_icon_view_set_cursor_item (GtkIconView     *icon_view,
 
   if (item_obj != NULL)
     {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       atk_focus_tracker_notify (item_obj);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
       atk_object_notify_state_change (item_obj, ATK_STATE_FOCUSED, TRUE);
       g_object_unref (item_obj); 
     }
@@ -6474,11 +6474,13 @@ gtk_icon_view_maybe_begin_drag (GtkIconView    *icon_view,
   
   retval = TRUE;
 
-  context = gtk_drag_begin (widget,
-                            gtk_drag_source_get_target_list (widget),
-                            icon_view->priv->source_actions,
-                            button,
-                            (GdkEvent*)event);
+  context = gtk_drag_begin_with_coordinates (widget,
+                                             gtk_drag_source_get_target_list (widget),
+                                             icon_view->priv->source_actions,
+                                             button,
+                                             (GdkEvent*)event,
+                                             icon_view->priv->press_start_x,
+                                             icon_view->priv->press_start_y);
 
   set_source_row (context, model, path);
   
@@ -6514,8 +6516,8 @@ gtk_icon_view_drag_begin (GtkWidget      *widget,
 
   g_return_if_fail (item != NULL);
 
-  x = icon_view->priv->press_start_x - item->cell_area.x + 1;
-  y = icon_view->priv->press_start_y - item->cell_area.y + 1;
+  x = icon_view->priv->press_start_x - item->cell_area.x + icon_view->priv->item_padding;
+  y = icon_view->priv->press_start_y - item->cell_area.y + icon_view->priv->item_padding;
   
   path = gtk_tree_path_new_from_indices (item->index, -1);
   icon = gtk_icon_view_create_drag_icon (icon_view, path);
@@ -7116,7 +7118,6 @@ gtk_icon_view_create_drag_icon (GtkIconView *icon_view,
 				GtkTreePath *path)
 {
   GtkWidget *widget;
-  GtkStyleContext *context;
   cairo_t *cr;
   cairo_surface_t *surface;
   GList *l;
@@ -7126,7 +7127,6 @@ gtk_icon_view_create_drag_icon (GtkIconView *icon_view,
   g_return_val_if_fail (path != NULL, NULL);
 
   widget = GTK_WIDGET (icon_view);
-  context = gtk_widget_get_style_context (widget);
 
   if (!gtk_widget_get_realized (widget))
     return NULL;
@@ -7147,30 +7147,16 @@ gtk_icon_view_create_drag_icon (GtkIconView *icon_view,
 	  };
 
 	  surface = gdk_window_create_similar_surface (icon_view->priv->bin_window,
-                                                       CAIRO_CONTENT_COLOR,
-                                                       rect.width + 2,
-                                                       rect.height + 2);
+                                                       CAIRO_CONTENT_COLOR_ALPHA,
+                                                       rect.width,
+                                                       rect.height);
 
 	  cr = cairo_create (surface);
-	  cairo_set_line_width (cr, 1.);
-
-          gtk_render_background (context, cr, 0, 0,
-                                 rect.width + 2, rect.height + 2);
-
-          cairo_save (cr);
-
-          cairo_rectangle (cr, 1, 1, rect.width, rect.height);
-          cairo_clip (cr);
 
 	  gtk_icon_view_paint_item (icon_view, cr, item, 
-				    icon_view->priv->item_padding + 1, 
-				    icon_view->priv->item_padding + 1, FALSE);
-
-          cairo_restore (cr);
-
-	  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0); /* black */
-	  cairo_rectangle (cr, 0.5, 0.5, rect.width + 1, rect.height + 1);
-	  cairo_stroke (cr);
+				    icon_view->priv->item_padding,
+				    icon_view->priv->item_padding,
+                                    FALSE);
 
 	  cairo_destroy (cr);
 

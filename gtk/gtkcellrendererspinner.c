@@ -28,7 +28,7 @@
 #include "config.h"
 
 #include "gtkcellrendererspinner.h"
-#include "gtkiconfactory.h"
+#include "deprecated/gtkiconfactory.h"
 #include "gtkicontheme.h"
 #include "gtkintl.h"
 #include "gtksettings.h"
@@ -99,7 +99,7 @@ static void gtk_cell_renderer_spinner_render       (GtkCellRenderer      *cell,
                                                     const GdkRectangle   *cell_area,
                                                     GtkCellRendererState  flags);
 
-G_DEFINE_TYPE (GtkCellRendererSpinner, gtk_cell_renderer_spinner, GTK_TYPE_CELL_RENDERER)
+G_DEFINE_TYPE_WITH_PRIVATE (GtkCellRendererSpinner, gtk_cell_renderer_spinner, GTK_TYPE_CELL_RENDERER)
 
 static void
 gtk_cell_renderer_spinner_class_init (GtkCellRendererSpinnerClass *klass)
@@ -159,17 +159,12 @@ gtk_cell_renderer_spinner_class_init (GtkCellRendererSpinnerClass *klass)
                                                       GTK_TYPE_ICON_SIZE, GTK_ICON_SIZE_MENU,
                                                       G_PARAM_READWRITE));
 
-
-  g_type_class_add_private (object_class, sizeof (GtkCellRendererSpinnerPrivate));
 }
 
 static void
 gtk_cell_renderer_spinner_init (GtkCellRendererSpinner *cell)
 {
-  cell->priv = G_TYPE_INSTANCE_GET_PRIVATE (cell,
-                                            GTK_TYPE_CELL_RENDERER_SPINNER,
-                                            GtkCellRendererSpinnerPrivate);
-
+  cell->priv = gtk_cell_renderer_spinner_get_instance_private (cell);
   cell->priv->pulse = 0;
   cell->priv->old_icon_size = GTK_ICON_SIZE_INVALID;
   cell->priv->icon_size = GTK_ICON_SIZE_MENU;
@@ -196,16 +191,11 @@ gtk_cell_renderer_spinner_update_size (GtkCellRendererSpinner *cell,
                                        GtkWidget              *widget)
 {
   GtkCellRendererSpinnerPrivate *priv = cell->priv;
-  GdkScreen *screen;
-  GtkSettings *settings;
 
   if (priv->old_icon_size == priv->icon_size)
     return;
 
-  screen = gtk_widget_get_screen (GTK_WIDGET (widget));
-  settings = gtk_settings_get_for_screen (screen);
-
-  if (!gtk_icon_size_lookup_for_settings (settings, priv->icon_size, &priv->size, NULL))
+  if (!gtk_icon_size_lookup (priv->icon_size, &priv->size, NULL))
     {
       g_warning ("Invalid icon size %u\n", priv->icon_size);
       priv->size = 24;
@@ -356,7 +346,7 @@ gtk_cell_renderer_spinner_render (GtkCellRenderer      *cellr,
     return;
 
   state = GTK_STATE_NORMAL;
-  if (gtk_widget_get_state (widget) == GTK_STATE_INSENSITIVE ||
+  if ((gtk_widget_get_state_flags (widget) & GTK_STATE_FLAG_INSENSITIVE) ||
       !gtk_cell_renderer_get_sensitive (cellr))
     {
       state = GTK_STATE_INSENSITIVE;

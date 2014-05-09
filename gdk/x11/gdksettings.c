@@ -32,26 +32,14 @@ static const struct {
   {"Net/CursorBlinkTime",     "gtk-cursor-blink-time"},
   {"Net/ThemeName",           "gtk-theme-name"},
   {"Net/IconThemeName",       "gtk-icon-theme-name"},
-  {"Gtk/CanChangeAccels",     "gtk-can-change-accels"},
   {"Gtk/ColorPalette",        "gtk-color-palette"},
   {"Gtk/FontName",            "gtk-font-name"},
-  {"Gtk/IconSizes",           "gtk-icon-sizes"},
   {"Gtk/KeyThemeName",        "gtk-key-theme-name"},
-  {"Gtk/ToolbarStyle",        "gtk-toolbar-style"},
-  {"Gtk/ToolbarIconSize",     "gtk-toolbar-icon-size"},
-  {"Gtk/IMPreeditStyle",      "gtk-im-preedit-style"},
-  {"Gtk/IMStatusStyle",       "gtk-im-status-style"},
   {"Gtk/Modules",             "gtk-modules"},
-  {"Gtk/FileChooserBackend",  "gtk-file-chooser-backend"},
   {"Gtk/ButtonImages",        "gtk-button-images"},
   {"Gtk/MenuImages",          "gtk-menu-images"},
-  {"Gtk/MenuBarAccel",        "gtk-menu-bar-accel"},
   {"Gtk/CursorThemeName",     "gtk-cursor-theme-name"},
   {"Gtk/CursorThemeSize",     "gtk-cursor-theme-size"},
-  {"Gtk/ShowInputMethodMenu", "gtk-show-input-method-menu"},
-  {"Gtk/ShowUnicodeMenu",     "gtk-show-unicode-menu"},
-  {"Gtk/TimeoutInitial",      "gtk-timeout-initial"},
-  {"Gtk/TimeoutRepeat",       "gtk-timeout-repeat"},
   {"Gtk/ColorScheme",         "gtk-color-scheme"},
   {"Gtk/EnableAnimations",    "gtk-enable-animations"},
   {"Xft/Antialias",           "gtk-xft-antialias"},
@@ -59,10 +47,7 @@ static const struct {
   {"Xft/HintStyle",           "gtk-xft-hintstyle"},
   {"Xft/RGBA",                "gtk-xft-rgba"},
   {"Xft/DPI",                 "gtk-xft-dpi"},
-  {"Net/FallbackIconTheme",   "gtk-fallback-icon-theme"},
-  {"Gtk/TouchscreenMode",     "gtk-touchscreen-mode"},
   {"Gtk/EnableAccels",        "gtk-enable-accels"},
-  {"Gtk/EnableMnemonics",     "gtk-enable-mnemonics"},
   {"Gtk/ScrolledWindowPlacement", "gtk-scrolled-window-placement"},
   {"Gtk/IMModule",            "gtk-im-module"},
   {"Fontconfig/Timestamp",    "gtk-fontconfig-timestamp"},
@@ -70,13 +55,17 @@ static const struct {
   {"Net/EnableInputFeedbackSounds", "gtk-enable-input-feedback-sounds"},
   {"Net/EnableEventSounds",   "gtk-enable-event-sounds"},
   {"Gtk/CursorBlinkTimeout",  "gtk-cursor-blink-timeout"},
-  {"Gtk/AutoMnemonics",       "gtk-auto-mnemonics"},
-  {"Gtk/VisibleFocus",        "gtk-visible-focus"},
   {"Gtk/ShellShowsAppMenu",   "gtk-shell-shows-app-menu"},
   {"Gtk/ShellShowsMenubar",   "gtk-shell-shows-menubar"},
+  {"Gtk/ShellShowsDesktop",   "gtk-shell-shows-desktop"},
   {"Gtk/EnablePrimaryPaste",  "gtk-enable-primary-paste"},
   {"Gtk/RecentFilesMaxAge",   "gtk-recent-files-max-age"},
-  {"Gtk/RecentFilesEnabled",  "gtk-recent-files-enabled"}
+  {"Gtk/RecentFilesEnabled",  "gtk-recent-files-enabled"},
+
+  /* These are here in order to be recognized, but are not sent to
+     gtk as they are handled internally by gdk: */
+  {"Gdk/WindowScalingFactor", "gdk-window-scaling-factor"},
+  {"Gdk/UnscaledDPI",         "gdk-unscaled-dpi"}
 };
 
 static const char *

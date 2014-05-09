@@ -9,9 +9,9 @@ INTROSPECTION_COMPILER_ARGS = \
    --includedir=$(srcdir) \
    --includedir=.
 
-SUBDIRS = $(GDK_BACKENDS) . tests
+SUBDIRS = $(GDK_BACKENDS) .
 
-DIST_SUBDIRS = win32 x11 quartz broadway wayland tests
+DIST_SUBDIRS = win32 x11 quartz broadway wayland
 
 CLEANFILES =
 
@@ -22,16 +22,14 @@ EXTRA_DIST += 			\
 	gdkkeynames.c		\
 	gen-keyname-table.pl	\
 	gdkconfig.h.win32	\
+	gdkconfig.h.win32_broadway	\
 	gdkkeysyms-update.pl	\
-	gdk.def			\
 	gdkmarshalers.list	\
 	gdkwindowimpl.h		\
 	makefile.msc		\
-	gdk.symbols		\
 	gdkenumtypes.c.template	\
 	gdkenumtypes.h.template	\
-	gdkversionmacros.h.in	\
-	abicheck.sh
+	gdkversionmacros.h.in
 
 AM_CPPFLAGS = 				\
 	-DG_LOG_DOMAIN=\"Gdk\"		\
@@ -54,8 +52,7 @@ LDADD = 					\
 	-version-info $(LT_VERSION_INFO)	\
 	-export-dynamic 			\
 	-rpath $(libdir) 			\
-	$(no_undefined)				\
-	$(LIBTOOL_EXPORT_OPTIONS)
+	$(no_undefined)
 
 #
 # setup source file variables
@@ -134,6 +131,7 @@ gdk_c_sources = 				\
 	gdkframeclockidle.c			\
 	gdkpango.c				\
 	gdkpixbuf-drawable.c			\
+	gdkproperty.c				\
 	gdkrectangle.c				\
 	gdkrgba.c				\
 	gdkscreen.c				\
@@ -143,11 +141,11 @@ gdk_c_sources = 				\
 	gdkwindowimpl.c
 
 gdk_built_sources = 				\
+	gdkenumtypes.h				\
 	gdkenumtypes.c				\
 	gdkmarshalers.h 			\
 	gdkmarshalers.c				\
-	gdkversionmacros.h			\
-	gdkenumtypes.h
+	gdkversionmacros.h
 
 #
 # setup GDK sources and their dependencies
@@ -165,6 +163,7 @@ common_sources = 		\
 	gdkmarshalers.h
 
 libgdk_3_la_SOURCES = $(common_sources)
+libgdk_3_la_CFLAGS = $(AM_CFLAGS) $(GDK_HIDDEN_VISIBILITY_CFLAGS)
 libgdk_3_la_LIBADD = $(GDK_DEP_LIBS)
 libgdk_3_la_LDFLAGS = $(LDADD)
 
@@ -173,6 +172,7 @@ libgdk_3_la_LIBADD += x11/libgdk-x11.la
 endif # USE_X11
 
 if USE_QUARTZ
+libgdk_3_la_CFLAGS += -xobjective-c
 libgdk_3_la_LIBADD += quartz/libgdk-quartz.la
 endif # USE_QUARTZ
 
@@ -196,8 +196,8 @@ if HAVE_INTROSPECTION
 introspection_files = 		\
 	$(filter-out gdkkeysyms-compat.h, $(gdk_public_h_sources))	\
 	$(gdk_c_sources)	\
-        $(srcdir)/gdkenumtypes.c	\
-        $(srcdir)/gdkenumtypes.h
+        gdkenumtypes.c		\
+        gdkenumtypes.h
 
 Gdk-3.0.gir: libgdk-3.la Makefile
 Gdk_3_0_gir_SCANNERFLAGS = 	\
@@ -298,19 +298,9 @@ install-ms-lib:
 uninstall-ms-lib:
 endif
 
-# This places the generated .def file in srcdir, since it is expected to be there.
-# (The one from a tarball is)
-gdk.def: gdk.symbols
-	$(AM_V_GEN) (echo -e EXPORTS; $(CPP) -P -DGDK_WINDOWING_WIN32 - <$(srcdir)/gdk.symbols | sed -e '/^$$/d' -e 's/^/	/' -e 's/G_GNUC_[^ ]*//g') > $(srcdir)/gdk.def
-
-TESTS_ENVIRONMENT = srcdir="$(srcdir)" GDK_BACKENDS="$(GDK_BACKENDS)"
-if OS_LINUX
-TESTS = abicheck.sh
-endif
-
 lib_LTLIBRARIES = libgdk-3.la
 
-MAINTAINERCLEANFILES = $(gdk_built_sources)
+MAINTAINERCLEANFILES = $(gdk_built_sources) stamp-gdkenumtypes.h
 EXTRA_DIST += \
 	$(gdk_built_sources)	\
 	fallback-c89.c
@@ -324,25 +314,28 @@ BUILT_SOURCES = \
 	$(gdk_built_sources)			\
 	gdkconfig.h
 
-gdkenumtypes.h: @REBUILD@ $(gdk_public_h_sources) $(srcdir)/gdkenumtypes.h.template
+gdkenumtypes.h: stamp-gdkenumtypes.h
+	@true
+stamp-gdkenumtypes.h: $(gdk_public_h_sources) gdkenumtypes.h.template
 	$(AM_V_GEN) ( cd $(srcdir) && $(GLIB_MKENUMS) --template gdkenumtypes.h.template \
 		$(gdk_public_h_sources) ) >> xgen-geth \
-	&& (cmp -s xgen-geth gdkenumtypes.h || cp xgen-geth $(srcdir)/gdkenumtypes.h ) \
-	&& rm -f xgen-geth 
-gdkenumtypes.c: @REBUILD@ $(gdk_public_h_sources) gdkenumtypes.c.template
+	&& (cmp -s xgen-geth gdkenumtypes.h || cp xgen-geth gdkenumtypes.h ) \
+	&& rm -f xgen-geth \
+	&& echo timestamp > $(@F)
+gdkenumtypes.c: $(gdk_public_h_sources) gdkenumtypes.c.template
 	$(AM_V_GEN) ( cd $(srcdir) && $(GLIB_MKENUMS) --template gdkenumtypes.c.template \
 		$(gdk_public_h_sources) ) > xgen-getc \
-	&& cp xgen-getc $(srcdir)/gdkenumtypes.c  \
+	&& cp xgen-getc gdkenumtypes.c  \
 	&& rm -f xgen-getc
 
 #
 # Marshaller generation
 #
-gdkmarshalers.h: @REBUILD@ gdkmarshalers.list
+gdkmarshalers.h: gdkmarshalers.list
 	$(AM_V_GEN) $(GLIB_GENMARSHAL) --prefix=_gdk_marshal $(srcdir)/gdkmarshalers.list --header > gdkmarshalers-h.tmp \
 	&& mv gdkmarshalers-h.tmp gdkmarshalers.h \
 	|| ( rm -f gdkmarshalers-h.tmp && exit 1)
-gdkmarshalers.c: @REBUILD@ gdkmarshalers.list
+gdkmarshalers.c: gdkmarshalers.list
 	$(AM_V_GEN) (echo "#include \"gdkmarshalers.h\""; \
 	 $(GLIB_GENMARSHAL) --prefix=_gdk_marshal $(srcdir)/gdkmarshalers.list --body) > gdkmarshalers-c.tmp	\
 	&& mv gdkmarshalers-c.tmp gdkmarshalers.c \
@@ -366,7 +359,7 @@ dist-hook: ../build/win32/vs9/gdk.vcproj ../build/win32/vs10/gdk.vcxproj ../buil
 	done >libgdk.sourcefiles
 	$(CPP) -P - <$(top_srcdir)/build/win32/vs9/gdk.vcprojin >$@
 	rm libgdk.sourcefiles
-	
+
 ../build/win32/vs10/gdk.vcxproj: ../build/win32/vs10/gdk.vcxprojin
 	for F in $(libgdk_3_la_SOURCES); do \
 		case $$F in \

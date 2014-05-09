@@ -93,16 +93,61 @@ get_vfunc_name (GtkOrientation orientation,
     return for_size < 0 ? "get_preferred_height" : "get_preferred_height_for_width";
 }
 
+static gboolean
+widget_class_has_baseline_support (GtkWidgetClass *widget_class)
+{
+  GtkWidgetClass *parent_class;
+
+  if (widget_class->get_preferred_height_and_baseline_for_width == NULL)
+    return FALSE;
+
+  /* This is kinda hacky, but for backwards compatibility reasons we have to handle the case
+     where a class previously did not support get_preferred_height_and_baseline_for_width,
+     but then gained support for it, and a subclass of it overrides the previous non-baseline
+     methods. If this happens we need to call the overridden (non-baseline supporting) versions
+     on the subclass, rather than the inherited but not overriddent new get_preferred_height_and_baseline_for_width.
+  */
+
+  /* Loop over all parent classes that inherit the same get_preferred_height_and_baseline_for_width */
+  parent_class = g_type_class_peek_parent (widget_class);
+  while (parent_class != NULL &&
+	 parent_class->get_preferred_height_and_baseline_for_width == widget_class->get_preferred_height_and_baseline_for_width)
+    {
+      if (parent_class->get_preferred_height != widget_class->get_preferred_height ||
+	  parent_class->get_preferred_height_for_width != widget_class->get_preferred_height_for_width)
+	return FALSE;
+
+	parent_class = g_type_class_peek_parent (parent_class);
+    }
+
+  return TRUE;
+}
+
+gboolean
+_gtk_widget_has_baseline_support (GtkWidget *widget)
+{
+  GtkWidgetClass *widget_class;
+
+  widget_class = GTK_WIDGET_GET_CLASS (widget);
+
+  return widget_class_has_baseline_support (widget_class);
+}
+
 static void
 gtk_widget_query_size_for_orientation (GtkWidget        *widget,
                                        GtkOrientation    orientation,
                                        gint              for_size,
                                        gint             *minimum_size,
-                                       gint             *natural_size)
+                                       gint             *natural_size,
+                                       gint             *minimum_baseline,
+                                       gint             *natural_baseline)
 {
   SizeRequestCache *cache;
+  GtkWidgetClass *widget_class;
   gint min_size = 0;
   gint nat_size = 0;
+  gint min_baseline = -1;
+  gint nat_baseline = -1;
   gboolean found_in_cache;
 
   if (gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_CONSTANT_SIZE)
@@ -113,20 +158,26 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
                                                    orientation,
                                                    for_size,
                                                    &min_size,
-                                                   &nat_size);
+                                                   &nat_size,
+						   &min_baseline,
+						   &nat_baseline);
+
+  widget_class = GTK_WIDGET_GET_CLASS (widget);
   
   if (!found_in_cache)
     {
       gint adjusted_min, adjusted_natural, adjusted_for_size = for_size;
 
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_widget_ensure_style (widget);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
 
       if (orientation == GTK_ORIENTATION_HORIZONTAL)
         {
           if (for_size < 0)
             {
 	      push_recursion_check (widget, orientation, for_size);
-              GTK_WIDGET_GET_CLASS (widget)->get_preferred_width (widget, &min_size, &nat_size);
+              widget_class->get_preferred_width (widget, &min_size, &nat_size);
 	      pop_recursion_check (widget, orientation);
             }
           else
@@ -140,17 +191,17 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
 	      gtk_widget_get_preferred_height (widget, &minimum_height, &natural_height);
 
               /* convert for_size to unadjusted height (for_size is a proposed allocation) */
-              GTK_WIDGET_GET_CLASS (widget)->adjust_size_allocation (widget,
-                                                                     GTK_ORIENTATION_VERTICAL,
-                                                                     &minimum_height,
-								     &natural_height,
-                                                                     &ignored_position,
-                                                                     &adjusted_for_size);
+              widget_class->adjust_size_allocation (widget,
+						    GTK_ORIENTATION_VERTICAL,
+						    &minimum_height,
+						    &natural_height,
+						    &ignored_position,
+						    &adjusted_for_size);
 
 	      push_recursion_check (widget, orientation, for_size);
-              GTK_WIDGET_GET_CLASS (widget)->get_preferred_width_for_height (widget, 
-									     MAX (adjusted_for_size, minimum_height),
-									     &min_size, &nat_size);
+              widget_class->get_preferred_width_for_height (widget,
+							    MAX (adjusted_for_size, minimum_height),
+							    &min_size, &nat_size);
 	      pop_recursion_check (widget, orientation);
             }
         }
@@ -159,7 +210,12 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
           if (for_size < 0)
             {
 	      push_recursion_check (widget, orientation, for_size);
-              GTK_WIDGET_GET_CLASS (widget)->get_preferred_height (widget, &min_size, &nat_size);
+	      if (widget_class_has_baseline_support (widget_class))
+		widget_class->get_preferred_height_and_baseline_for_width (widget, -1,
+									   &min_size, &nat_size,
+									   &min_baseline, &nat_baseline);
+	      else
+		widget_class->get_preferred_height (widget, &min_size, &nat_size);
 	      pop_recursion_check (widget, orientation);
             }
           else
@@ -173,17 +229,21 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
 	      gtk_widget_get_preferred_width (widget, &minimum_width, &natural_width);
 
               /* convert for_size to unadjusted width (for_size is a proposed allocation) */
-              GTK_WIDGET_GET_CLASS (widget)->adjust_size_allocation (widget,
-                                                                     GTK_ORIENTATION_HORIZONTAL,
-								     &minimum_width,
-                                                                     &natural_width,
-                                                                     &ignored_position,
-                                                                     &adjusted_for_size);
+              widget_class->adjust_size_allocation (widget,
+						    GTK_ORIENTATION_HORIZONTAL,
+						    &minimum_width,
+						    &natural_width,
+						    &ignored_position,
+						    &adjusted_for_size);
 
 	      push_recursion_check (widget, orientation, for_size);
-              GTK_WIDGET_GET_CLASS (widget)->get_preferred_height_for_width (widget, 
-									     MAX (adjusted_for_size, minimum_width),
-									     &min_size, &nat_size);
+	      if (widget_class_has_baseline_support (widget_class))
+		widget_class->get_preferred_height_and_baseline_for_width (widget, MAX (adjusted_for_size, minimum_width),
+									   &min_size, &nat_size,
+									   &min_baseline, &nat_baseline);
+	      else
+		widget_class->get_preferred_height_for_width (widget, MAX (adjusted_for_size, minimum_width),
+							      &min_size, &nat_size);
 	      pop_recursion_check (widget, orientation);
             }
         }
@@ -196,10 +256,10 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
 
       adjusted_min     = min_size;
       adjusted_natural = nat_size;
-      GTK_WIDGET_GET_CLASS (widget)->adjust_size_request (widget,
-                                                          orientation,
-                                                          &adjusted_min,
-                                                          &adjusted_natural);
+      widget_class->adjust_size_request (widget,
+					 orientation,
+					 &adjusted_min,
+					 &adjusted_natural);
 
       if (adjusted_min < min_size ||
           adjusted_natural < nat_size)
@@ -227,11 +287,42 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
           nat_size = adjusted_natural;
         }
 
+      if (min_baseline != -1 || nat_baseline != -1)
+	{
+	  if (orientation == GTK_ORIENTATION_HORIZONTAL)
+	    {
+	      g_warning ("%s %p reported a horizontal baseline",
+			 G_OBJECT_TYPE_NAME (widget), widget);
+	      min_baseline = -1;
+	      nat_baseline = -1;
+	    }
+	  else if (min_baseline == -1 || nat_baseline == -1)
+	    {
+	      g_warning ("%s %p reported baseline for only one of min/natural (min: %d, natural: %d)",
+			 G_OBJECT_TYPE_NAME (widget), widget,
+			 min_baseline, nat_baseline);
+	      min_baseline = -1;
+	      nat_baseline = -1;
+	    }
+	  else if (gtk_widget_get_valign_with_baseline (widget) != GTK_ALIGN_BASELINE)
+	    {
+	      /* Ignore requested baseline for non-aligned widgets */
+	      min_baseline = -1;
+	      nat_baseline = -1;
+	    }
+	  else
+	    widget_class->adjust_baseline_request (widget,
+						   &min_baseline,
+						   &nat_baseline);
+	}
+
       _gtk_size_request_cache_commit (cache,
                                       orientation,
                                       for_size,
                                       min_size,
-                                      nat_size);
+                                      nat_size,
+				      min_baseline,
+				      nat_baseline);
     }
 
   if (minimum_size)
@@ -240,15 +331,26 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
   if (natural_size)
     *natural_size = nat_size;
 
+  if (minimum_baseline)
+    *minimum_baseline = min_baseline;
+
+  if (natural_baseline)
+    *natural_baseline = nat_baseline;
+
   g_assert (min_size <= nat_size);
 
   GTK_NOTE (SIZE_REQUEST,
-            g_print ("[%p] %s\t%s: %d is minimum %d and natural: %d (hit cache: %s)\n",
+            g_print ("[%p] %s\t%s: %d is minimum %d and natural: %d",
                      widget, G_OBJECT_TYPE_NAME (widget),
                      orientation == GTK_ORIENTATION_HORIZONTAL ?
                      "width for height" : "height for width" ,
-                     for_size, min_size, nat_size,
-                     found_in_cache ? "yes" : "no"));
+                     for_size, min_size, nat_size);
+	    if (min_baseline != -1 || nat_baseline != -1)
+	      g_print (", baseline %d/%d",
+		       min_baseline, nat_baseline);
+	    g_print (" (hit cache: %s)\n",
+		     found_in_cache ? "yes" : "no")
+	    );
 }
 
 /* This is the main function that checks for a cached size and
@@ -256,12 +358,14 @@ gtk_widget_query_size_for_orientation (GtkWidget        *widget,
  * not cached. If the for_size here is -1, then get_preferred_width()
  * or get_preferred_height() will be used.
  */
-void
-_gtk_widget_compute_size_for_orientation (GtkWidget        *widget,
-                                          GtkOrientation    orientation,
-                                          gint              for_size,
-                                          gint             *minimum,
-                                          gint             *natural)
+static void
+gtk_widget_compute_size_for_orientation (GtkWidget        *widget,
+                                         GtkOrientation    orientation,
+                                         gint              for_size,
+                                         gint             *minimum,
+                                         gint             *natural,
+                                         gint             *minimum_baseline,
+                                         gint             *natural_baseline)
 {
   GHashTable *widgets;
   GHashTableIter iter;
@@ -274,12 +378,17 @@ _gtk_widget_compute_size_for_orientation (GtkWidget        *widget,
         *minimum = 0;
       if (natural)
         *natural = 0;
+      if (minimum_baseline)
+        *minimum_baseline = -1;
+      if (natural_baseline)
+        *natural_baseline = -1;
       return;
     }
 
   if (G_LIKELY (!_gtk_widget_get_sizegroups (widget)))
     {
-      gtk_widget_query_size_for_orientation (widget, orientation, for_size, minimum, natural);
+      gtk_widget_query_size_for_orientation (widget, orientation, for_size, minimum, natural,
+					     minimum_baseline, natural_baseline);
       return;
     }
 
@@ -293,7 +402,7 @@ _gtk_widget_compute_size_for_orientation (GtkWidget        *widget,
       GtkWidget *tmp_widget = key;
       gint min_dimension, nat_dimension;
 
-      gtk_widget_query_size_for_orientation (tmp_widget, orientation, for_size, &min_dimension, &nat_dimension);
+      gtk_widget_query_size_for_orientation (tmp_widget, orientation, for_size, &min_dimension, &nat_dimension, NULL, NULL);
 
       min_result = MAX (min_result, min_dimension);
       nat_result = MAX (nat_result, nat_dimension);
@@ -302,6 +411,13 @@ _gtk_widget_compute_size_for_orientation (GtkWidget        *widget,
   g_hash_table_foreach (widgets, (GHFunc) g_object_unref, NULL);
 
   g_hash_table_destroy (widgets);
+
+  /* Baselines make no sense with sizegroups really */
+  if (minimum_baseline)
+    *minimum_baseline = -1;
+
+  if (natural_baseline)
+    *natural_baseline = -1;
 
   if (minimum)
     *minimum = min_result;
@@ -371,11 +487,12 @@ gtk_widget_get_preferred_width (GtkWidget *widget,
   g_return_if_fail (GTK_IS_WIDGET (widget));
   g_return_if_fail (minimum_width != NULL || natural_width != NULL);
 
-  _gtk_widget_compute_size_for_orientation (widget,
-                                            GTK_ORIENTATION_HORIZONTAL,
-                                            -1,
-                                            minimum_width,
-                                            natural_width);
+  gtk_widget_compute_size_for_orientation (widget,
+                                           GTK_ORIENTATION_HORIZONTAL,
+                                           -1,
+                                           minimum_width,
+                                           natural_width,
+                                           NULL, NULL);
 }
 
 
@@ -405,11 +522,12 @@ gtk_widget_get_preferred_height (GtkWidget *widget,
   g_return_if_fail (GTK_IS_WIDGET (widget));
   g_return_if_fail (minimum_height != NULL || natural_height != NULL);
 
-  _gtk_widget_compute_size_for_orientation (widget,
-                                            GTK_ORIENTATION_VERTICAL,
-                                            -1,
-                                            minimum_height,
-                                            natural_height);
+  gtk_widget_compute_size_for_orientation (widget,
+                                           GTK_ORIENTATION_VERTICAL,
+                                           -1,
+                                           minimum_height,
+                                           natural_height,
+                                           NULL, NULL);
 }
 
 
@@ -442,11 +560,12 @@ gtk_widget_get_preferred_width_for_height (GtkWidget *widget,
   g_return_if_fail (minimum_width != NULL || natural_width != NULL);
   g_return_if_fail (height >= 0);
 
-  _gtk_widget_compute_size_for_orientation (widget,
-                                            GTK_ORIENTATION_HORIZONTAL,
-                                            height,
-                                            minimum_width,
-                                            natural_width);
+  gtk_widget_compute_size_for_orientation (widget,
+                                           GTK_ORIENTATION_HORIZONTAL,
+                                           height,
+                                           minimum_width,
+                                           natural_width,
+                                           NULL, NULL);
 }
 
 /**
@@ -477,11 +596,124 @@ gtk_widget_get_preferred_height_for_width (GtkWidget *widget,
   g_return_if_fail (minimum_height != NULL || natural_height != NULL);
   g_return_if_fail (width >= 0);
 
-  _gtk_widget_compute_size_for_orientation (widget,
-                                            GTK_ORIENTATION_VERTICAL,
-                                            width,
-                                            minimum_height,
-                                            natural_height);
+  gtk_widget_compute_size_for_orientation (widget,
+                                           GTK_ORIENTATION_VERTICAL,
+                                           width,
+                                           minimum_height,
+                                           natural_height,
+                                           NULL, NULL);
+}
+
+/**
+ * gtk_widget_get_preferred_height_and_baseline_for_width:
+ * @widget: a #GtkWidget instance
+ * @width: the width which is available for allocation, or -1 if none
+ * @minimum_height: (out) (allow-none): location for storing the minimum height, or %NULL
+ * @natural_height: (out) (allow-none): location for storing the natural height, or %NULL
+ * @minimum_baseline: (out) (allow-none): location for storing the baseline for the minimum height, or %NULL
+ * @natural_baseline: (out) (allow-none): location for storing the baseline for the natural height, or %NULL
+ *
+ * Retrieves a widget's minimum and natural height and the corresponding baselines if it would be given
+ * the specified @width, or the default height if @width is -1. The baselines may be -1 which means
+ * that no baseline is requested for this widget.
+ *
+ * The returned request will be modified by the
+ * GtkWidgetClass::adjust_size_request and GtkWidgetClass::adjust_baseline_request virtual methods
+ * and by any #GtkSizeGroup<!-- -->s that have been applied. That is, the returned request
+ * is the one that should be used for layout, not necessarily the one
+ * returned by the widget itself.
+ *
+ * Since: 3.10
+ */
+void
+gtk_widget_get_preferred_height_and_baseline_for_width (GtkWidget *widget,
+							gint       width,
+							gint      *minimum_height,
+							gint      *natural_height,
+							gint      *minimum_baseline,
+							gint      *natural_baseline)
+{
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+  g_return_if_fail (minimum_height != NULL || natural_height != NULL);
+  g_return_if_fail (width >= -1);
+
+  gtk_widget_compute_size_for_orientation (widget,
+                                           GTK_ORIENTATION_VERTICAL,
+                                           width,
+                                           minimum_height,
+                                           natural_height,
+                                           minimum_baseline,
+                                           natural_baseline);
+}
+
+/*
+ * _gtk_widget_get_preferred_size_and_baseline:
+ * @widget: a #GtkWidget instance
+ * @minimum_size: (out) (allow-none): location for storing the minimum size, or %NULL
+ * @natural_size: (out) (allow-none): location for storing the natural size, or %NULL
+ *
+ * Retrieves the minimum and natural size  and the corresponding baselines of a widget, taking
+ * into account the widget's preference for height-for-width management. The baselines may
+ * be -1 which means that no baseline is requested for this widget.
+ *
+ * This is used to retrieve a suitable size by container widgets which do
+ * not impose any restrictions on the child placement. It can be used
+ * to deduce toplevel window and menu sizes as well as child widgets in
+ * free-form containers such as GtkLayout.
+ *
+ * <note><para>Handle with care. Note that the natural height of a height-for-width
+ * widget will generally be a smaller size than the minimum height, since the required
+ * height for the natural width is generally smaller than the required height for
+ * the minimum width.</para></note>
+ */
+void
+_gtk_widget_get_preferred_size_and_baseline (GtkWidget      *widget,
+                                             GtkRequisition *minimum_size,
+                                             GtkRequisition *natural_size,
+                                             gint           *minimum_baseline,
+                                             gint           *natural_baseline)
+{
+  gint min_width, nat_width;
+  gint min_height, nat_height;
+
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+
+  if (gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH)
+    {
+      gtk_widget_get_preferred_width (widget, &min_width, &nat_width);
+
+      if (minimum_size)
+	{
+	  minimum_size->width = min_width;
+	  gtk_widget_get_preferred_height_and_baseline_for_width (widget, min_width,
+								  &minimum_size->height, NULL, minimum_baseline, NULL);
+	}
+
+      if (natural_size)
+	{
+	  natural_size->width = nat_width;
+	  gtk_widget_get_preferred_height_and_baseline_for_width (widget, nat_width,
+								  NULL, &natural_size->height, NULL, natural_baseline);
+	}
+    }
+  else /* GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT or CONSTANT_SIZE */
+    {
+      gtk_widget_get_preferred_height_and_baseline_for_width (widget, -1, &min_height, &nat_height, minimum_baseline, natural_baseline);
+
+      if (minimum_size)
+	{
+	  minimum_size->height = min_height;
+	  gtk_widget_get_preferred_width_for_height (widget, min_height,
+                                                     &minimum_size->width, NULL);
+	}
+
+      if (natural_size)
+	{
+	  natural_size->height = nat_height;
+	  gtk_widget_get_preferred_width_for_height (widget, nat_height,
+                                                     NULL, &natural_size->width);
+	}
+    }
 }
 
 /**
@@ -503,6 +735,9 @@ gtk_widget_get_preferred_height_for_width (GtkWidget *widget,
  * height for the natural width is generally smaller than the required height for
  * the minimum width.</para></note>
  *
+ * Use gtk_widget_get_preferred_size_and_baseline() if you want to support
+ * baseline alignment.
+ *
  * Since: 3.0
  */
 void
@@ -510,49 +745,9 @@ gtk_widget_get_preferred_size (GtkWidget      *widget,
                                GtkRequisition *minimum_size,
                                GtkRequisition *natural_size)
 {
-  gint min_width, nat_width;
-  gint min_height, nat_height;
-
-  g_return_if_fail (GTK_IS_WIDGET (widget));
-
-  if (gtk_widget_get_request_mode (widget) == GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH)
-    {
-      gtk_widget_get_preferred_width (widget, &min_width, &nat_width);
-
-      if (minimum_size)
-	{
-	  minimum_size->width = min_width;
-	  gtk_widget_get_preferred_height_for_width (widget, min_width,
-                                                     &minimum_size->height, NULL);
-	}
-
-      if (natural_size)
-	{
-	  natural_size->width = nat_width;
-	  gtk_widget_get_preferred_height_for_width (widget, nat_width,
-                                                     NULL, &natural_size->height);
-	}
-    }
-  else /* GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT or CONSTANT_SIZE */
-    {
-      gtk_widget_get_preferred_height (widget, &min_height, &nat_height);
-
-      if (minimum_size)
-	{
-	  minimum_size->height = min_height;
-	  gtk_widget_get_preferred_width_for_height (widget, min_height,
-                                                     &minimum_size->width, NULL);
-	}
-
-      if (natural_size)
-	{
-	  natural_size->height = nat_height;
-	  gtk_widget_get_preferred_width_for_height (widget, nat_height,
-                                                     NULL, &natural_size->width);
-	}
-    }
+  _gtk_widget_get_preferred_size_and_baseline (widget, minimum_size, natural_size,
+                                               NULL, NULL);
 }
-
 
 static gint
 compare_gap (gconstpointer p1,
@@ -655,3 +850,39 @@ gtk_distribute_natural_allocation (gint              extra_space,
 
   return extra_space;
 }
+
+void
+_gtk_widget_get_preferred_size_for_size (GtkWidget      *widget,
+                                         GtkOrientation  orientation,
+                                         gint            size,
+                                         gint           *minimum,
+                                         gint           *natural,
+                                         gint           *minimum_baseline,
+                                         gint           *natural_baseline)
+{
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+  g_return_if_fail (size >= -1);
+
+  if (orientation == GTK_ORIENTATION_HORIZONTAL)
+    {
+      if (size < 0)
+        gtk_widget_get_preferred_width (widget, minimum, natural);
+      else
+        gtk_widget_get_preferred_width_for_height (widget, size, minimum, natural);
+
+      if (minimum_baseline)
+        *minimum_baseline = -1;
+      if (natural_baseline)
+        *natural_baseline = -1;
+    }
+  else
+    {
+      gtk_widget_get_preferred_height_and_baseline_for_width (widget,
+                                                              size,
+                                                              minimum,
+                                                              natural,
+                                                              minimum_baseline,
+                                                              natural_baseline);
+    }
+}
+

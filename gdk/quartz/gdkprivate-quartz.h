@@ -97,14 +97,14 @@ void       _gdk_quartz_display_event_data_free (GdkDisplay     *display,
                                                 GdkEvent       *event);
 
 /* Display methods - cursor */
-GdkCursor *_gdk_quartz_display_get_cursor_for_type     (GdkDisplay    *display,
-                                                        GdkCursorType  type);
-GdkCursor *_gdk_quartz_display_get_cursor_for_name     (GdkDisplay    *display,
-                                                        const gchar   *name);
-GdkCursor *_gdk_quartz_display_get_cursor_for_pixbuf   (GdkDisplay    *display,
-                                                        GdkPixbuf     *pixbuf,
-                                                        gint           x,
-                                                        gint           y);
+GdkCursor *_gdk_quartz_display_get_cursor_for_type     (GdkDisplay      *display,
+                                                        GdkCursorType    type);
+GdkCursor *_gdk_quartz_display_get_cursor_for_name     (GdkDisplay      *display,
+                                                        const gchar     *name);
+GdkCursor *_gdk_quartz_display_get_cursor_for_surface  (GdkDisplay      *display,
+                                                        cairo_surface_t *surface,
+                                                        gdouble          x,
+                                                        gdouble          y);
 gboolean   _gdk_quartz_display_supports_cursor_alpha   (GdkDisplay    *display);
 gboolean   _gdk_quartz_display_supports_cursor_color   (GdkDisplay    *display);
 void       _gdk_quartz_display_get_default_cursor_size (GdkDisplay *display,
@@ -154,20 +154,6 @@ gint        _gdk_quartz_display_text_property_to_utf8_list (GdkDisplay     *disp
                                                             gchar        ***list);
 gchar *     _gdk_quartz_display_utf8_to_string_target      (GdkDisplay     *displayt,
                                                             const gchar    *str);
-
-
-/* Display manager */
-void    _gdk_quartz_display_manager_add_display    (GdkDisplayManager *manager,
-                                                    GdkDisplay        *display);
-void    _gdk_quartz_display_manager_remove_display (GdkDisplayManager *manager,
-                                                    GdkDisplay        *display);
-
-/* Display manager methods - events */
-GdkAtom _gdk_quartz_display_manager_atom_intern   (GdkDisplayManager *manager,
-                                                   const gchar       *atom_name,
-                                                   gboolean           copy_name);
-gchar * _gdk_quartz_display_manager_get_atom_name (GdkDisplayManager *manager,
-                                                   GdkAtom            atom);
 
 /* Screen */
 GdkScreen  *_gdk_quartz_screen_new                      (void);

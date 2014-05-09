@@ -51,19 +51,19 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-gen-sources.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-gen-sources.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-gen-sources.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="gtk+.props" />
+    <Import Project="gtk-gen-sources.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -79,7 +79,7 @@
       <PreprocessorDefinitions>_DEBUG;G_ENABLE_DEBUG;$(GtkDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -88,7 +88,6 @@
     <Link>
       <AdditionalDependencies>atk-1.0.lib;pangowin32-1.0.lib;imm32.lib;winspool.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(GtkDllPrefix)$(ProjectName)$(GtkDllSuffix).dll</OutputFile>
-      <ModuleDefinitionFile>$(IntDir)gtk.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(TargetDir)$(ProjectName)-$(ApiVersion).lib</ImportLibrary>
@@ -108,7 +107,6 @@
     <Link>
       <AdditionalDependencies>atk-1.0.lib;pangowin32-1.0.lib;imm32.lib;winspool.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(GtkDllPrefix)$(ProjectName)$(GtkDllSuffix).dll</OutputFile>
-      <ModuleDefinitionFile>$(IntDir)gtk.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -133,7 +131,6 @@
     <Link>
       <AdditionalDependencies>atk-1.0.lib;pangowin32-1.0.lib;imm32.lib;winspool.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(GtkDllPrefix)$(ProjectName)$(GtkDllSuffix).dll</OutputFile>
-      <ModuleDefinitionFile>$(IntDir)gtk.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(TargetDir)$(ProjectName)-$(ApiVersion).lib</ImportLibrary>
@@ -153,7 +150,6 @@
     <Link>
       <AdditionalDependencies>atk-1.0.lib;pangowin32-1.0.lib;imm32.lib;winspool.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(GtkDllPrefix)$(ProjectName)$(GtkDllSuffix).dll</OutputFile>
-      <ModuleDefinitionFile>$(IntDir)gtk.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -163,19 +159,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\..\gdk\gtk.symbols">
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating gtk.def</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(GtkGenerateGtkDef)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)gtk.def;%(Outputs)</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating gtk.def</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(GtkGenerateGtkDef)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)gtk.def;%(Outputs)</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating gtk.def</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(GtkGenerateGtkDef)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)gtk.def;%(Outputs)</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating gtk.def</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(GtkGenerateGtkDef)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)gtk.def;%(Outputs)</Outputs>
+    <CustomBuild Include="..\..\..\gtk\gtkdbusinterfaces.xml">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating GTK+ DBus Sources...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(GenerateGtkDbusBuiltSources)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\gtk\gtkdbusgenerated.c;..\..\..\gtk\gtkdbusgenerated.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating GTK+ DBus Sources...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(GenerateGtkDbusBuiltSources)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\..\gtk\gtkdbusgenerated.c;..\..\..\gtk\gtkdbusgenerated.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating GTK+ DBus Sources...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(GenerateGtkDbusBuiltSources)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\gtk\gtkdbusgenerated.c;..\..\..\gtk\gtkdbusgenerated.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating GTK+ DBus Sources...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(GenerateGtkDbusBuiltSources)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\..\gtk\gtkdbusgenerated.c;..\..\..\gtk\gtkdbusgenerated.h;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

@@ -52,7 +52,7 @@
  * example, when an Open button is clicked you might display a
  * #GtkFileChooserDialog. After a callback finishes, GTK+ will return to the
  * main loop and await more user input.
- * </para>
+ *
  * <example>
  * <title>Typical <function>main()</function> function for a GTK+ application</title>
  * <programlisting>
@@ -82,7 +82,7 @@
  * }
  * </programlisting>
  * </example>
- * <para>
+ *
  * It's OK to use the GLib main loop directly instead of gtk_main(), though it
  * involves slightly more typing. See #GMainLoop in the GLib documentation.
  */
@@ -120,7 +120,6 @@
 #include "gtkmodulesprivate.h"
 #include "gtkprivate.h"
 #include "gtkrecentmanager.h"
-#include "gtkresources.h"
 #include "gtkselectionprivate.h"
 #include "gtksettingsprivate.h"
 #include "gtktooltip.h"
@@ -172,7 +171,10 @@ static const GDebugKey gtk_debug_keys[] = {
   {"printing", GTK_DEBUG_PRINTING},
   {"builder", GTK_DEBUG_BUILDER},
   {"size-request", GTK_DEBUG_SIZE_REQUEST},
-  {"no-css-cache", GTK_DEBUG_NO_CSS_CACHE}
+  {"no-css-cache", GTK_DEBUG_NO_CSS_CACHE},
+  {"baselines", GTK_DEBUG_BASELINES},
+  {"pixel-cache", GTK_DEBUG_PIXEL_CACHE},
+  {"no-pixel-cache", GTK_DEBUG_NO_PIXEL_CACHE}
 };
 #endif /* G_ENABLE_DEBUG */
 
@@ -707,7 +709,7 @@ do_post_parse_initialization (int    *argc,
       g_warning ("Whoever translated default:LTR did so wrongly.\n");
   }
 
-  _gtk_register_resource ();
+  _gtk_ensure_resources ();
 
   _gtk_accel_map_init ();
 
@@ -1166,6 +1168,8 @@ gtk_main (void)
 
   if (gtk_main_loop_level == 0)
     {
+      /* Keep this section in sync with gtk_application_shutdown() */
+
       /* Try storing all clipboard data we have */
       _gtk_clipboard_store_all ();
 
@@ -1611,9 +1615,17 @@ gtk_main_do_event (GdkEvent *event)
     case GDK_EXPOSE:
       if (event->any.window && gtk_widget_get_double_buffered (event_widget))
         {
-          gdk_window_begin_paint_region (event->any.window, event->expose.region);
-          gtk_widget_send_expose (event_widget, event);
-          gdk_window_end_paint (event->any.window);
+	  /* We handle exposes only on native windows, relying on the
+	   * draw() handler to propagate down to non-native windows.
+	   * This is ok now that we child windows always are considered
+	   * (semi)transparent.
+	   */
+	  if (gdk_window_has_native (event->expose.window))
+	    {
+	      gdk_window_begin_paint_region (event->any.window, event->expose.region);
+	      gtk_widget_send_expose (event_widget, event);
+	      gdk_window_end_paint (event->any.window);
+	    }
         }
       else
         {
@@ -1662,11 +1674,9 @@ gtk_main_do_event (GdkEvent *event)
       /* make focus visible in a window that receives a key event */
       {
         GtkWidget *window;
-        GtkPolicyType visible_focus;
 
         window = gtk_widget_get_toplevel (grab_widget);
-        g_object_get (gtk_widget_get_settings (grab_widget), "gtk-visible-focus", &visible_focus, NULL);
-        if (GTK_IS_WINDOW (window) && visible_focus != GTK_POLICY_NEVER)
+        if (GTK_IS_WINDOW (window))
           gtk_window_set_focus_visible (GTK_WINDOW (window), TRUE);
       }
 
@@ -1678,26 +1688,18 @@ gtk_main_do_event (GdkEvent *event)
           ((event->key.state & (gtk_accelerator_get_default_mod_mask ()) & ~(GDK_RELEASE_MASK|GDK_MOD1_MASK)) == 0) &&
           !GTK_IS_MENU_SHELL (grab_widget))
         {
-          gboolean auto_mnemonics;
+          gboolean mnemonics_visible;
+          GtkWidget *window;
 
-          g_object_get (gtk_widget_get_settings (grab_widget),
-                        "gtk-auto-mnemonics", &auto_mnemonics, NULL);
+          mnemonics_visible = (event->type == GDK_KEY_PRESS);
 
-          if (auto_mnemonics)
+          window = gtk_widget_get_toplevel (grab_widget);
+          if (GTK_IS_WINDOW (window))
             {
-              gboolean mnemonics_visible;
-              GtkWidget *window;
-
-              mnemonics_visible = (event->type == GDK_KEY_PRESS);
-
-              window = gtk_widget_get_toplevel (grab_widget);
-              if (GTK_IS_WINDOW (window))
-                {
-                  if (mnemonics_visible)
-                    _gtk_window_schedule_mnemonics_visible (GTK_WINDOW (window));
-                  else
-                    gtk_window_set_mnemonics_visible (GTK_WINDOW (window), FALSE);
-                }
+              if (mnemonics_visible)
+                _gtk_window_schedule_mnemonics_visible (GTK_WINDOW (window));
+              else
+                gtk_window_set_mnemonics_visible (GTK_WINDOW (window), FALSE);
             }
         }
       /* else fall through */
@@ -2035,13 +2037,8 @@ gtk_grab_add (GtkWidget *widget)
 {
   GtkWindowGroup *group;
   GtkWidget *old_grab_widget;
-  GtkWidget *toplevel;
 
   g_return_if_fail (widget != NULL);
-
-  toplevel = gtk_widget_get_toplevel (widget);
-  if (toplevel && gdk_window_get_window_type (gtk_widget_get_window (toplevel)) == GDK_WINDOW_OFFSCREEN)
-    return;
 
   if (!gtk_widget_has_grab (widget) && gtk_widget_is_sensitive (widget))
     {
@@ -2128,14 +2125,9 @@ gtk_device_grab_add (GtkWidget *widget,
 {
   GtkWindowGroup *group;
   GtkWidget *old_grab_widget;
-  GdkWindow *toplevel;
 
   g_return_if_fail (GTK_IS_WIDGET (widget));
   g_return_if_fail (GDK_IS_DEVICE (device));
-  
-  toplevel = gdk_window_get_toplevel (gtk_widget_get_window (widget));
-  if (toplevel && gdk_window_get_window_type (toplevel) == GDK_WINDOW_OFFSCREEN)
-    return;
 
   group = gtk_main_get_window_group (widget);
   old_grab_widget = gtk_window_group_get_current_device_grab (group, device);

@@ -22,8 +22,8 @@
 #include "gtkrecentchooser.h"
 #include "gtkrecentchooserprivate.h"
 #include "gtkrecentmanager.h"
-#include "gtkrecentaction.h"
-#include "gtkactivatable.h"
+#include "deprecated/gtkrecentaction.h"
+#include "deprecated/gtkactivatable.h"
 #include "gtkintl.h"
 #include "gtktypebuiltins.h"
 #include "gtkprivate.h"
@@ -220,10 +220,7 @@ gtk_recent_chooser_default_init (GtkRecentChooserInterface *iface)
    * GtkRecentChooser:limit:
    *
    * The maximum number of recently used resources to be displayed,
-   * or -1 to display all items. By default, the
-   * GtkSetting:gtk-recent-files-limit setting is respected: you can
-   * override that limit on a particular instance of #GtkRecentChooser
-   * by setting this property.
+   * or -1 to display all items.
    *
    * Since: 2.10
    */
@@ -233,7 +230,7 @@ gtk_recent_chooser_default_init (GtkRecentChooserInterface *iface)
    							 P_("The maximum number of items to be displayed"),
    							 -1,
    							 G_MAXINT,
-   							 -1,
+   							 50,
    							 GTK_PARAM_READWRITE));
   /**
    * GtkRecentChooser:sort-type:
@@ -848,7 +845,8 @@ gtk_recent_chooser_get_items (GtkRecentChooser *chooser)
 /**
  * gtk_recent_chooser_get_uris:
  * @chooser: a #GtkRecentChooser
- * @length: (allow-none): return location for a the length of the URI list, or %NULL
+ * @length: (out) (allow-none): return location for a the length of the
+ *     URI list, or %NULL
  *
  * Gets the URI of the recently used resources.
  *
@@ -962,7 +960,7 @@ gtk_recent_chooser_list_filters (GtkRecentChooser *chooser)
 /**
  * gtk_recent_chooser_set_filter:
  * @chooser: a #GtkRecentChooser
- * @filter: a #GtkRecentFilter
+ * @filter: (allow-none): a #GtkRecentFilter
  *
  * Sets @filter as the current #GtkRecentFilter object used by @chooser
  * to affect the displayed recently used resources.
@@ -974,7 +972,7 @@ gtk_recent_chooser_set_filter (GtkRecentChooser *chooser,
 			       GtkRecentFilter  *filter)
 {
   g_return_if_fail (GTK_IS_RECENT_CHOOSER (chooser));
-  g_return_if_fail (GTK_IS_RECENT_FILTER (filter));
+  g_return_if_fail (filter == NULL || GTK_IS_RECENT_FILTER (filter));
   
   g_object_set (G_OBJECT (chooser), "filter", filter, NULL);
 }
@@ -1030,13 +1028,23 @@ _gtk_recent_chooser_update (GtkActivatable *activatable,
 			    GtkAction      *action,
 			    const gchar    *property_name)
 {
-  GtkRecentChooser *recent_chooser = GTK_RECENT_CHOOSER (activatable);
-  GtkRecentChooser *action_chooser = GTK_RECENT_CHOOSER (action);
-  GtkRecentAction  *recent_action  = GTK_RECENT_ACTION (action);
+  GtkRecentChooser *recent_chooser;
+  GtkRecentChooser *action_chooser;
+  GtkRecentAction  *recent_action;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+  recent_chooser = GTK_RECENT_CHOOSER (activatable);
+  action_chooser = GTK_RECENT_CHOOSER (action);
+  recent_action  = GTK_RECENT_ACTION (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   if (strcmp (property_name, "show-numbers") == 0 && recent_chooser_has_show_numbers (recent_chooser))
-    g_object_set (recent_chooser, "show-numbers",
-                  gtk_recent_action_get_show_numbers (recent_action), NULL);
+    {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      g_object_set (recent_chooser, "show-numbers",
+                    gtk_recent_action_get_show_numbers (recent_action), NULL);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+    }
   else if (strcmp (property_name, "show-private") == 0)
     gtk_recent_chooser_set_show_private (recent_chooser, gtk_recent_chooser_get_show_private (action_chooser));
   else if (strcmp (property_name, "show-not-found") == 0)
@@ -1059,16 +1067,25 @@ void
 _gtk_recent_chooser_sync_action_properties (GtkActivatable *activatable,
 			                    GtkAction      *action)
 {
-  GtkRecentChooser *recent_chooser = GTK_RECENT_CHOOSER (activatable);
-  GtkRecentChooser *action_chooser = GTK_RECENT_CHOOSER (action);
+  GtkRecentChooser *recent_chooser;
+  GtkRecentChooser *action_chooser;
+
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+  recent_chooser = GTK_RECENT_CHOOSER (activatable);
+  action_chooser = GTK_RECENT_CHOOSER (action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
 
   if (!action)
     return;
 
   if (recent_chooser_has_show_numbers (recent_chooser))
-    g_object_set (recent_chooser, "show-numbers", 
-                  gtk_recent_action_get_show_numbers (GTK_RECENT_ACTION (action)),
-                  NULL);
+    {
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      g_object_set (recent_chooser, "show-numbers", 
+                    gtk_recent_action_get_show_numbers (GTK_RECENT_ACTION (action)),
+                    NULL);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
+    }
   gtk_recent_chooser_set_show_private (recent_chooser, gtk_recent_chooser_get_show_private (action_chooser));
   gtk_recent_chooser_set_show_not_found (recent_chooser, gtk_recent_chooser_get_show_not_found (action_chooser));
   gtk_recent_chooser_set_show_tips (recent_chooser, gtk_recent_chooser_get_show_tips (action_chooser));
@@ -1090,7 +1107,9 @@ _gtk_recent_chooser_set_related_action (GtkRecentChooser *recent_chooser,
   if (prev_action == action)
     return;
 
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
   gtk_activatable_do_set_related_action (GTK_ACTIVATABLE (recent_chooser), action);
+  G_GNUC_END_IGNORE_DEPRECATIONS;
   g_object_set_qdata (G_OBJECT (recent_chooser), quark_gtk_related_action, action);
 }
 
@@ -1118,7 +1137,9 @@ _gtk_recent_chooser_set_use_action_appearance (GtkRecentChooser *recent_chooser,
 
       g_object_set_qdata (G_OBJECT (recent_chooser), quark_gtk_use_action_appearance, GINT_TO_POINTER (!use_appearance));
  
+      G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
       gtk_activatable_sync_action_properties (GTK_ACTIVATABLE (recent_chooser), action);
+      G_GNUC_END_IGNORE_DEPRECATIONS;
     }
 }
 

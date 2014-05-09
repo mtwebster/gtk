@@ -134,8 +134,7 @@ _gdk_quartz_display_open (const gchar *display_name)
   _gdk_quartz_dnd_init ();
 #endif
 
-  g_signal_emit_by_name (gdk_display_manager_get (),
-			 "display_opened", _gdk_display);
+  g_signal_emit_by_name (_gdk_display, "opened");
 
   return _gdk_display;
 }
@@ -153,24 +152,6 @@ gdk_quartz_display_get_name (GdkDisplay *display)
     }
 
   return display_name;
-}
-
-static gint
-gdk_quartz_display_get_n_screens (GdkDisplay *display)
-{
-  g_return_val_if_fail (GDK_IS_DISPLAY (display), 0);
-
-  return 1;
-}
-
-static GdkScreen *
-gdk_quartz_display_get_screen (GdkDisplay *display,
-                               gint        screen_num)
-{
-  g_return_val_if_fail (GDK_IS_DISPLAY (display), NULL);
-  g_return_val_if_fail (screen_num == 0, NULL);
-
-  return _gdk_screen;
 }
 
 static GdkScreen *
@@ -283,17 +264,12 @@ G_DEFINE_TYPE (GdkQuartzDisplay, gdk_quartz_display, GDK_TYPE_DISPLAY)
 static void
 gdk_quartz_display_init (GdkQuartzDisplay *display)
 {
-  _gdk_quartz_display_manager_add_display (gdk_display_manager_get (),
-                                           GDK_DISPLAY_OBJECT (display));
 }
 
 static void
 gdk_quartz_display_dispose (GObject *object)
 {
   GdkQuartzDisplay *display_quartz = GDK_QUARTZ_DISPLAY (object);
-
-  _gdk_quartz_display_manager_remove_display (gdk_display_manager_get (),
-                                              GDK_DISPLAY_OBJECT (object));
 
   g_list_foreach (display_quartz->input_devices,
                   (GFunc) g_object_run_dispose, NULL);
@@ -323,8 +299,6 @@ gdk_quartz_display_class_init (GdkQuartzDisplayClass *class)
   display_class->window_type = GDK_TYPE_QUARTZ_WINDOW;
 
   display_class->get_name = gdk_quartz_display_get_name;
-  display_class->get_n_screens = gdk_quartz_display_get_n_screens;
-  display_class->get_screen = gdk_quartz_display_get_screen;
   display_class->get_default_screen = gdk_quartz_display_get_default_screen;
   display_class->beep = gdk_quartz_display_beep;
   display_class->sync = gdk_quartz_display_sync;
@@ -342,7 +316,7 @@ gdk_quartz_display_class_init (GdkQuartzDisplayClass *class)
   display_class->list_devices = gdk_quartz_display_list_devices;
   display_class->get_cursor_for_type = _gdk_quartz_display_get_cursor_for_type;
   display_class->get_cursor_for_name = _gdk_quartz_display_get_cursor_for_name;
-  display_class->get_cursor_for_pixbuf = _gdk_quartz_display_get_cursor_for_pixbuf;
+  display_class->get_cursor_for_surface = _gdk_quartz_display_get_cursor_for_surface;
   display_class->get_default_cursor_size = _gdk_quartz_display_get_default_cursor_size;
   display_class->get_maximal_cursor_size = _gdk_quartz_display_get_maximal_cursor_size;
   display_class->supports_cursor_alpha = _gdk_quartz_display_supports_cursor_alpha;
@@ -362,4 +336,11 @@ gdk_quartz_display_class_init (GdkQuartzDisplayClass *class)
   display_class->convert_selection = _gdk_quartz_display_convert_selection;
   display_class->text_property_to_utf8_list = _gdk_quartz_display_text_property_to_utf8_list;
   display_class->utf8_to_string_target = _gdk_quartz_display_utf8_to_string_target;
+
+  ProcessSerialNumber psn = { 0, kCurrentProcess };
+
+  /* Make the current process a foreground application, i.e. an app
+   * with a user interface, in case we're not running from a .app bundle
+   */
+  TransformProcessType (&psn, kProcessTransformToForegroundApplication);
 }

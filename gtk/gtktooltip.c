@@ -67,7 +67,7 @@
  * to the signal handler is a GtkTooltip object. This is the object that we
  * are about to display as a tooltip, and can be manipulated in your callback
  * using functions like gtk_tooltip_set_icon(). There are functions for setting
- * the tooltip's markup, setting an image from a stock icon, or even putting in
+ * the tooltip's markup, setting an image from a named icon, or even putting in
  * a custom widget.
  * </para>
  * </listitem>
@@ -109,6 +109,9 @@
 
 #undef DEBUG_TOOLTIP
 
+#define HOVER_TIMEOUT          500
+#define BROWSE_TIMEOUT         60
+#define BROWSE_DISABLE_TIMEOUT 500
 
 #define GTK_TOOLTIP_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_TOOLTIP, GtkTooltipClass))
 #define GTK_IS_TOOLTIP_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_TOOLTIP))
@@ -313,12 +316,15 @@ gtk_tooltip_set_markup (GtkTooltip  *tooltip,
 {
   g_return_if_fail (GTK_IS_TOOLTIP (tooltip));
 
-  gtk_label_set_markup (GTK_LABEL (tooltip->label), markup);
-
   if (markup)
-    gtk_widget_show (tooltip->label);
+    {
+      gtk_label_set_markup (GTK_LABEL (tooltip->label), markup);
+      gtk_widget_show (tooltip->label);
+    }
   else
-    gtk_widget_hide (tooltip->label);
+    {
+      gtk_widget_hide (tooltip->label);
+    }
 }
 
 /**
@@ -337,12 +343,15 @@ gtk_tooltip_set_text (GtkTooltip  *tooltip,
 {
   g_return_if_fail (GTK_IS_TOOLTIP (tooltip));
 
-  gtk_label_set_text (GTK_LABEL (tooltip->label), text);
-
   if (text)
-    gtk_widget_show (tooltip->label);
+    {
+      gtk_label_set_text (GTK_LABEL (tooltip->label), text);
+      gtk_widget_show (tooltip->label);
+    }
   else
-    gtk_widget_hide (tooltip->label);
+    {
+      gtk_widget_hide (tooltip->label);
+    }
 }
 
 /**
@@ -363,12 +372,15 @@ gtk_tooltip_set_icon (GtkTooltip *tooltip,
   if (pixbuf)
     g_return_if_fail (GDK_IS_PIXBUF (pixbuf));
 
-  gtk_image_set_from_pixbuf (GTK_IMAGE (tooltip->image), pixbuf);
-
   if (pixbuf)
-    gtk_widget_show (tooltip->image);
+    {
+      gtk_image_set_from_pixbuf (GTK_IMAGE (tooltip->image), pixbuf);
+      gtk_widget_show (tooltip->image);
+    }
   else
-    gtk_widget_hide (tooltip->image);
+    {
+      gtk_widget_hide (tooltip->image);
+    }
 }
 
 /**
@@ -382,6 +394,8 @@ gtk_tooltip_set_icon (GtkTooltip *tooltip,
  * by @size.  If @stock_id is %NULL, the image will be hidden.
  *
  * Since: 2.12
+ *
+ * Deprecated: 3.10: Use gtk_tooltip_set_icon_from_icon_name() instead.
  */
 void
 gtk_tooltip_set_icon_from_stock (GtkTooltip  *tooltip,
@@ -390,12 +404,17 @@ gtk_tooltip_set_icon_from_stock (GtkTooltip  *tooltip,
 {
   g_return_if_fail (GTK_IS_TOOLTIP (tooltip));
 
-  gtk_image_set_from_stock (GTK_IMAGE (tooltip->image), stock_id, size);
-
   if (stock_id)
-    gtk_widget_show (tooltip->image);
+    {
+ G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+      gtk_image_set_from_stock (GTK_IMAGE (tooltip->image), stock_id, size);
+ G_GNUC_END_IGNORE_DEPRECATIONS;
+      gtk_widget_show (tooltip->image);
+    }
   else
-    gtk_widget_hide (tooltip->image);
+    {
+      gtk_widget_hide (tooltip->image);
+    }
 }
 
 /**
@@ -417,12 +436,15 @@ gtk_tooltip_set_icon_from_icon_name (GtkTooltip  *tooltip,
 {
   g_return_if_fail (GTK_IS_TOOLTIP (tooltip));
 
-  gtk_image_set_from_icon_name (GTK_IMAGE (tooltip->image), icon_name, size);
-
   if (icon_name)
-    gtk_widget_show (tooltip->image);
+    {
+      gtk_image_set_from_icon_name (GTK_IMAGE (tooltip->image), icon_name, size);
+      gtk_widget_show (tooltip->image);
+    }
   else
-    gtk_widget_hide (tooltip->image);
+    {
+      gtk_widget_hide (tooltip->image);
+    }
 }
 
 /**
@@ -444,12 +466,15 @@ gtk_tooltip_set_icon_from_gicon (GtkTooltip  *tooltip,
 {
   g_return_if_fail (GTK_IS_TOOLTIP (tooltip));
 
-  gtk_image_set_from_gicon (GTK_IMAGE (tooltip->image), gicon, size);
-
   if (gicon)
-    gtk_widget_show (tooltip->image);
+    {
+      gtk_image_set_from_gicon (GTK_IMAGE (tooltip->image), gicon, size);
+      gtk_widget_show (tooltip->image);
+    }
   else
-    gtk_widget_hide (tooltip->image);
+    {
+      gtk_widget_hide (tooltip->image);
+    }
 }
 
 /**
@@ -1089,6 +1114,7 @@ gtk_tooltip_position (GtkTooltip *tooltip,
 #define MAX_DISTANCE 32
 
   gtk_widget_realize (GTK_WIDGET (tooltip->current_window));
+  gtk_widget_set_visible (GTK_WIDGET (tooltip->current_window), TRUE);
 
   tooltip->tooltip_widget = new_tooltip_widget;
 
@@ -1347,14 +1373,7 @@ gtk_tooltip_hide_tooltip (GtkTooltip *tooltip)
 
   if (!tooltip->keyboard_mode_enabled)
     {
-      guint timeout;
-      GtkSettings *settings;
-
-      settings = gtk_widget_get_settings (GTK_WIDGET (tooltip->window));
-
-      g_object_get (settings,
-		    "gtk-tooltip-browse-mode-timeout", &timeout,
-		    NULL);
+      guint timeout = BROWSE_DISABLE_TIMEOUT;
 
       /* The tooltip is gone, after (by default, should be configurable) 500ms
        * we want to turn off browse mode
@@ -1410,7 +1429,6 @@ gtk_tooltip_start_delay (GdkDisplay *display)
 {
   guint timeout;
   GtkTooltip *tooltip;
-  GtkSettings *settings;
 
   tooltip = g_object_get_data (G_OBJECT (display),
 			       "gdk-display-current-tooltip");
@@ -1421,12 +1439,10 @@ gtk_tooltip_start_delay (GdkDisplay *display)
   if (tooltip->timeout_id)
     g_source_remove (tooltip->timeout_id);
 
-  settings = gtk_widget_get_settings (GTK_WIDGET (tooltip->window));
-
   if (tooltip->browse_mode_enabled)
-    g_object_get (settings, "gtk-tooltip-browse-timeout", &timeout, NULL);
+    timeout = BROWSE_TIMEOUT;
   else
-    g_object_get (settings, "gtk-tooltip-timeout", &timeout, NULL);
+    timeout = HOVER_TIMEOUT;
 
   tooltip->timeout_id = gdk_threads_add_timeout_full (0, timeout,
 						      tooltip_popup_timeout,
@@ -1578,26 +1594,15 @@ tooltips_enabled (GdkEvent *event)
 {
   GdkDevice *source_device;
   GdkInputSource source;
-  GdkWindow *window;
-  gboolean enabled;
-  GdkScreen *screen;
-  GtkSettings *settings;
 
-  window = event->any.window;
   source_device = gdk_event_get_source_device (event);
 
   if (!source_device)
     return FALSE;
 
   source = gdk_device_get_source (source_device);
-  screen = gdk_window_get_screen (window);
-  settings = gtk_settings_get_for_screen (screen);
 
-  g_object_get (settings,
-		"gtk-enable-tooltips", &enabled,
-		NULL);
-
-  if (enabled && source != GDK_SOURCE_TOUCHSCREEN)
+  if (source != GDK_SOURCE_TOUCHSCREEN)
     return TRUE;
 
   return FALSE;

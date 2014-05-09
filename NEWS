@@ -1,200 +1,908 @@
-Overview of Changes in GTK+ 3.8.3
-=================================
+Overview of Changes in GTK+ 3.10.7 to 3.10.8
+============================================
 
 * Bugs fixed:
- 667759 gtkdnd-quartz.c is missing annotations for introspection
- 672271 File chooser seems over-enthusiastic about using subdir...
- 674108 Hard crash due to wrong NSAutoreleasePool stacking
- 680953 set_item_width / text wrapping doesn't work in iconview...
- 688738 GtkMenuButton problem with mnemonics / accelerators
- 691921 GTK+ (quartz) built on Mac OS X 10.5 references [NSMenu...
- 692548 Quartz: Cursor doesn't reset when the mouse leaves a to...
- 694273 Patch to support NSTextInputClient in text widgets
- 694755 When clicking Activities, sometimes gnome-shell crashes.
- 696498 can't set download folder
- 696640 GtkButton: Don't suppress unhandled mouse events
- 698183 Text input is too slow and some keys are broken after c...
- 698758 Wrong limit for "Native Windows wider or taller than 65...
- 700185 GtkWindow: problem with child widget visibility
- 700779 gtk_menu_item_draw puts the arrow too close to the border
- 701332 Patch for minor glitch in NSTextInput
- 701341 Windows only paint once in Weston 1.1
- 701365 Do not assert sm_proxy != NULL in GtkApplication inhibi...
- 701613 XEmbed doesn't work with frame-synced GTK/Mutter
- 702598 Invalid read of size 4 in gtk_icon_info_get_embedded_rect
- 702763 ellipsize placeholder text
- 702913 Reduce hash table lookups in gdk_x11_screen_supports_ne...
- 703069 Opening a big menu activates some menu entry
- 703220 Memory allocation integer overflow in gdk_cairo_set_sou...
- 705181 Annoying beep on arrow keys when using IME on MacOS
- 705182 Reset Cocoa IME state when immodule is reset
- 705320 gtkicontheme: check for GdkPixbuf first
- 705692 Segmentation fault on horizontal slider
- 705750 Quartz input method doesn't work correctly for Chinese...
- 706152 g_object_notify called with NULL priv->focus_widget
+ 566945 gtk_widget_override_color() documentation should mention non-...
+ 591258 Easy to accidentally select first option in popup menus
+ 692931 The list of printers should be searchable/sortable
+ 693200 Printing via evince crashes badly when /tmp is not writable
+ 701884 lots of invalid reads in iconview a11y code
+ 704456 Synthesized crossing events don't have correct device position
+ 712752 GtkClipboard: add _get_default and _get_primary
+ 722058 GtkTreeModelFilter bug
+ 722722 Fix vertical alignment of labels in "Paper" section of the pr...
+ 723121 GtkPlacesSidebar: pressing "eject" icon does not power down drive
+ 723159 CSD shadows are clipped
+ 723183 GtkStyleContext: don't use disconnect_by_func()
+ 723366 GtkFileChooser crashes due to a signal connection left behind...
+ 723390 gdkwindow: Use an InputOnly window for focus_window
+ 723438 jhbuild buildone glib gtk+ fails with `HAVE_INTROSPECTION doe...
+ 723555 [PATCH] Decode extension names in X11 error handler
+ 723621 Underscore of mnemonics visible in Copy, Cut, Paste popup.
+ 723771 gtkwindow: remove delete-event idle function on finalize
+ 724008 void function should not return void expression
+ 724541 Labels with links can't be activated in a GtkListBox
+ 724631 printing leaks a GFile
+ 724891 GtkTreeViewColumn::button never freed
+ 724895 Print dialog UI regressions
+ 725089 Cairo context sent to the "draw" signal handler has incorrect...
+ 725172 GdkWindow: fix redraws for backends that keep the same backin...
+ 725205 treeselection docs: spelling fix
+ 725225 auto scroll in vertical popover from volume button goes the w...
+ 725754 Fix font size when gdk_x11_display_set_window_scale() is used
+ 725824 gtkentrycompletion: fix a critical warning
+ 725866 DnD fixes
+ 726136 use && instead of 'and' in deprecation warnings
+ 726476 New fontchooser dialog doesn't update font list upon change
+ 726717 Nesting GtkExpander gives Gdk-CRITICAL error
+ 726858 GTK_ENABLE_DEBUG should be G_ENABLE_DEBUG
+ 726859 Assertion/crash if gtk_radio_menu_item_set_group() is called ...
+ 726871 treeview: Lower the duration of validation iterations
+ 726996 Label-for/Labelled-by AtkRelations missing for containers in ...
+ 727643 Segfault in gtk-3.12.0 
+
+* Translation updates:
+ Catalan
+ Kannada
+ Russian
+ Scottish Gaelic
+
+
+Overview of Changes in GTK+ 3.10.6 to 3.10.7
+============================================
+
+* Bugs fixed:
+ 386569 GtkFileChooser enters first file name into the entry...
+ 709491 dark theme setting not propagated to vertical spinbu...
+ 711298 "Edit Scheduled Transaction" window way too modal
+ 719314 gdk_property_change segfault on multiple X protocol...
+ 719970 Fails to build: gdkevents-quartz.c:1692:58: error: ...
+ 719977 Can not use GtkFileChooserDialog: assertion failure
+ 721700 invalid callback prototypes leads to test issues 
+        win32: add more width to the slider to not cut it w...
+        win32: add margin to scale trough
+        win32: set color for scale marks
+        win32: scale slider with marks was off by 2 pixels
+        win32: handle again gtk-font-name
+
+* Translation updates:
+ Czech
+ German
+ Greek
+ Hungarian
+ Punjabi
+ Russian
+ Simplified Chinese
+ Slovenian
+
+
+Overview of Changes in GTK+ 3.10.5 to 3.10.6
+============================================
+
+* Bugs fixed:
+ 709027 List mode has black background
+ 711715 gtk object tests: run under local environment
+ 719469 Alternative for deprecated function in gtkstyle.h...
+ 719505 Wrong icon for desktop entry in FileChooser dialog
+ 719510 Infobar always visible on gtk 3.10.5 with enable-...
+ 719516 3.10.4 -> 3.10.5 makes labels not wrap in dialogs
+ 719568 Search bar area is still visible when switched off
+ 719569 The widest dialog I know
+ 719595 Toolbar style context is created before style cla...
+ 719762 translate_crossing_mode() assertion error since r...
+        On-screen keyboards like iok should work again
+
+* Translation updates:
+ Galician
+ Lithuanian
+ Serbian
+
+
+Overview of Changes in GTK+ 3.10.4 to 3.10.5
+============================================
+
+* Bugs fixed:
+ 691974 ComboBox only scrolls the first time
+ 694859 Can not scroll down list in Combobox the first time...
+ 699574 gtk_selection_owner_set() breaks mouse wheel scrolling
+ 702663 GtkComboBox::appears-as-list does not respect scrolling
+ 705203 Natural scroll doesn't work immediately
+ 709716 gdk_x11_screen_lookup_visual segfault on multiple X...
+ 712302 GtkPlacesSideBar showing "Desktop" or not shouldn't...
+ 712632 infobar and revealer not respecting enable-animations=false
+ 712760 Clang static analysis fixes
+ 712799 Memory leak when listing Avahi printers
+ 715029 Ensure GdkScreen::monitors-changed gets emitted after...
 
 * Translation updates:
  Brazilian Portuguese
- Traditional Chinese
-
-
-Overview of Changes in GTK+ 3.8.2
-=================================
-
-* Bugs fixed:
- 504901 GtkCellRendererCombo requires click-and-hold
- 695120 GtkMenu and GdkWindow sizes can get out of sync
- 698051 Typo in documentation comment
- 698181 Document icon-shadow CSS property
- 699104 when nothing is selected, Add to Bookmarks is enabled...
- 699239 Choose DnD/tooltip widget better on GtkOverlay and ot...
- 699750 Print dialog crashes when printer does not provide pr...
- 699901 GTK CSS keybinding broken
- 699929 GtkCheckMenuItem: remove an unused boolean field
- 700007 Various small improvements
- 700079 Fix accels added after the window was shown not working
-
-Translation updates:
- Brazilian Portuguese
- German
- Italian
- Japanese
- Lithuanian
- Norwegian bokmål
- Russian
-
-
-Overview of Changes in GTK+ 3.8.1
-=================================
-
-* Broadway backend improvements:
- - Ensure window sizes are synched right
- - Sync surface updates with paint clock
- - Add support for password authentication
- - Reuse surfaces passed to server
-
-* CSS improvements:
- - Add cycle detection to color resolving
-
-* Bug fixes
- 675649 gtk-demo: Fix typo
- 681446 gtkdnd memory leak
- 685419 gtkprintbackendfile: Infinite loop in _cairo_write()
- 685420 Critical warnings when GtkPrintJob is released too early
- 690275 scrolling on other windows is applied when coming back...
- 696370 GtkOverlay doesn't work on top of GtkClutterEmbed
- 696622 gtk option printer widget segfault in epiphany
- 696623 GtkOverlay with a revealer produces warnings setting a...
- 696882 GtkWindow changes size after hide/show cycle
- 697144 Popup menu mnemonics fixes
- 697263 Impossible to set window transparency on 3.8
- 697427 Unreferencing GtkStatusIcon object causes abort
-
-* Translation updates
- Basque
- British English
- Catalan (Valencian)
- Czech
- Finnish
- Hungarian
  Indonesian
- Interlingua
- Kannada
- Malayalam
- Norwegian bokmål
  Polish
- Simplified Chinese
- Slovak
- Slovenian
+ Spanish
 
 
-Overview of Changes in GTK+ 3.8.0
-=================================
-
-* Bug fixes
- 674759 GtkLabel: wrong value of "mnemonic-keyval" when...
- 695493 testgtk: issues with the color selection example
- 696051 vertical grid lines in rtl mode
- 696171 GtkAssistant highlighted font unreadable
- 696202 Add GtkSpinner animation back to Win32 theme
- 696232 win32: do not crash on invalid utf8 conversion
- 696405 appchooserbutton: filter out applications not...
- 696546 Fix a crash in gtk_print_backend_cups_finalize()
- 696553 Fix a crash in avahi_create_browsers()
-        Use natural size to set treeview adjustments
-
-* Translation updates
- Aragonese
- Czech
- French
- Galician
- German
- Gujarati
- Hindi
- Hungarian
- Italian
- Kazakh
- Marathi
- Odia
-  Persian
- Punjabi
- Russian
- Slovenian
- Tamil
- Traditional Chinese
- Ukrainian
-
-
-Overview of Changes in GTK+ 3.7.14
-==================================
-
-* A lot of filechooser button fixes
+Overview of Changes in GTK+ 3.10.3 to 3.10.4
+============================================
 
 * Bugs fixed:
- 586367 In local_only mode, file chooser should return native...
- 671939 crash on exit
- 674759 GtkLabel: wrong value of "mnemonic-keyval" when "use-...
- 691040 selection is reported incorrectly in file chooser button
- 694339 Fix build of GTK+ on Windows
- 695200 Switching apps while a combobox open makes the parent...
- 695278 Avoid passing a NULL title to setTitle
- 695304 GtkTextView: don't popdown a bubble if we don't have one
- 695312 Initial 'text' set in the non-numeric-only GtkSpinBut...
- 695375 GtkEntryAccessible: also handle entry icon tooltip NU...
- 695391 wayland documentation section id is "gtk-osx"
- 695473 treeview: fix a critical warning
- 695482 Universal Access panel appears jumbled and horrible a...
- 695682 Cannot build docs for wayland-only build
- 695714 Getting of printer info can hang
- 695715 Use DBus calls instead of Avahi API
- 695772 Different appearance of menus within Audacious
- 695783 GtkApplication: Allow passing windows on non-X11 targets
- 695874 GtkFontChooser docs
- 695948 GtkFontButton sets wrong show-preview-entry
+ 705176 Reordering columns in GtkTreeView freezes mutter
+ 710909 Buttons are cut in some windows
+ 711545 gtkpixelcache: Possibly ignoring queued redraw
+ 711548 GtkPlacesSidebar doesn't show unmounted bookmarks
+ 711574 GtkPlacesSidebar is missing "local-only" flag
+ 711636 Duplicated 'Music' and 'Videos' from favorites...
+ 712164 GtkMenuTracker: set action namespace correctly
+ 712213 Nautilus "connect to server" dialog has an incorrect...
+ 712302 GtkPlacesSideBar showing "Desktop" or not shouldn't...
+
+* Translation updates:
+ Polish
+
+
+Overview of Changes in GTK+ 3.10.2 to 3.10.3
+============================================
+
+* Theme support
+ - Always fall back to 'gnome' icon theme in addition to 'hicolor'
+ - Respect deprecated gtk-button-images setting
+ - Respect deprecated gtk-menu-images setting
+
+* Bugs fixed:
+ 577642 Selected Printer Does Not Stick Between Sessions
+ 693227 Incorrect size allocation with overflow
+ 703784 Epiphany crash during displaying printing dialog
+ 710389 x11: Don't set WM_TAKE_FOCUS if accept_focus is FALSE
+ 710411 [PATCH] Fix key "Page_Down" identified as "Next"
+ 710666 Frame clock related bug fixes
+ 710958 Problem with very large window
+ 711110 GDK_HINT_MAX_SIZE ignored on Win32
+ 711255 GtkListBox: Expand the placeholder
+ 711553 gdk/win32: remove extra allocation for \r removal
+ 711611 GtkStack: Use new-style property installation/notification 
 
 * Translation updates:
  Arabic
+ German
+ Greek
+ Russian
+
+
+Overview of Changes in GTK+ 3.10.1 to 3.10.2
+============================================
+
+* Bug fixes:
+ 168530 gtk_accel_map_load: wasteful extra stat call
+ 698730 tooltip: Fix possible wrong placement
+ 708163 all symbolic icons are missing when using icon theme diff...
+ 708346 gnome-terminal does not respect "Disable mnemonics" and "...
+ 709621 gdkevents.h: Mention _get_source_device()
+ 709697 Fix a warning in builg gtk+ with clang
+ 709854 Wayland: Reliable crash when hovering over items with an ...
+ 709939 monitor reconfiguration while GtkOffscreenWindows exist t...
+ 709967 Double free in gtkicontheme.c
+ 710073 Assertion failure because _gtk_icon_info_load_symbolic_in...
+ 710096 gtk3.10 doesn't work correctly when used from a dynamic l...
+ 710141 gtk_shell_interface exported in libgdk
+ 
+* Translation updates:
+ Africaans
+ Belarusian
+ Catalan
+ Catalan (Valencian)
+ Persian
+ Spanish
+
+
+Overview of Changes in GTK+ 3.10.0 to 3.10.1
+============================================
+
+* Bug fixes:
+ 341146 reorder lines in configure.in for a better display
+ 586107 gtkprintbackendpapi.c does not compile on Solaris 10
+ 681484 GtkAboutDialog has extra space when gtk_widget_show...
+ 684076 clean up a11y on shutdown
+ 702196 Unfinished frame being presented
+ 703062 GtkTreeViewColumn returns negative size request on ...
+ 707524 CSD windows "shake" when they go backdrop
+ 708019 Invisible characters at the end of a TextView withi...
+ 708024 Accessibility being initialized in the wrong place
+ 708414 entrycompletion: set the GtkWindow as attached to t...
+ 708423 GtkTextView regression: current line highlighting n...
+ 708547 search provider crashes: gnome-contacts-3.9.90-1.fc...
+ 709049 gtk_widget_destroy() on a GtkHeaderBar tries to gtk...
+ 709056 icontheme: use g_file_load_contents() for symbolic icons
+ 709212 Configure fails if I don't have wayland dependency
+ 709264 Fix memory leaks in icons handling
+ 709522 GtkFileChooser sidebar is not populated since 742a2f11
+ 709613 GtkStack: Warn when setting a child visible which i...
+ 709745 GtkSearchBar example problems 
+
+* Translation updates:
+ Arabic
+ Basque
+ Catalan
+ Danish
+ Dutch
+ German
+ Hungarian
+ Latvian
+ Norwegian bokmål
+ Russian
+ Serbian
+ Slovak
+ Tajik
+
+
+Overview of Changes in GTK+ 3.9.16 to 3.10.0
+============================================
+
+* Accessibility improvements
+ - Add accessible names to csd window buttons
+ - Mark GtkLinkButton as visited when appropriate
+ - Add a GtkListBoxRow accessible
+
+* Bug fixes:
+ 692258 Implement GtkListBoxRowAccessible, set its state to...
+ 702681 Issues with applications marked as NoDisplay
+ 704087 GtkPlacesSidebar shouldn't open a bookmark when the...
+ 708320 listbox: Update the cursor row when the row's child...
+ 708384 icontheme: Make sure icon_info->scale doesn't end u...
+
+* Translation updates
+ Assamese
+ Brazilian Portuguese
+ Czech
+ French
+ Galician
+ Hebrew
+ Indonesian
+ Italian
+ Kazakh
+ Latvian
+ Lithuanian
+ Polish
+ Portuguese
+ Russian
+ Scottish Gaelic
+ Serbian
+ Slovak
+ Slovenian
+ Spanish
+ Traditional Chinese
+
+
+Overview of Changes in GTK+ 3.9.14 to 3.9.16
+============================================
+
+* Bug fixes:
+ 339539 Ctrl-C, Ctrl-V changes tags
+ 513812 Optimize gdk_cairo_set_source_pixbuf() alpha multiplication loop
+ 696756 gdk_device_get_source : assertion `GDK_IS_DEVICE(source)` failed
+ 702034 color_value_parse() memory leak
+ 702423 CellRendererPixbuf regression: Stock icons with rtl/ltr varia...
+ 706269 Clarify GtkBox, GtkHBox, and GtkVBox documentation
+ 706345 GtkExpander's click-and-drag behavior should match that of Gt...
+ 706708 GtkHeaderBar doesn't respect titlebar button layout setting
+ 707129 wayland: support application menus
+ 707244 pixelcache: gtktextview pixelcache does not invalidate textma...
+ 707328 Segmentation fault when running on Wayland compositor
+ 707445 ghost cursor when mouse hovers over an image file in a tab
+ 707488 Typo in error message in gtkfilechooserdefault.c
+ 707519 Missing introspection annotations
+ 707659 orca becomes non-responsive when doing read line on Unbound
+ 707704 Prefer Wayland to X11
+ 707778 The redesigned "Universal Access" and "Date & Time" panels ca...
+ 707786 Collapsed Gtk combo boxes no longer emit accessible selection...
+ 707844 No way to get window field a GdkEvent from Gjs
+ 707872 GtkSwitch shouldn't have a default name
+ 707915 Accessible object for GtkListBoxRow should have list_item role
+ 707926 GtkSwitch shouldn't have a default accessible description
+ 707981 GtkHeaderBar needs a better accessible role
+ 708012 Wayland dependency inaccurate
+ 708067 Headerbar 'Previous' and 'Next' buttons are not keyboard navi...
+ 708076 Doc: small fixes in GtkTextView
+ 708128 listbox keynav gets stuck at insensitive rows
+ 708150 GtkWidget: Add gtk_widget_remove_action_group()?
+
+* Translation updates:
+ Belarusian
+ Brazilian Portuguese
+ Czech
+ Danish
+ Finnish
+ French
+ Galician
+ Hebrew
+ Hungarian
+ Indonesian
+ Italian
+ Japanese
+ Korean
+ Latvian
+ Lithuanian
+ Norwegian bokmål
+ Polish
+ Punjabi
+ Russian
+ Slovak
+ Slovenian
+ Spanish
+ Tajik
+ Thai
+ Traditional Chinese
+
+
+Overview of Changes in GTK+ 3.9.12 to 3.9.14
+============================================
+
+* GtkLabel can now ellipsize just the last line,
+  ellipsized in multi-line labels.
+
+* Bugs fixed:
+ 680953 set_item_width / text wrapping doesn't work in iconview...
+ 700428 Default input method should be chosen based on the inpu...
+ 701125 port scrolling to GtkPixelCache
+ 704278 Possible crash when destroying a tick callback
+ 705980 Update Win32 code so that GTK+ will build and run
+ 706323 HeaderBar window menus
+ 706448 Shortcut <ALT> + O in Save As Dialog is not Unique
+ 706451 Path bar - pushed buttons have an erroneous bold weight
+ 706493 fix some memory leaks
+ 706529 CSD fixes for mutter/gnome-shell
+ 706563 Un-deprecate gtk-entry-password-hint-timeout
+ 706592 csd: some fixes for the titlebar
+ 706722 path bar looks broken when the window is to small to fit...
+ 706728 pixelcache: allow specifying extra size and cairo_conten...
+ 706740 a typo in gtk_icon_view_key_release()
+ 706756 GtkAssistant behaviour changed and now throws 'Page flow...
+ 706778 GtkMessageDialog contains translatable space
+ 706802 Missing docs for GTK_PRINT_SETTINGS_OUTPUT_DIR and GTK_P...
+ 706870 serial number jump bigger than 1000 warnings
+ 706922 Set the opaque region when using CSD
+ 706929 HeaderBar padding - account for double bottom button border
+ 706938 revealer: clamp minimum size to natural one
+ 707051 Do not hardcode title and subtititle style
+ 707201 Needs glib 2.37.5
+
+* Translation updates:
+ Brazilian Portuguese
+ Czech
+ Galician
+ Irish
+ Italian
+ Kazakh
+ Lithuanian
+ Norwegian bokmål
+ Polish
+ Punjabi
+ Scottish Gaelic
+ Slovenian
+ Tajik
+
+
+Overview of Changes in GTK+ 3.9.10 to 3.9.12
+============================================
+
+* GtkInfoBar now uses a GtkRevealer internally to slide in place.
+  It is no longer necessary to do that manually.
+
+* GtkHeaderBar can now add a window close button
+
+* The fine adjustment mode for scrolling has been revamped to be
+  easier discoverable, and visual feedback and autoscrolling has
+  been added.
+
+* GtkIconTheme now supports 2x scaled icons for hi-dpi displays.
+
+* The Wayland and X11 clipboard implementations can now coexist
+
+* Bugs fixed:
+ 448637 Convert comment in gtkmenushell.c into docs
+ 672220 GtkFileChooserButton dialog stretched, when user has a really...
+ 674108 Hard crash due to wrong NSAutoreleasePool stacking
+ 680926 generic type fallback logic is broken for -symbolic
+ 688738 GtkMenuButton problem with mnemonics / accelerators
+ 692548 Quartz: Cursor doesn't reset when the mouse leaves a toplevel...
+ 694831 GtkEntry provides no visual feedback when editable=FALSE
+ 697127 gedit context menu uses fixed-width font
+ 697399 GtkEntry: Add a "tabs" property for setting a PangoTabArray...
+ 700029 GdkEvent type not accessible from Javascript
+ 701571 1ad25dfb causes NSApp to not notice NSWindow destruction
+ 702144 Make gdkwin32.h a pure include-only header
+ 702971 GtkHeaderBar - pick up window controls from the system settings
+ 704173 Don't use UNIX-specific printer objects on non-UNIX
+ 704334 add revealer to infobar
+ 704703 fine adjustments are difficult with scrollbars
+ 705068 Update the GDK and GTK on Win32 to not use deprecated APIs
+ 705181 Annoying beep on arrow keys when using IME on MacOS
+ 705182 Reset Cocoa IME state when immodule is reset
+ 705215 Minimum required cairo version should be 1.12 since 83c5e354b
+ 705320 gtkicontheme: check for GdkPixbuf first
+ 705372 gtk_image_menu_item_new_from_stock deprecation warning point...
+ 705443 Fix image effects
+ 705498 build and enable wayland backend by default
+ 705524 searchbar: ignore GDK_KEY_Menu in handle_event()
+ 705529 GtkTextView: improve documentation
+ 705558 [listbox] convenience methods to prepend and insert at index
+ 705601 headerbar: some improvements
+ 705605 Improve the spring-back animation for drag and drop
+ 705624 paned: minus the size by the handle for the for_child1 compu...
+ 705640 GtkWindow incorrectly requires a default screen
+ 705672 Inconsistent deprecations. GtkComboBox and GtkMenu.
+ 705692 Segmentation fault on horizontal slider
+ 705750 Quartz input method doesn't work correctly for Chinese characters
+ 705765 gtkwindow: Export our custom frame extents
+ 705809 Middle click on HeaderBar (as tiitelbar) isn't moved to the...
+ 705918 Add gtk_button_new_from_icon_name
+ 706014 Searchbar entry lacks an accessible name
+ 706045 Set GtkBox as titlebar of the window - the background of the box...
+ 706152 g_object_notify called with NULL priv->focus_widget
+ 706220 Add the "text-button" style to button created with gtk_button_ne...
+ 706028 The pathbar in GTKFilechooser don't stick together
+ 706335 doc: Fix typos
+
+* Updated translations:
+ Arabic
+ Czech
+ Galician
+ Hebrew
+ Hungarian
+ Lithuanian
+ Norwegian bokmål
+ Spanish
+ Tajik
+ Traditional Chinese
+
+
+Overview of Changes in GTK+ 3.9.8 to 3.9.10
+===========================================
+
+* GtkInfoBar updates
+ - Turn action area horizontal
+ - Fix spacing
+ - Add an easy way to add a close button
+
+* Documentation
+ - Modernize many screenshots
+ - Redo the widget gallery
+ - Improve 'Getting Started' tutorial
+ - Add new application examples to tutorial
+
+* Deprecations:
+ - tear-off menuitems
+
+* Bugs fixed:
+ 684558 gtk_tree_model_rows_reordered is skipped by introspection
+ 694086 GtkEntry elements need clipping
+ 698758 Wrong limit for "Native Windows wider or taller than 65535...
+ 700229 provide a way to rate limit change signal in GtkSearchEntry
+ 700896 Rename gtk_widget_class_declare_callback()
+ 700898 Explain what "automated" mean in the context of children c...
+ 701332 Patch for minor glitch in NSTextInput
+ 701365 Do not assert sm_proxy != NULL in GtkApplication inhibit f...
+ 701613 XEmbed doesn't work with frame-synced GTK/Mutter
+ 702563 gtk_widget_class_automate_child() takes private offset
+ 704104 gdk/wayland: cope with the compositor implementing an olde...
+ 704164 GtkSearchEntry: the contents is always cleared on icon-rel...
+ 704171 Fix prototype of gdk_device_win32_warp
+ 704216 Fix prototype for gdk_quartz_device_core_warp
+ 704274 Add API to show a close button on GtkInfoBar
+ 704392 Improve GtkAction deprecation notices
+ 704554 FIX mmap fails when getting root_window
+ 704700 Gtk.IconView.get_cursor segfault
+ 704747 testsuite/a11y: Don't check minimum increment
+ 704894 The GtkInfoBar close button is visible by default
+ 704937 IME input method does not handle dead keys
+ 705060 Remove unneeded include from gtkprintoperation-win32.c
+
+* Translation updates
+ Czech
+ Italian
+ Lithuanian
+ Norwegian bokmål
+ Tajik
+ Traditional Chinese
+
+
+Overview of Changes in GTK+ 3.9.6 to 3.9.8
+==========================================
+
+* We've started deprecating GtkStock apis. These apis will continue
+  working until GTK+ 4, so there is no need to rush to replace them.
+  For more information, see
+  https://mail.gnome.org/archives/gtk-devel-list/2013-July/msg00000.html
+  Wholly deprecated as part of this effort:
+  GtkIconFactory, GtkIconSet, GtkIconSource, GtkImageMenuItem,
+  GtkAction, GtkUIManager
+
+* The GtkSettings cleanup that was discussed at the recent GTK+
+  hackfest has started to land. A number of settings have been
+  deprecated and are ignored now:
+  gtk-button-images,
+  gtk-show-unicode-menu,
+  gtk-show-input-method-menu,
+  gtk-enable-mnemonics,
+  gtk-auto-mnemonics,
+  gtk-color-palette,
+  gtk-can-change-accels,
+  cursor blink settings,
+  gtk-fallback-icon-theme,
+  gtk-scrolled-window-placement,
+  menu popup delay settings,
+  gtk-menu-bar-accel,
+  keynav tweaks,
+  gtk-touchscreen-mode,
+  gtk-icon-sizes,
+  im style tweaks,
+  gtk-file-chooser-backend,
+  gtk-enable-tooltips,
+  gtk-visible-focus,
+  tooltip timeout tweaks,
+  toolbar style tweaks
+
+* Initial support for scaled output (on high-dpi screens) has been
+  added. While this can be built with cairo 1.12, it needs a cairo
+  branch to work. Support for this has been added to the Wayland,
+  OS X and Windows backends.
+
+* Bugs fixed:
+ 390048 Entire word search flag
+ 672271 File chooser seems over-enthusiastic about using subdirectories
+ 696498 can't set download folder
+ 701119 Error messages when GtkAboutDialog shows license info
+ 702332 File Browser: Filter submenu is missing from context menu
+ 702831 Shaped GDK windows do not work
+ 702913 Reduce hash table lookups in gdk_x11_screen_supports_net...
+ 702977 Problem with gtk_text_iter_forward_search(), multi-byte ...
+ 702981 GtkListBox docs still refer to GtkListBoxUpdateSeparatorFunc
+ 702996 Port to the new private macros and API
+ 703069 Opening a big menu activates some menu entry
+ 703154 Calling gtk_widget_set_opacity() on an unrealized widget...
+ 703220 Memory allocation integer overflow in gdk_cairo_set_sour...
+ 703313 Improve documentation of the GtkTextView API
+ 703406 GtkSearchBar does not automatically connect entry
+ 703533 textlayout: avoid double-free when adding preedit color
+ 703606 GtkPlacesSidebar should use g_themed_icon_new_with_default...
+ 703616 Inconsistent deprecations. GtkIconSet and other classes.
+ 703618 listbox: Add function to get the index of a GtkListBoxRow
+ 703656 GtkSearchBar: Don't show a close button by default
+ 703765 Build of wayland backend fails when not building X11 backend
+ 703827 Confusion in docs for gtk_recent_info_get_modified () and...
+
+* Translation updates:
+ Tajik
+ Vietnamese
+
+
+Overview of Changes in GTK+ 3.9.4 to 3.9.6
+==========================================
+
+* GtkListBox:
+ - handle double-clicks properly
+ - add an example in gtk3-demo
+ 
+* Bugs fixed:
+ 390048 Patch for adding "whole word" search for gtk_text_iter...
+ 560337 GtkFileChooser hour time missing for current date files
+ 649390 CRLF text is copied to clipboard as CRCRLF on Windows
+ 679930 gtk_builder_add_* should not use GError
+ 698183 Text input is too slow and some keys are broken after...
+ 701174 Update misleading filechooser documentation
+ 702598 Invalid read of size 4 in gtk_icon_info_get_embedded_rect
+ 702695 typo: "and thus will thus"
+ 702763 ellipsize placeholder text
+
+* Translation updates:
+ Italian
+ Tajik
+
+
+Overview of Changes in GTK+ 3.9.2 to 3.9.4
+==========================================
+
+* GtkSearchBar: a toolbar that will popup automatically when
+  searches should be started, and dismissed when they are finished
+
+* GtkListBox a vertical container that can sort and filter its
+  children
+
+* GtkStack has gained position dependent transitions (left-right
+  and up-down)
+
+* The Broadway GDK backend can be built on Windows now
+
+* Bugs fixed:
+ 593079 untranslated strings in errors
+ 692638 Don't use AC_CANONICAL_TARGET
+ 699673 [3.2/3.4/3.6/3.8] uuid conflicting on Windows
+ 700185 GtkWindow: problem with child widget visibility
+ 700444 [W32] The use of uninitialized GDK default screen
+ 700779 gtk_menu_item_draw puts the arrow too close to the border
+ 701463 typo: "a string containing the an approximation"
+ 701840 deprecate gtk_im_multicontext_append_menuitems
+ 702370 a11y's /child/add-remove/GtkEntry test reads invalid memory
+
+* Translation updates
+ Brazilian Portuguese
+ Chinese
+ Czech
+ Japanese
+
+
+Overview of Changes in GTK+ 3.9.0 to 3.9.2
+==========================================
+
+* The GDK initialization code has been refactored. GdkDisplayManager
+  is no longer backend-specific.
+
+* The symbol exporting functionality has been refactored. We no longer
+  use .symbols files, and instead rely on explicit header annotations
+  for every exported symbol. the abicheck scripts are no longer used.
+
+* The GDK drawing and scrolling has been simplified. We no longer use
+  XCopyArea for scrolling, instead an offscreen cache is used. There
+  is a new debug flag, GTK_DEBUG=pixel-cache for this.
+
+* Window sizing issues have been addressed.
+
+* Implement height-for-width for GtkEventBox and GtkCheckButton
+
+* Custom titlebars can now be set from GtkBuilder files
+
+* Optionally install tests, when configured with --enable-installed-tests.
+  To run these tests, gnome-desktop-testing-runner can be used.
+
+* Native input methods are supported on OS X now.
+
+* Bugs fixed:
+ 360131 Wrong documentation for gtk_file_chooser_set_do_overwrite_...
+ 561221 Don't allow file bookmarks
+ 591969 make the FileChooser dialog handle Make FileChooser handle...
+ 628902 use expand flags to determine window resizability
+ 667759 gtkdnd-quartz.c is missing annotations for introspection
+ 691921 GTK+ (quartz) built on Mac OS X 10.5 references [NSMenu re...
+ 694273 Patch to support NSTextInputClient in text widgets
+ 695120 GtkMenu and GdkWindow sizes can get out of sync
+ 696001 need to know about tiling
+ 696640 GtkButton: Don't suppress unhandled mouse events
+ 698051 Typo in documentation comment
+ 698361 file chooser: menu commands should be capitalized
+ 698933 places sidebar: don't capitalize "file system"
+ 699104 when nothing is selected, Add to Bookmarks is enabled but ...
+ 699140 Baseline support breaks height-for-width in event box
+ 699239 Choose DnD/tooltip widget better on GtkOverlay and other l...
+ 699289 API request: MenuItem has no function to set label markup
+ 699633 GtkWindow: critical messages when negative size allocations
+ 699690 Cross-compilation broken as of 3.9.0 due to extract-string...
+ 699739 GtkSettings fails to read uint properties from settings.ini
+ 699750 Print dialog crashes when printer does not provide printer...
+ 699901 GTK CSS keybinding broken
+ 699929 GtkCheckMenuItem: remove an unused boolean field
+ 699970 Fullscreen OSD not visible against gtk+ git master
+ 700007 Various small improvements
+ 700053 titlebar: fullscreen broken
+ 700054 titlebar: warning at destroy time
+ 700056 titlebar: dialogs do not appear centered
+ 700079 Fix accels added after the window was shown not working
+ 700233 Gtk+ exits on X11 when querying a slave device
+ 700301 wayland: ensure the clip region is updated after the windo...
+ 700465 Missing NULL-check in XI2's implementation for get_window()
+ 700575 docs: remove unused objects_grouped.sgml
+ 700578 Missing vertical grid lines when some columns hidden.
+ 700737 [wayland] gdk_screen_get_height() returns wrong value
+ 700787 Add GtkSearchBar widget
+ 700844 GdkRgba: Fix 'loose' typo
+ 700864 error_selecting_folder_over_existing_file_dialog() will ne...
+ 700979 GtkPlacesSidebar: do not unref mount
+
+* Translation updates:
+ Brazilian Portuguese
+ English
+ Hebrew
+ Japanese
+ Norwegian bokmål
+ Russian
+ Slovak
+ Spanish
+ Tajik
+
+
+Overview of Changes in GTK+ 3.7 to 3.9
+======================================
+
+* GtkFileChooser:
+ - Always show fuse-mounted locations in shortcuts
+ - GtkFileChooserButton has received a lot of fixes and tests have
+   been added for many of them
+
+* GtkWindow:
+ - Initial support for client-side decorations has been added. This
+   is going to be used by default under Wayland. To try it with other
+   backends, set the GTK_CSD=1 environment variable.
+ - gtk_window_set_titlebar: A new function that can set a custom,
+   client-side titlebar on toplevel windows.
+
+* Wayland:
+ - Use client-side decorations
+ - Implement maximization
+ - Improve cursor handling
+ - Improve multi-monitor handling
+ - Support most GtkSettings (for now by reading GSettings directly)
+ - Complete the keymap implementation
+ - Add support for custom surfaces
+ - Implement animated cursors
+ - Support the WAYLAND_SOCKET environment variable
+ - Implement frame synchronizatio
+ - Document Wayland-specific APIs
+
+* Broadway:
+ - Improve window size handling
+ - Implement frame synchronization
+ - Add support for password authentication
+
+* New APIs, widgets, feature additions:
+ - GtkHeaderBar is a new widget similar to a GtkBox, with the extra
+   feature that it can center a child (typically a title), independent
+   of the other content.
+ - GtkPlacesSidebar is the sidebar widget in the file chooser, exported
+   as a public widget - it will be shared with nautilus.
+ - GtkStack is an alternative to GtkNotebook for showing one of several
+   child widgets at a time. It supports animated transitions. Tabs are
+   not built into this widgets, but instead provided by the separate
+   GtkStackSwitcher widget.
+ - GtkRevealer is a new new widget that can hide or show its child
+   in an animated fashion.
+ - GtkMenuTracker is a helper object that makes dealing with
+   GMenuModels easier and more efficient.
+ - gtk_grid_remove_row/column: New functions to remove whole rows
+   or columns from a GtkGrid
+ - Support for composite children has been added to GtkWidget. This
+   allows to create complex widgets from GtkBuilder ui files. All
+   complex GTK+ widgets have been converted to use this facility.
+ - Baseline support was added to the GTK+ size allocation machinery.
+   Widgets can now export the baseline of the text they contain,
+   and containers can align their children wrt to their baselines.
+
+
+* Known problems, feature removals, compatibility caveats:
+ - Handling of window size is currently in flux, and there are
+   some known problems with sizes unintentionally changing
+ - Support for the Motif DND protocol has been dropped
+ - Client-side decorations still have some issues when drawing
+   directly on toplevel windows or setting their background
+ - Support for multiple screens per display has been removed. This
+   was only ever supported on X11, and is an exceedingly rare setup
+   nowadays. The display-screen relation is now 1:1, and we will do
+   some more simplification of displaymanager/display/screen/monitor
+   APIs.
+ - gdk_window_get_display has been deprecated
+ - gtk_widget_push_composite_child has been deprecated - this was
+   used for anything
+ - GtkSwitch has been changed to draw focus internally, instead of
+   reserving space outside the switch for it. This may require some
+   application adjustment where margins were tweaked to 'correct'
+   the alignment of switches manually
+
+* Printing:
+ - Avoid blocking when looking for avahi printers
+ - Don't link against avahi-gobject, use D-Bus directly
+
+* Bugs fixed:
+ 504901 GtkCellRendererCombo requires click-and-hold
+ 586367 In local_only mode, file chooser should return native pa...
+ 671939 [regression] crash on exit
+ 672018 Need API to set global application state (busy, counters...
+ 674051 Scrolling zoom in view - incorrect image display
+ 674759 GtkLabel: wrong value of "mnemonic-keyval" when "use-mar...
+ 675571 (out) or (inout) annotation possibly missing for gtk_men...
+ 675649 gtk-demo: Fix typo
+ 680241 Instructions on how to build a GTK app won't work with r...
+ 681446 gtkdnd memory leak
+ 685419 gtkprintbackendfile: Infinite loop in _cairo_write()
+ 685420 Critical warnings when GtkPrintJob is released too early
+ 688820 GIcon is a bad interface
+ 688896 Add documentation for GtkWidget::show,hide,map,unmap,rea...
+ 690275 scrolling on other windows is applied when coming back (...
+ 691040 selection is reported incorrectly in file chooser button
+ 692871 Need to expose output information to make GdkScreen API ...
+ 694339 Fix build of GTK+ on Windows
+ 694465 Allow backends to fail during initialisation
+ 695200 Switching apps while a combobox open makes the parent wi...
+ 695228 GdkPixbuf:ERROR:gdk-pixbuf-animation.c:242:gdk_pixbuf_an...
+ 695278 Avoid passing a NULL title to setTitle
+ 695304 GtkTextView: don't popdown a bubble if we don't have one
+ 695312 Initial 'text' set in the non-numeric-only GtkSpinButton...
+ 695375 GtkEntryAccessible: also handle entry icon tooltip NULL ...
+ 695380 gtk_binding_entry_skip broken
+ 695391 wayland documentation section id is "gtk-osx"
+ 695473 treeview: fix a critical warning
+ 695476 Drop the Motif DND protocol
+ 695482 Universal Access panel appears jumbled and horrible afte...
+ 695493 testgtk: issues with the color selection example
+ 695495 testgtk: cursor example segfaults
+ 695497 testgtk: lack of key repeat
+ 695506 gtk-demo: link hovering unreliable
+ 695682 Cannot build docs for wayland-only build
+ 695714 Getting of printer info can hang
+ 695772 Different appearance of menus within Audacious
+ 695783 GtkApplication: Allow passing windows on non-X11 targets
+ 695861 Allow to use custom surfaces for GdkWindows in Wayland
+ 695874 GtkFontChooser docs
+ 695895 Fix the gtk3-demo demo program on Windows
+ 695945 implement minimize / maximize functionality
+ 695948 GtkFontButton sets wrong show-preview-entry
+ 695998 csd: enable shadows in the outer border
+ 696051 vertical grid lines in rtl mode
+ 696138 GtkWidget: some deprecation marks are missing
+ 696171 GtkAssistant highlighted font unreadable
+ 696202 Add GtkSpinner animation back to Win32 theme
+ 696232 win32: do not crash on invalid utf8 conversion
+ 696340 wayland: device list is populated async
+ 696370 GtkOverlay doesn't work on top of GtkClutterEmbed
+ 696429 wayland: Implement animated cursors
+ 696457 gnome-ostree build broken by 3a9de35a6cefddc09aaf000e523...
+ 696468 improve GMenuModel -> GtkMenu conversion
+ 696546 gtk_print_backend_cups_finalize() crashes if cups_get_pr...
+ 696553 Crash in avahi_create_browsers
+ 696561 GtkApplicationWindow rendering broken
+ 696608 css_image_value_parse: returning FALSE in pointer function
+ 696622 gtk option printer widget segfault in epiphany
+ 696623 GtkOverlay with a revealer produces warnings setting a m...
+ 696767 a pair of memory leaks
+ 696882 [regression] GtkWindow changes size after hide/show cycle
+ 697048 GtkTextView: small code improvements
+ 697144 Popup menu mnemonics fixes
+ 697196 gtk_notebook_set_tab_reorderable boolean handling
+ 697200 GtkWindow: notify::attached-to not emitted
+ 697263 Impossible to set window transparency on 3.8
+ 697275 gtk_window_set_default_size() doesn't work anymore
+ 697427 Unreferencing GtkStatusIcon object causes abort
+ 697673 Apps should connect only once when using Wayland
+ 697795 xi2: Improve pointer emulation debug reporting
+ 697886 dnd icon drawing broken on master
+ 697947 A lot of GTK+ apps fail to launch with error "desktop_she...
+ 698181 Document icon-shadow CSS property
+ 698433 Geometry management broken in GtkBin widgets
+ 698682 GtkSpinButton: don't constantly recreate style contexts f...
+ 698864 wayland: improve integration with GdkFrameClock
+ 699020 GtkImage: do not leak metrics in baseline align
+ 699225 typo: Modifed -> Modified
+
+* Translation updates:
+ Arabic
+ Aragonese
  Assamese
  Belarusian
  Brazilian Portuguese
+ British English
  Catalan
+ Catalan (Valencian)
+ Czech
  Danish
  Finnish
  French
  Galician
  German
  Greek
+ Hindi
+ Hungarian
  Indonesian
+ Italian
  Kazakh
- Lithuanian
  Korean
+ Latvian
+ Malayalam
+ Odia
+ Persian
  Polish
- Portuguese
  Punjabi
+ Russian
  Serbian
+ Simplified Chinese
  Slovenian
- Spanish
- Uyghur
+ Tajik
+ Tamil
+ Ukrainian
 
 
 Overview of Changes in GTK+ 3.7.12
